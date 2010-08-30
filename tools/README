@@ -19,5 +19,7 @@ deploy_snapshot.pl
 deploy_snapshot.tar.gz
 test_deploy_snapshot.pl
 
+* email_failures.pl is a script that parses junit result files, git blames, and emails
+
 
 

@@ -114,10 +114,18 @@ sub send_alert {
 
     my @to = splice( @editors, 0, 3 );
     @to = map { $_ . '@genome.wustl.edu' } @to;
-    my $to = @to > 0 ? join( ',', @to ) : 'apipe@genome.wustl.edu';
+    my ($to, $cc);
+    my @us = us();
 
-    my $cc = join(',', 'ssmith', 'jedlred');
-    my $bcc = join(',', 'jlolofie');
+    if (@to > 0) {
+        $to =  join(',', @to);
+
+        my $to_regex = '(' . join('|', @to) . ')';
+        my @rest = grep(!/$to_regex/,@us);
+        $cc  = join(',', @rest);
+    } else {
+        $to = join(',', @us);
+    }
 
     my $subject = "$filename";
 
@@ -141,13 +149,12 @@ To: $to
 Cc: $cc
 _BODY_
 
-#    $to = 'jlolofie@genome.wustl.edu';
-#    $cc = '';
+    $to = 'jlolofie@genome.wustl.edu';
+    $cc = '';
 
     my $mail = {
         To      => $to,
         Cc      => $cc,
-        Bcc     => $bcc,
         From    => 'ssmith@genome.wustl.edu',
         Subject => $subject,
         Message => $body,
@@ -232,6 +239,31 @@ sub git_blame {
     return if !$winners;
 
     return sort { $winners->{$b} <=> $winners->{$a} } keys %$winners;
+}
+
+sub us {
+
+    my @us = qw(
+        abrummet
+        adukes
+        bdericks
+        bobkerfe
+        ebelter
+        eclark
+        fdu
+        gsanders
+        jeldred
+        jlolofie
+        jmcmicha
+        jweible
+        kyung
+        nnutter
+        rlong
+        ssmith
+        tmooney
+    );
+
+    return map { $_ . '@genome.wustl.edu' } @us;
 }
 
 
