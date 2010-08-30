@@ -110,22 +110,9 @@ sub send_alert {
     my $genome   = $revision->{'genome'} || 'unknown';
     my $workflow = $revision->{'workflow'} || 'unknown';
 
-    my @editors = git_blame($test_pathname);    # sorted by most ownership of test and module
-
-    my @to = splice( @editors, 0, 3 );
-    @to = map { $_ . '@genome.wustl.edu' } @to;
-    my ($to, $cc);
-    my @us = us();
-
-    if (@to > 0) {
-        $to =  join(',', @to);
-
-        my $to_regex = '(' . join('|', @to) . ')';
-        my @rest = grep(!/$to_regex/,@us);
-        $cc  = join(',', @rest);
-    } else {
-        $to = join(',', @us);
-    }
+    my ($to_aryref, $cc_aryref) = git_blame($test_pathname);    # sorted by most ownership of test and module
+    my $to = join(',', @$to_aryref);
+    my $cc = join(',', @$cc_aryref);
 
     my $subject = "$filename";
 
@@ -199,13 +186,41 @@ sub get_test_details {
 sub git_blame {
 
     my ($test_pathname) = @_;
+    my @winners;
+    my @winners_without_decoration;
 
+    my @rest;
+
+    my @us = us();
+    my @ignore = ignore();
     $test_pathname = join('/', '/gscuser/jlolofie/dev/git/genome/lib/perl/Genome', $test_pathname);
 
     my $module_pathname = $test_pathname;
     $module_pathname =~ s/^(.*)\.t$/$1.pm/;
 
-    my $winners = {};
+    # returns the editor with last commit, most commits, and random apiper
+    
+    # 1. last commit
+    my ($base_path) = $module_pathname =~ /^(.*)\/.*$/;
+    local $CWD = $base_path; # git requires --git-dir or pwd being git checkout
+    my $log_cmd = "git log $module_pathname";
+    my @log_out = `$log_cmd`;
+    for my $log_line (@log_out) {
+        if ($log_line =~ /Author:/) {
+
+            my ($last_commiter) = $log_line =~ /Author: .*\<(.*)\@.*\>/;
+            if (grep(/$last_commiter/, @ignore)) {
+                next;
+            } else {
+                push @winners, 'last-commit+' . $last_commiter . '@genome.wustl.edu' if defined($last_commiter);
+                push @winners_without_decoration, $last_commiter;
+            }
+        }
+    }
+
+
+
+    # 2. most commits
     for my $file ($test_pathname, $module_pathname) {
 
         next if ! -f $file;
@@ -214,31 +229,55 @@ sub git_blame {
 
         my ($base_path) = $file =~ /^(.*)\/.*$/;
         local $CWD = $base_path; # git requires --git-dir or pwd being git checkout
-        my $cmd = "/gsc/scripts/sbin/gsc-cron /gsc/bin/git blame $file";
-        my @out = `$cmd`;
+
+        my $blame_cmd = "/gsc/scripts/sbin/gsc-cron /gsc/bin/git blame $file";
+        my @out = `$blame_cmd`;
 
             for my $line (@out) {
                 my ($hash, $fn, $u) = split(/\s+/, $line);
                 $u =~ s/\(//g;
 
-                next if $u =~ /[A-Z]/;
-                next if grep /$u/, ('jpeck');
+                next if $u =~ /[A-Z]/;      # this might be a real name not username
+                next if grep(/$u/, @ignore);
                 $user->{$u}++;
             }
 
         my @sorted = sort { $user->{$b} <=> $user->{$a} } keys %$user;
 
-        my $i = -1;
-
-        while (++$i < @sorted && $i <= 3) {
-
-            $winners->{$sorted[$i]}++;
+        # take the first user sorted by number of lines commited,
+        # unless it was also the last commiter (see above)
+        for my $s (@sorted) {
+            next if grep(/$s/, @winners_without_decoration);
+            push @winners, 'most-commits+' . $s . '@genome.wustl.edu';
+            push @winners_without_decoration, $s;
+            last;
         }
-
     }
-    return if !$winners;
 
-    return sort { $winners->{$b} <=> $winners->{$a} } keys %$winners;
+    # 3. random apiper
+    my $winners_regex = '(' . join('|', @winners_without_decoration) . ')';
+    @rest = grep(!/$winners_regex/,@us);
+    my $random_apiper = $us[int(rand(@rest + 1))];    
+    push @winners, 'lucky+' . $random_apiper;
+    push @winners_without_decoration, $random_apiper;
+
+
+    if (@winners > 1) {
+        my $to_regex = '(' . join('|', @winners_without_decoration) . ')';
+        @rest = grep(!/$to_regex/,@us);
+    } else {
+        @winners = @us; # yay!
+    }
+
+    return (\@winners, \@rest);
+}
+
+sub ignore {
+
+    return qw(
+        jpeck
+        pkimmey
+    );
 }
 
 sub us {
