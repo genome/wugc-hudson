@@ -103,8 +103,6 @@ sub send_alert {
         $truncated = "Output was truncated because it was too large. Visit the hudson URL above for the whole everything.";
     }
 
-    my ($filename) = $test_pathname =~ /^.*\/(.*)$/;
-
     my $revision = get_revision_info();
     my $ur       = $revision->{'UR'} || 'unknown';
     my $genome   = $revision->{'genome'} || 'unknown';
@@ -114,7 +112,7 @@ sub send_alert {
     my $to = join(',', @$to_aryref);
     my $cc = join(',', @$cc_aryref);
 
-    my $subject = "$filename";
+    my $subject = $test_pathname;
 
     my $body = <<"_BODY_";
 
@@ -254,12 +252,12 @@ sub git_blame {
         }
     }
 
-    # 3. random apiper
-    my $winners_regex = '(' . join('|', @winners_without_decoration) . ')';
-    @rest = grep(!/$winners_regex/,@us);
-    my $random_apiper = $us[int(rand(@rest + 1))];    
-    push @winners, 'lucky+' . $random_apiper;
-    push @winners_without_decoration, $random_apiper;
+#    # 3. random apiper
+#    my $winners_regex = '(' . join('|', @winners_without_decoration) . ')';
+#    @rest = grep(!/$winners_regex/,@us);
+#    my $random_apiper = $us[int(rand(@rest + 1))];    
+#    push @winners, 'lucky+' . $random_apiper;
+#    push @winners_without_decoration, $random_apiper;
 
 
     if (@winners > 1) {
@@ -273,6 +271,8 @@ sub git_blame {
 }
 
 sub ignore {
+
+    return;
 
     return qw(
         jpeck

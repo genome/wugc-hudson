@@ -115,6 +115,7 @@ my @repos = (
     }
 );
 
+$DB::single = 1;
 Library::snapshot_namespaces( $snapshot_path, @repos );
 
 my @dump_files = `find $snapshot_path -iname *sqlite3-dump`;
@@ -140,10 +141,22 @@ print "FIXME MISSING SO FILES: Generating auto-competition opt files\n";
 print "Finished copying to local machine. Snapshot available at $snapshot_path\n";
 
 if ( defined $testing ) {
-    `scp -pqr $snapshot_path linus1:/gsc/scripts/opt/testings/`; # deploy to /gsc/scripts/opt if used the --deploy flag
-    print "Finished copying to remote server. Snapshot available at /gsc/scripts/opt/testings/$snapshot_name \n";
+
+    # deploy to /gsc/scripts/opt if used the --deploy flag
+    my $cmd = "+ scp -pqr $snapshot_path linus1:/gsc/scripts/opt/testings/"; 
+    print "$cmd\n";
+    my $out = `$cmd`;
+    print "-----output from scp-----\n$out\n----------\n";
+
+    print "+ Snapshot is here: /gsc/scripts/opt/testings/$snapshot_name \n";
+
     if ( defined $modeltests ) {
+        print "+ starting up model tests\n";
         local $CWD = qq{/gsc/scripts/opt/testings/$snapshot_name/lib/perl};
         `$ENV{APIPE_TEST_SCRIPT_PATH}`;
     }
 }
+
+
+
+
