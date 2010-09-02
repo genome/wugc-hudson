@@ -17,8 +17,8 @@ use File::chdir '$CWD';
 my $hudson_build_id = $ARGV[0] || die 'first argument should be a hudson build id';
 chomp($hudson_build_id);
 
-my $test_result_base_path = '/gscuser/mjohnson/.hudson/jobs/Genome/workspace/test_result';
-my $build_base_path = join('/', '/gscuser/mjohnson/.hudson/jobs/Genome/builds', $hudson_build_id);
+my $test_result_base_path = '/gscuser/jlolofie/.hudson/jobs/Genome/workspace/test_result';
+my $build_base_path = join('/', '/gscuser/jlolofie/.hudson/jobs/Genome/builds', $hudson_build_id);
 
 my $url = join('/', 'http://hudson:8090/job/Genome', $hudson_build_id);
 
@@ -134,8 +134,8 @@ To: $to
 Cc: $cc
 _BODY_
 
-    $to = 'jlolofie@genome.wustl.edu';
-    $cc = '';
+#    $to = 'jlolofie@genome.wustl.edu';
+#    $cc = '';
 
     my $mail = {
         To      => $to,
