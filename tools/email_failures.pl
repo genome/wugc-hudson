@@ -203,6 +203,7 @@ sub git_blame {
     local $CWD = $base_path; # git requires --git-dir or pwd being git checkout
     my $log_cmd = "git log $module_pathname";
     my @log_out = `$log_cmd`;
+
     for my $log_line (@log_out) {
         if ($log_line =~ /Author:/) {
 
@@ -212,6 +213,7 @@ sub git_blame {
             } else {
                 push @winners, 'last-commit+' . $last_commiter . '@genome.wustl.edu' if defined($last_commiter);
                 push @winners_without_decoration, $last_commiter;
+                last;
             }
         }
     }
