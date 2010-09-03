@@ -211,7 +211,7 @@ sub git_blame {
             if (grep(/$last_commiter/, @ignore)) {
                 next;
             } else {
-                push @winners, 'last-commit+' . $last_commiter . '@genome.wustl.edu' if defined($last_commiter);
+                push @winners, $last_commiter . '@genome.wustl.edu' if defined($last_commiter);
                 push @winners_without_decoration, $last_commiter;
                 last;
             }
@@ -248,7 +248,7 @@ sub git_blame {
         # unless it was also the last commiter (see above)
         for my $s (@sorted) {
             next if grep(/$s/, @winners_without_decoration);
-            push @winners, 'most-commits+' . $s . '@genome.wustl.edu';
+            push @winners, $s . '@genome.wustl.edu';
             push @winners_without_decoration, $s;
             last;
         }
@@ -259,7 +259,7 @@ sub git_blame {
     my $winners_regex = '(' . join('|', @winners_without_decoration) . ')';
     @rest = grep(!/$winners_regex/,@us);
     my $random_apiper = $us[int(rand(@rest + 1))];    
-    push @winners, 'lucky+' . $random_apiper;
+    push @winners, $random_apiper;
     push @winners_without_decoration, $random_apiper;
 
 
