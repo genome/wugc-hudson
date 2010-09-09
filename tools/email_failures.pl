@@ -289,7 +289,7 @@ sub us {
         abrummet
         adukes
         bdericks
-        bobkerfe
+        boberkfe
         ebelter
         eclark
         fdu
@@ -298,7 +298,7 @@ sub us {
         jlolofie
         jmcmicha
         jweible
-        kyung
+        kkyung
         nnutter
         rlong
         ssmith
