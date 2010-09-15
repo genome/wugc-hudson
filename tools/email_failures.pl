@@ -134,8 +134,8 @@ To: $to
 Cc: $cc
 _BODY_
 
-    $to = 'jlolofie@genome.wustl.edu';
-    $cc = '';
+#    $to = 'jlolofie@genome.wustl.edu';
+#    $cc = '';
 
     my $mail = {
         To      => $to,
