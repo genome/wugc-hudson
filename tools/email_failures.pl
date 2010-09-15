@@ -134,8 +134,8 @@ To: $to
 Cc: $cc
 _BODY_
 
-#    $to = 'jlolofie@genome.wustl.edu';
-#    $cc = '';
+    $to = 'jlolofie@genome.wustl.edu';
+    $cc = '';
 
     my $mail = {
         To      => $to,
@@ -190,6 +190,7 @@ sub git_blame {
     my @rest;
 
     my @us = us();
+
     my @ignore = ignore();
     $test_pathname = join('/', '/gscuser/jlolofie/dev/git/genome/lib/perl/Genome', $test_pathname);
 
@@ -275,11 +276,10 @@ sub git_blame {
 
 sub ignore {
 
-    return;
-
     return qw(
         jpeck
         pkimmey
+        ehvatum
     );
 }
 
