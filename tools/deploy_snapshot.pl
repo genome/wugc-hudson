@@ -92,10 +92,11 @@ sub rename_from_temp_names {
 
         my ($from, $to) = from_and_to_pathnames($ns);
 
-        my $cmd1 = "mv $to $last_deploy_path";
-        print "+ $cmd1\n";
-        my $r1 = system($cmd1); 
-        die "failed to mv file to $last_deploy_path" if $r1;
+        # broken: used to move existing stuff aside for easy reverting later
+#        my $cmd1 = "mv $to $last_deploy_path";
+#        print "+ $cmd1\n";
+#        my $r1 = system($cmd1); 
+#        die "failed to mv file to $last_deploy_path" if $r1;
 
         my $cmd2 = "mv $to.tmp $to";
         print "+ $cmd2\n";

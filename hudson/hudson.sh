@@ -107,6 +107,6 @@ $WORKSPACE/UR/bin/ur test run \
 --lsf-params="-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'" \
 --recurse --junit --lsf --jobs=10
 
-$TEST_TOOLS/email_features.pl $BUILD_NUMBER
+$TEST_TOOLS/email_failures.pl $BUILD_NUMBER
 
 
