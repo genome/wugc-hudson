@@ -280,6 +280,11 @@ sub ignore {
         jpeck
         pkimmey
         ehvatum
+        josborne
+        mjohnson
+        edemello
+        rmeyer
+        jschindl
     );
 }
 

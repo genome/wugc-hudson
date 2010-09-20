@@ -5,7 +5,6 @@ use Genome;
 my $id = $ARGV[0] || die 'first argument should be hudson build that passed unit tests';
 
 my $deploy_path = Genome::Config->deploy_path();
-my $last_deploy_path = join('/', $deploy_path, 'last_genome_deploy');
 my $snapshot_path = snapshot_path($id) || die "cant find snapshot for hudson build $id";
 print "+ deploying from $snapshot_path to $deploy_path\n";
 
@@ -93,10 +92,10 @@ sub rename_from_temp_names {
         my ($from, $to) = from_and_to_pathnames($ns);
 
         # broken: used to move existing stuff aside for easy reverting later
-#        my $cmd1 = "mv $to $last_deploy_path";
-#        print "+ $cmd1\n";
-#        my $r1 = system($cmd1); 
-#        die "failed to mv file to $last_deploy_path" if $r1;
+        my $cmd1 = "mv $to $to.old";
+        print "+ $cmd1\n";
+        my $r1 = system($cmd1); 
+        die "failed to mv file to $to.old" if $r1;
 
         my $cmd2 = "mv $to.tmp $to";
         print "+ $cmd2\n";
