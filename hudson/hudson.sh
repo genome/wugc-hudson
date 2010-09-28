@@ -36,6 +36,10 @@ else
 	echo "WORKSPACE env variable not set. Run in Hudson. Exiting."
 	exit
 fi
+
+GIT_CMD="/gsc/bin/git "
+BUILD_NAME="genome-$BUILD_NUMBER"
+
 #rm $WORKSPACE/UR -rvf
 #rm $WORKSPACE/perl_modules -rvf
 #rm $WORKSPACE/test_result -rvf
@@ -44,50 +48,62 @@ rm $WORKSPACE/* -rf
 # update UR & copy
 ##
 cd $CODE_STORAGE_BASE/UR
-/gsc/bin/git reset --hard
-/gsc/bin/git pull origin master # update UR
+$GIT_CMD reset --hard
+$GIT_CMD pull origin master # update UR
+$GIT_CMD tag $BUILD_NAME
+$GIT_CMD push origin master --tags
+
+
 cd $CODE_STORAGE_BASE/workflow
-/gsc/bin/git reset --hard
-/gsc/bin/git pull origin master
+$GIT_CMD reset --hard
+$GIT_CMD pull origin master
+$GIT_CMD tag $BUILD_NAME
+$GIT_CMD push origin master --tags
+
 cd $CODE_STORAGE_BASE/genome
-/gsc/bin/git reset --hard
-/gsc/bin/git pull origin master
+$GIT_CMD reset --hard
+$GIT_CMD pull origin master
+$GIT_CMD tag $BUILD_NAME
+$GIT_CMD push origin master --tags
+
+
 cd $WORKSPACE
 
-/gsc/bin/git clone $CODE_STORAGE_BASE/UR/.git UR # clone UR from local .UR directory
+
+$GIT_CMD clone $CODE_STORAGE_BASE/UR/.git UR # clone UR from local .UR directory
 cd $WORKSPACE/UR
 
 ##
 # Put UR version information in revision.txt
 ##
 echo -n "UR " >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-/gsc/bin/git show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
+$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
 
 ##
 # copy genome
 ##
 cd $WORKSPACE
-/gsc/bin/git clone $CODE_STORAGE_BASE/genome/.git genome
+$GIT_CMD clone $CODE_STORAGE_BASE/genome/.git genome
 
 ##
 # put genome version information in revision.txt
 ##
 cd $WORKSPACE/genome
 echo -n "genome " >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-/gsc/bin/git show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
+$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
 
 ##
 # copy workflow
 ##
 cd $WORKSPACE
-/gsc/bin/git clone $CODE_STORAGE_BASE/workflow/.git workflow
+$GIT_CMD clone $CODE_STORAGE_BASE/workflow/.git workflow
 
 ##
 # put workflow information in revision.txt
 ##
 cd $WORKSPACE/workflow
 echo -n "workflow " >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-/gsc/bin/git show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
+$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
 
 
 ##
@@ -107,6 +123,10 @@ $WORKSPACE/UR/bin/ur test run \
 --lsf-params="-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'" \
 --recurse --junit --lsf --jobs=10
 
-bsub -u jlolofie@genome.wustl.edu -q short /gscuser/jlolofie/bin/retry -s 60 -n 2 perl $TEST_TOOLS/email_failures.pl $BUILD_NUMBER
+# sleep and hope the junit files have been written by now and are accessible in NFS
+sleep 120
+
+bsub -u jlolofie@genome.wustl.edu -q short perl $TEST_TOOLS/email_failures.pl $BUILD_NUMBER
+
 
 

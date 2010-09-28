@@ -108,11 +108,13 @@ sub send_alert {
     my $genome   = $revision->{'genome'} || 'unknown';
     my $workflow = $revision->{'workflow'} || 'unknown';
 
-    my ($to_aryref, $cc_aryref) = git_blame($test_pathname);    # sorted by most ownership of test and module
+    my ($to_aryref, $cc_aryref, $names_aryref) = git_blame($test_pathname);    # sorted by most ownership of test and module
     my $to = join(',', @$to_aryref);
     my $cc = join(',', @$cc_aryref);
+    my $names = join(',', @$names_aryref);
 
-    my $subject = $test_pathname;
+    my $subject = '[fail] ' . $test_pathname;
+    $subject .= " - $names";
 
     my $body = <<"_BODY_";
 
@@ -271,7 +273,7 @@ sub git_blame {
         @winners = @us; # yay!
     }
 
-    return (\@winners, \@rest);
+    return (\@winners, \@rest, \@winners_without_decoration);
 }
 
 sub ignore {

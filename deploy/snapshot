@@ -115,7 +115,6 @@ my @repos = (
     }
 );
 
-$DB::single = 1;
 Library::snapshot_namespaces( $snapshot_path, @repos );
 
 my @dump_files = `find $snapshot_path -iname *sqlite3-dump`;
@@ -143,16 +142,20 @@ print "Finished copying to local machine. Snapshot available at $snapshot_path\n
 if ( defined $testing ) {
 
     # deploy to /gsc/scripts/opt if used the --deploy flag
-    my $cmd = "+ scp -pqr $snapshot_path linus1:/gsc/scripts/opt/testings/"; 
+    my $cmd = "scp -pqr $snapshot_path deploy:/gsc/scripts/opt/passed-unit-tests/"; 
     print "$cmd\n";
     my $out = `$cmd`;
     print "-----output from scp-----\n$out\n----------\n";
 
-    print "+ Snapshot is here: /gsc/scripts/opt/testings/$snapshot_name \n";
+    print "+ Snapshot is here: /gsc/scripts/opt/passed-unit-tests/$snapshot_name \n";
 
     if ( defined $modeltests ) {
+
         print "+ starting up model tests\n";
-        local $CWD = qq{/gsc/scripts/opt/testings/$snapshot_name/lib/perl};
+        my $path = qq{/gsc/scripts/opt/passed-unit-tests/$snapshot_name/lib/perl};
+        die "path doesnt exist: $path" if ! -e $path;
+
+        local $CWD = $path;
         `$ENV{APIPE_TEST_SCRIPT_PATH}`;
     }
 }
