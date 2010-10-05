@@ -287,6 +287,7 @@ sub ignore {
         edemello
         rmeyer
         jschindl
+        ccarey
     );
 }
 
