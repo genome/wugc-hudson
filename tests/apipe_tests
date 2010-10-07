@@ -14,12 +14,13 @@ my @build_ids = ();
 
 foreach my $model_id (@model_ids) {
     my $command = Genome::Model::Build::Command::Start->create(
-        model_identifier => $model_id,
+        models => [Genome::Model->get($model_id)],
         force => 1,
     );
     $command->execute;
     UR::Context->commit;
-    push(@build_ids, $command->build->build_id);
+    my ($build) = @{$command->builds};
+    push(@build_ids, $build->build_id);
 }
 
 my %build_master_events = ();

@@ -50,15 +50,11 @@ rm $WORKSPACE/* -rf
 cd $CODE_STORAGE_BASE/UR
 $GIT_CMD reset --hard
 $GIT_CMD pull origin master # update UR
-$GIT_CMD tag $BUILD_NAME
-$GIT_CMD push origin master --tags
 
 
 cd $CODE_STORAGE_BASE/workflow
 $GIT_CMD reset --hard
 $GIT_CMD pull origin master
-$GIT_CMD tag $BUILD_NAME
-$GIT_CMD push origin master --tags
 
 cd $CODE_STORAGE_BASE/genome
 $GIT_CMD reset --hard
