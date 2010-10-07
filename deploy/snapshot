@@ -156,7 +156,13 @@ if ( defined $testing ) {
         die "path doesnt exist: $path" if ! -e $path;
 
         local $CWD = $path;
-        `$ENV{APIPE_TEST_SCRIPT_PATH}`;
+        my $cmd_out = `$ENV{APIPE_TEST_SCRIPT_PATH}`;
+            if (defined($?)) {
+                my $e = $? >> 8;
+                print "ERROR exit code $e\n$cmd_out";
+                exit($e);
+            }
+
     }
 }
 
