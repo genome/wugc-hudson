@@ -157,9 +157,9 @@ if ( defined $testing ) {
     my $cmd = "scp -pqr $snapshot_path deploy:/gsc/scripts/opt/passed-unit-tests/"; 
     print "$cmd\n";
     my $out = `$cmd`;
+    print "-----output from scp-----\n$out\n----------\n";
     die "Error: scp failed to copy to passed-unit-tests (exit code $?)" if $?;
 
-    print "-----output from scp-----\n$out\n----------\n";
 
     print "+ Copied snapshot here: $passed_unit_test_path \n";
 
@@ -185,6 +185,7 @@ if ( defined $testing ) {
     print "$cmd\n";
     my $out = `$cmd`;
     print "-----output from scp-----\n$out\n----------\n";
+    die "Error: fialed to scp to passed-model-tests" if $?;
     print "+ Done. Snapshot is here: $passed_model_test_path \n";
 
 
