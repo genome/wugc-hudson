@@ -19,7 +19,7 @@ foreach my $model_id (@model_ids) {
     );
     $command->execute;
     UR::Context->commit;
-    my ($build) = @{$command->builds};
+    my ($build) = $command->builds;
     push(@build_ids, $build->build_id);
 }
 
