@@ -82,8 +82,12 @@ print "UR hash: " . $ur_hash . "\n";
 print "Workflow hash: " . $workflow_hash . "\n";
 print "Snapshot name: " . $snapshot_name . "\n";
 
-unless (defined $genome_hash && $genome_hash ne '' && defined $ur_hash && $ur_hash ne '' && defined $workflow_hash && $workflow_hash ne '')
-{
+unless (defined $genome_hash 
+        && $genome_hash ne '' 
+        && defined $ur_hash 
+        && $ur_hash ne '' 
+        && defined $workflow_hash 
+        && $workflow_hash ne '') {
     die "Some needed variable is not set.\n";
 }
 
@@ -127,6 +131,7 @@ for my $sqlite_dump (@dump_files) {
     } else {
         my $sqlite_path = $ENV{SQLITE_PATH} || 'sqlite3';
         `$sqlite_path $sqlite_db < $sqlite_dump`;
+        die "Error: died building sqlite db for $sqlite_dump" if $?;
     }
     unless (-e $sqlite_db) {
         die "Failed to reconstitute $sqlite_dump as $sqlite_db!";
@@ -135,8 +140,12 @@ for my $sqlite_dump (@dump_files) {
 
 print "FIXME MISSING SO FILES: Generating auto-competition opt files\n";
 `cd $snapshot_path/lib/perl/; ur create-completion-spec-file Genome::Command`;
+die "Error: exit code $? for create-completion-spec-file Genome::Command" if $?;
 `cd $snapshot_path/lib/perl/; ur create-completion-spec-file Genome::Model::Tools`;
+die "Error: exit code $? for create-completion-spec-file Genome::Command" if $?;
 `cd $snapshot_path/lib/perl/; ur create-completion-spec-file UR::Namespace::Command`;
+die "Error: exit code $? for create-completion-spec-file Genome::Command" if $?;
+
 print "Finished copying to local machine. Snapshot available at $snapshot_path\n";
 
 if ( defined $testing ) {
@@ -145,6 +154,8 @@ if ( defined $testing ) {
     my $cmd = "scp -pqr $snapshot_path deploy:/gsc/scripts/opt/passed-unit-tests/"; 
     print "$cmd\n";
     my $out = `$cmd`;
+    die "Error: scp failed to copy to passed-unit-tests (exit code $?)" if $?;
+
     print "-----output from scp-----\n$out\n----------\n";
 
     print "+ Snapshot is here: /gsc/scripts/opt/passed-unit-tests/$snapshot_name \n";
