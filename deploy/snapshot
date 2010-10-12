@@ -148,6 +148,9 @@ die "Error: exit code $? for create-completion-spec-file Genome::Command" if $?;
 
 print "Finished copying to local machine. Snapshot available at $snapshot_path\n";
 
+my $passed_unit_test_path = qq{/gsc/scripts/opt/passed-unit-tests/$snapshot_name};
+my $passed_model_test_path = qq{/gsc/scripts/opt/passed-model-tests/$snapshot_name};
+
 if ( defined $testing ) {
 
     # deploy to /gsc/scripts/opt if used the --deploy flag
@@ -158,19 +161,31 @@ if ( defined $testing ) {
 
     print "-----output from scp-----\n$out\n----------\n";
 
-    print "+ Snapshot is here: /gsc/scripts/opt/passed-unit-tests/$snapshot_name \n";
+    print "+ Copied snapshot here: $passed_unit_test_path \n";
 
     if ( defined $modeltests ) {
 
         print "+ starting up model tests\n";
-        my $path = qq{/gsc/scripts/opt/passed-unit-tests/$snapshot_name/lib/perl};
-        die "path doesnt exist: $path" if ! -e $path;
+        my $cwd = join('/', $passed_unit_test_path, 'lib', 'perl');
+        die "path doesnt exist: $cwd" if ! -e $cwd;
 
-        local $CWD = $path;
-        `$ENV{APIPE_TEST_SCRIPT_PATH}`;
+        local $CWD = $cwd;
+        my $cmd_out = `$ENV{APIPE_TEST_SCRIPT_PATH}`;
+            if (defined($?)) {
+                my $e = $? >> 8;
+                print "ERROR exit code $e\n$cmd_out";
+                exit($e);
+            }
+
     }
 }
 
+
+    my $cmd = "scp -pqr $passed_unit_test_path deploy:/gsc/scripts/opt/passed-model-tests/"; 
+    print "$cmd\n";
+    my $out = `$cmd`;
+    print "-----output from scp-----\n$out\n----------\n";
+    print "+ Done. Snapshot is here: $passed_model_test_path \n";
 
 
 

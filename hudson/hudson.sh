@@ -1,118 +1,84 @@
 #!/bin/bash -x
 
+set -o errexit   # exit if any command fails
+set -o pipefail  # fail if any command in a pipe fails
+set -o nounset   # fail if an env var is used but unset
 
-TEST_TOOLS="/gscuser/jlolofie/dev/wugc-hudson/tools/"
+
 
 if [ -n "${HUDSON_PROJECT_PATH+x}" ]; then
-    echo "HUDSON_PROJECT_PATH set, continuing"
+    echo "HUDSON_PROJECT_PATH: $HUDSON_PROJECT_PATH"
 else
-    echo "HUDSON_PROJECT_PATH not set. Exiting."
+    echo "Error: HUDSON_PROJECT_PATH not set."
     exit
 fi
+
 
 if [ -n "${CODE_STORAGE_BASE+x}" ]; then
-    echo "CODE_STORAGE_BASE is set, continuing"
+    echo "CODE_STORAGE_BASE: $CODE_STORAGE_BASE"
 else
-    echo "CODE_STORAGE_BASE not set. Exiting."
+    echo "Error: CODE_STORAGE_BASE not set."
     exit
 fi
 
-##
-# Make sure source is in correct location.
-##
+
 if [ -e $CODE_STORAGE_BASE/UR ] && [ -e $CODE_STORAGE_BASE/genome ]; then
-	echo "$CODE_STORAGE_BASE/{UR, perl_modules} folders exists. Assuming it is valid."
+    echo "./UR and ./GENOME look good"
 else
-	echo "$CODE_STORAGE_BASE/UR folders do not all exist. Please run 'make install'. Exiting."
+	echo "Erorr: $CODE_STORAGE_BASE is missing /UR or /genome."
 	exit
 fi
 
-##
-# clean out existing folder
-##
+
 if [ -n "${WORKSPACE+x}" ]; then
-	echo "WORKSPACE env variable is set. You are running in Hudson."
+	echo "WORKSPACE: $WORKSPACE"
 else
-	echo "WORKSPACE env variable not set. Run in Hudson. Exiting."
+	echo "Error: WORKSPACE env variable not set. Run in Hudson."
 	exit
 fi
 
+
+
+export PERL_TEST_HARNESS_DUMP_TAP=$WORKSPACE/test_result
+TEST_TOOLS="/gscuser/jlolofie/dev/wugc-hudson/tools/"
 GIT_CMD="/gsc/bin/git "
 BUILD_NAME="genome-$BUILD_NUMBER"
+BUILD_DIR="$HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER"
+REV_FILE="$BUILD_DIR/revision.txt"
 
-#rm $WORKSPACE/UR -rvf
-#rm $WORKSPACE/perl_modules -rvf
-#rm $WORKSPACE/test_result -rvf
+
+
+# delete stuff from the last tests
 rm $WORKSPACE/* -rf
-##
-# update UR & copy
-##
-cd $CODE_STORAGE_BASE/UR
-$GIT_CMD reset --hard
-$GIT_CMD pull origin master # update UR
-$GIT_CMD tag $BUILD_NAME
-$GIT_CMD push origin master --tags
 
 
-cd $CODE_STORAGE_BASE/workflow
+
+for NAMESPACE in "UR" "workflow" "genome"
+do
+
+cd $CODE_STORAGE_BASE/$NAMESPACE
 $GIT_CMD reset --hard
 $GIT_CMD pull origin master
-$GIT_CMD tag $BUILD_NAME
-$GIT_CMD push origin master --tags
 
-cd $CODE_STORAGE_BASE/genome
-$GIT_CMD reset --hard
-$GIT_CMD pull origin master
-$GIT_CMD tag $BUILD_NAME
-$GIT_CMD push origin master --tags
-
+    if [[ $NAMESPACE = "genome" ]]; then
+        $GIT_CMD tag $BUILD_NAME
+        $GIT_CMD push origin master --tags
+    fi
 
 cd $WORKSPACE
+$GIT_CMD clone $CODE_STORAGE_BASE/$NAMESPACE/.git $NAMESPACE
+echo -n "$NAMESPACE " >> $REV_FILE
+
+cd $WORKSPACE/$NAMESPACE
+$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $REV_FILE
+
+done
 
 
-$GIT_CMD clone $CODE_STORAGE_BASE/UR/.git UR # clone UR from local .UR directory
-cd $WORKSPACE/UR
 
-##
-# Put UR version information in revision.txt
-##
-echo -n "UR " >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-
-##
-# copy genome
-##
-cd $WORKSPACE
-$GIT_CMD clone $CODE_STORAGE_BASE/genome/.git genome
-
-##
-# put genome version information in revision.txt
-##
-cd $WORKSPACE/genome
-echo -n "genome " >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-
-##
-# copy workflow
-##
-cd $WORKSPACE
-$GIT_CMD clone $CODE_STORAGE_BASE/workflow/.git workflow
-
-##
-# put workflow information in revision.txt
-##
-cd $WORKSPACE/workflow
-echo -n "workflow " >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER/revision.txt
-
-
-##
-# run actual tests
-##
 cd $WORKSPACE/genome/lib/perl/Genome/
-export PERL_TEST_HARNESS_DUMP_TAP=$WORKSPACE/test_result
 
-# passing lib dirs via -I instead of PERL5LIB because it appears to be getting squashed
+# We used to set PERL5LIB with the line below. Now we just pass -I
 #export PERL5LIB=$WORKSPACE/UR/lib:$WORKSPACE/genome/lib/perl:$WORKSPACE/workflow/lib/perl:/gsc/lib/perl5/site_perl/5.8.3/i686-linux/:/gsc/lib/perl5/site_perl/5.8.3/:/gsc/lib/perl5/5.8.7/
 
 /gsc/scripts/sbin/gsc-cron /gsc/bin/perl \
@@ -127,6 +93,8 @@ $WORKSPACE/UR/bin/ur test run \
 sleep 120
 
 bsub -u jlolofie@genome.wustl.edu -q short perl $TEST_TOOLS/email_failures.pl $BUILD_NUMBER
+
+
 
 
 
