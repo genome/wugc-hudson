@@ -78,13 +78,11 @@ done
 
 cd $WORKSPACE/genome/lib/perl/Genome/
 
-# We used to set PERL5LIB with the line below. Now we just pass -I
-#export PERL5LIB=$WORKSPACE/UR/lib:$WORKSPACE/genome/lib/perl:$WORKSPACE/workflow/lib/perl:/gsc/lib/perl5/site_perl/5.8.3/i686-linux/:/gsc/lib/perl5/site_perl/5.8.3/:/gsc/lib/perl5/5.8.7/
 
 /gsc/scripts/sbin/gsc-cron /gsc/bin/perl \
 -I $WORKSPACE/UR/lib \
 -I $WORKSPACE/genome/lib/perl \
--I $WORKSPACE/workflow/lib/perl \
+-I $WORKSPACE/workflow/lib \
 $WORKSPACE/UR/bin/ur test run \
 --lsf-params="-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'" \
 --recurse --junit --lsf --jobs=10

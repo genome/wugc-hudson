@@ -171,7 +171,7 @@ if ( defined $testing ) {
 
         local $CWD = $cwd;
         my $cmd_out = `$ENV{APIPE_TEST_SCRIPT_PATH}`;
-            if (defined($?)) {
+            if (defined($?) && $? > 0) {
                 my $e = $? >> 8;
                 print "ERROR exit code $e\n$cmd_out";
                 exit($e);
