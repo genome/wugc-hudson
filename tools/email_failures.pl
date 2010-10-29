@@ -279,6 +279,7 @@ sub git_blame {
 sub ignore {
 
     return qw(
+        lcarmich
         jpeck
         pkimmey
         ehvatum
