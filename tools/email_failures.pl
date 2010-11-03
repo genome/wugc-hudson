@@ -9,6 +9,9 @@ use Data::Dumper;
 use Mail::Sendmail;
 use File::chdir '$CWD';
 
+use lib "../deploy/";
+use Users;
+
 #
 # it only makes sense to run this on the last hudson build to finish since it looks
 # at junit files in the workspace which is overwritten each time
@@ -136,9 +139,6 @@ To: $to
 Cc: $cc
 _BODY_
 
-#    $to = 'jlolofie@genome.wustl.edu';
-#    $cc = '';
-
     my $mail = {
         To      => $to,
         Cc      => $cc,
@@ -191,9 +191,9 @@ sub git_blame {
 
     my @rest;
 
-    my @us = us();
+    my @us = map { $_ . '@genome.wustl.edu' } Users::apipe();
 
-    my @ignore = ignore();
+    my @ignore = Users::apipe_ignore();
     $test_pathname = join('/', '/gscuser/jlolofie/dev/git/genome/lib/perl/Genome', $test_pathname);
 
     my $module_pathname = $test_pathname;
@@ -275,55 +275,4 @@ sub git_blame {
 
     return (\@winners, \@rest, \@winners_without_decoration);
 }
-
-sub ignore {
-
-    return qw(
-        lcarmich
-        jpeck
-        pkimmey
-        ehvatum
-        josborne
-        mjohnson
-        edemello
-        rmeyer
-        jschindl
-        ccarey
-    );
-}
-
-sub us {
-
-    my @us = qw(
-        abrummet
-        adukes
-        bdericks
-        boberkfe
-        ebelter
-        eclark
-        fdu
-        gsanders
-        jeldred
-        jlolofie
-        jmcmicha
-        jweible
-        kkyung
-        nnutter
-        rlong
-        ssmith
-        tmooney
-    );
-
-    return map { $_ . '@genome.wustl.edu' } @us;
-}
-
-
-#~$ vim /gscuser/mjohnson/.hudson/jobs/Genome/workspace/test_result/Model/Tools/BedTools/Coverage.t.junit.xml
-
-# wtf sometimes its className, sometimes testName
-#'className' => 'Model_Tools_DetectVariants_VarScan_t',
-#'errorDetails' => 'not ok 6 - No differences in output from expected result from running var-scan for this version and parameters',
-#'failedSince' => '94',
-
-
 
