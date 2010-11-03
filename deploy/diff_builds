@@ -7,7 +7,7 @@ use MIME::Lite;
 use Users;
 
 my $hudson_build_number = $ENV{BUILD_NUMBER};
-my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test', $hudson_build_number);
+my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20Output', $hudson_build_number);
 
 my $passed_model_tests_dir = "/gsc/scripts/opt/passed-model-tests";
 my @snapshots = glob("$passed_model_tests_dir/*");
