@@ -52,8 +52,8 @@ REV_FILE="$BUILD_DIR/revision.txt"
 rm $WORKSPACE/* -rf
 
 
-
-for NAMESPACE in "UR" "workflow" "genome"
+i=0
+for NAMESPACE in "genome" "UR" "workflow"
 do
 
 cd $CODE_STORAGE_BASE/$NAMESPACE
@@ -70,9 +70,26 @@ $GIT_CMD clone $CODE_STORAGE_BASE/$NAMESPACE/.git $NAMESPACE
 echo -n "$NAMESPACE " >> $REV_FILE
 
 cd $WORKSPACE/$NAMESPACE
-$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1 >> $REV_FILE
-
+HASH=`$GIT_CMD show --oneline --summary | head -n1 | cut -d ' ' -f1`
+echo $HASH >> $REV_FILE
+GIT_HASH[i]=$HASH
+let "i += 1"
 done
+
+
+
+## record stuff in our sqlitedb
+SQLITE_DB="/gsc/var/cache/testsuite/hudson.db"
+
+GENOME_HASH=${GIT_HASH[0]}
+UR_HASH=${GIT_HASH[1]}
+WORKFLOW_HASH=${GIT_HASH[2]}
+
+NOW=`date +"%Y-%m-%d %H:%M:%S"`
+SQL="INSERT INTO unit_test (date, status, build_number, genome_hash, ur_hash, workflow_hash ) \
+values (\"$NOW\", \"started\", \"$BUILD_NUMBER\", \"$GENOME_HASH\", \"$UR_HASH\", \"$WORKFLOW_HASH\");"
+echo $SQL | sqlite3 $SQLITE_DB
+## end - record stuff in our sqlitedb
 
 
 
@@ -87,11 +104,15 @@ $WORKSPACE/UR/bin/ur test run \
 --lsf-params="-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'" \
 --recurse --junit --lsf --jobs=10
 
+
+
 # sleep and hope the junit files have been written by now and are accessible in NFS
-sleep 120
+#sleep 120
 
-bsub -u jlolofie@genome.wustl.edu -q short perl $TEST_TOOLS/email_failures.pl $BUILD_NUMBER
+#bsub -u jlolofie@genome.wustl.edu -q short perl $TEST_TOOLS/email_failures.pl $BUILD_NUMBER
 
+SQL="UPDATE unit_test SET status = 'done' where BUILD_NUMBER = $BUILD_NUMBER;"
+echo $SQL | sqlite3 $SQLITE_DB
 
 
 
