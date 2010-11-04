@@ -109,7 +109,7 @@ $WORKSPACE/UR/bin/ur test run \
 # sleep and hope the junit files have been written by now and are accessible in NFS
 #sleep 120
 
-#bsub -u jlolofie@genome.wustl.edu -q short perl $TEST_TOOLS/email_failures.pl $BUILD_NUMBER
+bsub -u jlolofie@genome.wustl.edu -q short perl $TEST_TOOLS/email_failures.pl $BUILD_NUMBER
 
 SQL="UPDATE unit_test SET status = 'done' where BUILD_NUMBER = $BUILD_NUMBER;"
 echo $SQL | sqlite3 $SQLITE_DB
