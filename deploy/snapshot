@@ -221,6 +221,7 @@ sub now {
     $year += 1900;
 
     my $now = join('-',$year,$mon,$day). ' ' . join(':',$hour,$min,$sec) . "\n";
+    chomp($now);
     return $now;
 }
 
