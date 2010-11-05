@@ -9,24 +9,23 @@ use above 'UR';
 my $LOOP_SLEEP_MINS = 1;
 my $TIMEOUT_HOURS = 30;
 
-my @model_ids = (2853834494, 2857580641, 2857581024, 2857479926, 2857912274, 2859885434);
-my @build_ids = ();
+my @models = Genome::Model->get(
+    'name like' => 'apipe-test%',
+);
 
-foreach my $model_id (@model_ids) {
-    my $command = Genome::Model::Build::Command::Start->create(
-        models => [Genome::Model->get($model_id)],
-        force => 1,
-    );
-    $command->execute;
-    UR::Context->commit;
-    my ($build) = $command->builds;
-    push(@build_ids, $build->build_id);
-}
+my $command = Genome::Model::Build::Command::Start->create(
+    models => \@models,
+    force => 1,
+);
+$command->execute;
+UR::Context->commit;
+
+my @builds = $command->builds;
+my @build_ids = map { $_->build_id } @builds;
 
 my %build_master_events = ();
-foreach my $build_id (@build_ids) {
-    my $build_object = Genome::Model::Build->get(id=>$build_id);
-    $build_master_events{$build_id} = $build_object->the_master_event->id;
+foreach my $build (@builds) {
+    $build_master_events{$build->build_id} = $build->the_master_event->id;
 }
 
 my $start_msg_body = "This is an initial notification. You will receive the results within 30 hours.\n";
