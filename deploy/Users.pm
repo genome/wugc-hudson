@@ -41,5 +41,48 @@ sub apipe {
     );
 }
 
+sub reference_alignment {
+    return qw(
+        bdericks
+        boberkfe
+        fdu
+        tmooney
+    );
+}
+
+sub somatic {
+    return qw(
+        gsanders
+        tmooney
+    );
+}
+
+sub de_novo_assembly {
+    return qw(
+        ebelter
+        kkyung
+    );
+}
+
+sub amplicon_assembly {
+    return qw(
+        ebelter
+        kkyung
+    );
+}
+
+sub convergence {
+    return qw(
+        tmooney
+    );
+}
+
+sub metagenomic_composition_16s {
+    return qw(
+        ebelter
+        kkyung
+    );
+}
+
 1;
 
