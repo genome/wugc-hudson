@@ -17,25 +17,29 @@ print "Found " . scalar @snapshots . " snapshots in $passed_model_tests_dir\n";
 # Get the most recent snapshot in the passed-model-tests directory, which
 # should the snapshot that was just created by the nightly model test process
 # TODO Use the sqlite database Justin is setting up instead of this
-my $latest_hudson_id = 0;
-my $latest_snapshot_path;
-for my $snapshot (@snapshots) {
-    $snapshot =~ /.*genome-(\d+).*/;
-    my $id = $1;
-    if ($id > $latest_hudson_id) {
-        $latest_hudson_id = $id;
-        $latest_snapshot_path = $snapshot;
-    }
-}
-$latest_snapshot_path .= "/lib/perl";
+#my $latest_hudson_id = 0;
+#my $latest_snapshot;
+#for my $snapshot (@snapshots) {
+#    my ($id) = $snapshot =~ /.*genome-(\d+).*/;
+#    if ($id > $latest_hudson_id) {
+#        $latest_hudson_id = $id;
+#        $latest_snapshot = $snapshot . '/lib/perl';
+#    }
+#}
 
-my $stable = readlink("/gsc/scripts/opt/genome-stable");
-print "Latest snapshot seems to be $latest_snapshot_path, diffing against current genome-stable $stable\n";
+my $latest_hudson_id = 328;
+my $latest_snapshot = '/gsc/scripts/opt/passed-model-tests/genome-328/lib/perl';
 
-#my $diff_cmd = "perl -I $latest_snapshot_path `which gmt` compare-builds --first-revision " .
-#    "$latest_snapshot_path apipe-test%";
-my $diff_cmd = "perl -I /gscuser/bdericks/genome/clean/lib/perl `which gmt` compare-builds --first-revision " .
-    "$latest_snapshot_path apipe-test%";
+# Figure out what the current genome-stable snapshot is
+my $stable_target = readlink("/gsc/scripts/opt/genome-stable");
+die "Could not readlink genome-stable symlink!" unless defined $stable_target;
+my $stable_snapshot = '/gsc/scripts/opt/' . $stable_target . '/lib/perl/';
+die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
+
+print "Latest snapshot seems to be $latest_snapshot, diffing against current genome-stable $stable_snapshot\n";
+
+my $diff_cmd = "perl -I /gscuser/bdericks/genome/clean/lib/perl `which genome` model diff --first-revision " .
+    "$latest_snapshot apipe-test%";
 
 my $diff_out = eval { `$diff_cmd 2>&1` };
 if ($@ or $?) {
@@ -46,27 +50,76 @@ if ($@ or $?) {
     exit 1;
 }
 
+# Now that the command is run, see if there were any differences or if some builds couldn't be found and
+# send emails to the appropriate people.
 print "Diff command output:\n$diff_out\n";
 
-if ($diff_out =~ /DIFFERENCES FOUND:/) {
-    print "Diff found that some files were not the same, sending email!\n";
-    my $failure_msg_body = "Output diff between hudson nightly test builds running on $latest_snapshot_path " .
-        "and genome-stable ($stable) found differences!\nTo see raw output, go to $hudson_build_url";
-    send_mail(subject => '[fail] Test Build Diff Failed!', body => $failure_msg_body);
-    exit 1;
+my $problems = 0;
+while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
+    my $error_type = $1;
+    my $build_type = $2;
+    my $model_id = $3;
+    $problems = 1;
+
+    # See if there are owners defined for this build type and send the mail to them
+    # cc the entire apipe team (but don't send to apipe@genome.wustl.edu because 
+    # people outside of the group get mail from that alias
+    my @to;
+    if (Users->can($build_type)) {
+        @to = Users->$build_type;
+    }
+    else {
+        @to = Users::apipe();
+    }
+    my @cc = Users::apipe();
+
+    my ($failure_msg, $failure_subject);
+    if ($error_type =~ /DIFFERENCES FOUND/) {
+        $failure_msg = "Output differences detected when comparing builds of type $build_type from model $model_id " .
+            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot. To see raw output, go to $hudson_build_url.";
+        $failure_subject = "[fail] differences found, model $model_id, $build_type - " . join(",", @to);
+    }
+    else {
+        $failure_msg = "Problem occurred when attempting to compare builds of type $build_type from model $model_id " .
+            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot. " .
+            "Please take a look at $hudson_build_url.";
+        $failure_subject = "[fail] problem executing build differ, model $model_id, $build_type - " . join(",", @to);
+    }
+
+    send_mail(
+        to => users_to_addresses(@to),
+        from => 'ssmith@genome.wustl.edu',
+        cc => users_to_addresses(@cc),
+        subject => $failure_subject,
+        body => $failure_msg,
+    );
 }
 
-print "Test build differ completed successfully and no differences found!\n";
-print "Fin.\n";
-exit 0;
+if ($problems) {
+    print "Differences or errors encountered, please review and/or fix!\n";
+    exit 1;
+}
+else {
+    print "Test build differ completed successfully and no differences found!\n";
+    print "Fin.\n";
+    exit 0;
+}
+
+sub users_to_addresses {
+    my @users = @_;
+    return join(',', map { $_ . '@genome.wustl.edu' } @users);
+}
 
 sub send_mail {
     my %params = @_;
     my $subject = $params{subject} || die "No subject provided to send_mail method!";
     my $data = $params{body} || die "No messsage body provied to send_mail method!";
     my $from = $params{from} || sprintf('%s@genome.wustl.edu', $ENV{'USER'});
-    #my $to = $params{to} || join(",", map { $_ . '@genome.wustl.edu' } Users::apipe());
+    #my $cc = $params{cc} || '';
+    #my $to = $params{to} || die "No to parameters provided to send_mail method!"; 
     my $to = 'bdericks@genome.wustl.edu';
+    my $cc = '';
+
     my $msg = MIME::Lite->new(
         From => $from,
         To => $to,
