@@ -17,18 +17,15 @@ print "Found " . scalar @snapshots . " snapshots in $passed_model_tests_dir\n";
 # Get the most recent snapshot in the passed-model-tests directory, which
 # should the snapshot that was just created by the nightly model test process
 # TODO Use the sqlite database Justin is setting up instead of this
-#my $latest_hudson_id = 0;
-#my $latest_snapshot;
-#for my $snapshot (@snapshots) {
-#    my ($id) = $snapshot =~ /.*genome-(\d+).*/;
-#    if ($id > $latest_hudson_id) {
-#        $latest_hudson_id = $id;
-#        $latest_snapshot = $snapshot . '/lib/perl';
-#    }
-#}
-
-my $latest_hudson_id = 328;
-my $latest_snapshot = '/gsc/scripts/opt/passed-model-tests/genome-328/lib/perl';
+my $latest_hudson_id = 0;
+my $latest_snapshot;
+for my $snapshot (@snapshots) {
+    my ($id) = $snapshot =~ /.*genome-(\d+).*/;
+    if ($id > $latest_hudson_id) {
+        $latest_hudson_id = $id;
+        $latest_snapshot = $snapshot . '/lib/perl';
+    }
+}
 
 # Figure out what the current genome-stable snapshot is
 my $stable_target = readlink("/gsc/scripts/opt/genome-stable");
