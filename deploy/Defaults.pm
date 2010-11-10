@@ -2,7 +2,7 @@ package Defaults;
 
 our $RSS_FEED_URL = 'http://hudson:8090/job/Genome/rssAll';
 our $BUILD_PATH = '/gscuser/jlolofie/.hudson/jobs/Genome/builds';
-our $SNAPSHOT_PATH = $ENV{HOME} . '/.snapshot';
+our $SNAPSHOT_PATH = $ENV{HOME} . '/.hudson_snapshot';
 our $GSCPAN = $ENV{GSCPAN} || 'svn+ssh://svn/srv/svn/gscpan';
 
 our $UR_REPOSITORY = 'git://github.com/sakoht/UR.git';
