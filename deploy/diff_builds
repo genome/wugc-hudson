@@ -7,6 +7,11 @@ use MIME::Lite;
 use Users;
 
 my $hudson_build_number = $ENV{BUILD_NUMBER};
+unless (defined $hudson_build_number) {
+    print "BUILD_NUMBER environment variable (corresponds to hudson build ID) not set, using dummy value!\n";
+    $hudson_build_number = -42;
+}
+
 my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20Output', $hudson_build_number);
 
 my $passed_model_tests_dir = "/gsc/scripts/opt/passed-model-tests";
@@ -15,7 +20,7 @@ my @snapshots = glob("$passed_model_tests_dir/*");
 print "Found " . scalar @snapshots . " snapshots in $passed_model_tests_dir\n";
 
 # Get the most recent snapshot in the passed-model-tests directory, which
-# should the snapshot that was just created by the nightly model test process
+# should be the snapshot that was just created by the nightly model test process
 # TODO Use the sqlite database Justin is setting up instead of this
 my $latest_hudson_id = 0;
 my $latest_snapshot;
@@ -27,23 +32,35 @@ for my $snapshot (@snapshots) {
     }
 }
 
+# One way the above can fail is if this script is run ad-hoc and the latest snapshot is genome-###-fix#,
+# which is a snapshot that doesn't have test builds run against it. Remove the fix# bit.
+$latest_snapshot =~ s/-fix\d+//;
+
 # Figure out what the current genome-stable snapshot is
 my $stable_target = readlink("/gsc/scripts/opt/genome-stable");
 die "Could not readlink genome-stable symlink!" unless defined $stable_target;
 my $stable_snapshot = '/gsc/scripts/opt/' . $stable_target . '/lib/perl/';
 die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
 
+# Need to remove any fix# from the stable snapshot path, since the nightly builds aren't run against patched snapshots
+$stable_snapshot =~ s/-fix\d+//;
+
 print "Latest snapshot seems to be $latest_snapshot, diffing against current genome-stable $stable_snapshot\n";
 
 my $diff_cmd = "perl -I /gscuser/bdericks/genome/clean/lib/perl `which genome` model diff --first-revision " .
-    "$latest_snapshot apipe-test%";
+    "$latest_snapshot --second-revision $stable_snapshot apipe-test%";
 
 my $diff_out = eval { `$diff_cmd 2>&1` };
 if ($@ or $?) {
     my $exit_code = $@ ? $@ : ($? >> 8);
     print "Problems executing diff command\nExit code: $exit_code\nOutput:\n$diff_out";
     my $failure_msg_body = "Hudson diff build $hudson_build_number failed to execute! To see raw output, go to $hudson_build_url";
-    send_mail(subject => '[fail] Test Build Diff Failed to Execute!', body => $failure_msg_body);
+    send_mail(
+        subject => '[fail] Test Build Diff Failed to Execute!', 
+        body => $failure_msg_body,
+        from => 'ssmith@genome.wustl.edu',
+        to => users_to_addresses(Users::apipe()),
+    );
     exit 1;
 }
 
@@ -60,7 +77,7 @@ while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
 
     # See if there are owners defined for this build type and send the mail to them
     # cc the entire apipe team (but don't send to apipe@genome.wustl.edu because 
-    # people outside of the group get mail from that alias
+    # people outside of the group get mail from that alias)
     my @to;
     if (Users->can($build_type)) {
         @to = Users->$build_type;
@@ -73,12 +90,12 @@ while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
     my ($failure_msg, $failure_subject);
     if ($error_type =~ /DIFFERENCES FOUND/) {
         $failure_msg = "Output differences detected when comparing builds of type $build_type from model $model_id " .
-            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot. To see raw output, go to $hudson_build_url.";
+            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot.\n\nTo see raw output, go to $hudson_build_url.";
         $failure_subject = "[fail] differences found, model $model_id, $build_type - " . join(",", @to);
     }
     else {
         $failure_msg = "Problem occurred when attempting to compare builds of type $build_type from model $model_id " .
-            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot. " .
+            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot.\n\n" .
             "Please take a look at $hudson_build_url.";
         $failure_subject = "[fail] problem executing build differ, model $model_id, $build_type - " . join(",", @to);
     }
@@ -112,10 +129,8 @@ sub send_mail {
     my $subject = $params{subject} || die "No subject provided to send_mail method!";
     my $data = $params{body} || die "No messsage body provied to send_mail method!";
     my $from = $params{from} || sprintf('%s@genome.wustl.edu', $ENV{'USER'});
-    #my $cc = $params{cc} || '';
-    #my $to = $params{to} || die "No to parameters provided to send_mail method!"; 
-    my $to = 'bdericks@genome.wustl.edu';
-    my $cc = '';
+    my $cc = $params{cc} || '';
+    my $to = $params{to} || die "No to parameters provided to send_mail method!"; 
 
     my $msg = MIME::Lite->new(
         From => $from,
