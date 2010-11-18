@@ -14,13 +14,14 @@ unless (defined $hudson_build_number) {
 
 my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20Output', $hudson_build_number);
 
-my $passed_model_tests_dir = "/gsc/scripts/opt/passed-model-tests";
-my @snapshots = glob("$passed_model_tests_dir/*");
+# The nightly build runner runs on snapshots in the passed unit tests directory, so we need
+# to look for builds run on snapshots in this diretory
+my $passed_unit_tests_dir = "/gsc/scripts/opt/passed-unit-tests";
+my @snapshots = glob("$passed_unit_tests_dir/*");
 
-print "Found " . scalar @snapshots . " snapshots in $passed_model_tests_dir\n";
+print "Found " . scalar @snapshots . " snapshots in $passed_unit_tests_dir\n";
 
-# Get the most recent snapshot in the passed-model-tests directory, which
-# should be the snapshot that was just created by the nightly model test process
+# Get the most recent snapshot in the passed-unit-tests directory 
 # TODO Use the sqlite database Justin is setting up instead of this
 my $latest_hudson_id = 0;
 my $latest_snapshot;
@@ -32,10 +33,6 @@ for my $snapshot (@snapshots) {
     }
 }
 
-# One way the above can fail is if this script is run ad-hoc and the latest snapshot is genome-###-fix#,
-# which is a snapshot that doesn't have test builds run against it. Remove the fix# bit.
-$latest_snapshot =~ s/-fix\d+//;
-
 # Figure out what the current genome-stable snapshot is
 my $stable_target = readlink("/gsc/scripts/opt/genome-stable");
 die "Could not readlink genome-stable symlink!" unless defined $stable_target;
@@ -44,6 +41,9 @@ die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
 
 # Need to remove any fix# from the stable snapshot path, since the nightly builds aren't run against patched snapshots
 $stable_snapshot =~ s/-fix\d+//;
+# Also need to point to the corresponding passed-unit-tests directory, again since the nightly builder doesn't start
+# builds in the passed-model-tests directory
+$stable_snapshot =~ s/passed-model-tests/passed-unit-tests/;
 
 print "Latest snapshot seems to be $latest_snapshot, diffing against current genome-stable $stable_snapshot\n";
 
@@ -137,6 +137,7 @@ sub send_mail {
         To => $to,
         Subject => $subject,
         Data => $data,
+        Cc => $cc,
     );
     $msg->send();
 }
