@@ -16,7 +16,6 @@ my $cmd = q[git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " ] . $rev;
 my $c = `$cmd`;
 
 
-
 #undef $/;
 #open(my $fh, '/gscuser/jlolofie/tmp/changelog');
 #my $c = <$fh>;
@@ -26,9 +25,10 @@ my $c = `$cmd`;
 my $now = localtime();
 print<<"_TOP_";
 
-Change Log $rev2
-(whats new since $rev1)
-$now
+Change Log for $rev2
+This is a summary of important changes (since $rev1).
+For an exhaustive list try:  $ git log $rev1..$rev2
+($now)
 ****************
 
 _TOP_
