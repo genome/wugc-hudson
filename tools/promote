@@ -13,7 +13,7 @@ OLD_BUILD_NAME=`perl -e '$path = readlink("/gsc/scripts/opt/genome-stable"); $pa
 OLD_BUILD_VERSION=`echo $OLD_BUILD_NAME | sed 's/-fix.*//'`
 
 if [ -n "${1+x}" ]; then
-    BUILD_NUMBER=$1
+    BUILD_NUMBER=`echo $1 | sed 's/genome-//'`
     NEW_BUILD_NAME="genome-$BUILD_NUMBER"
     NEW_BUILD_VERSION=`echo $NEW_BUILD_NAME | sed 's/-fix.*//'`
     BUILD_PATH="./passed-model-tests/$NEW_BUILD_NAME"
