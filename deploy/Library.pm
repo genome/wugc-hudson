@@ -5,8 +5,6 @@ use LWP::Simple;
 use Defaults;
 
 sub snapshot_namespaces {
-    my $recorded_hash;
-    my $command;
     # create a nice path for working not likely to get blasted
     my $timestamp = UR::Time->now();
     $timestamp =~ s/\s/_/g;
@@ -87,4 +85,36 @@ sub get_something_hash {
         }
     }
 }
+
+# Shamelessly stolen from Genome/Utility/Text.pm
+sub model_class_name_to_string {
+    my $type = shift;
+    $type =~ s/Genome::Model:://;
+    my @words = split( /(?=(?<![A-Z])[A-Z])|(?=(?<!\d)\d)/, $type);
+    return join('_', map { lc $_ } @words);
+}
+
+sub users_to_addresses {
+    my @users = @_;
+    return join(',', map { $_ . '@genome.wustl.edu' } @users);
+}
+
+sub send_mail {
+    my %params = @_;
+    my $subject = $params{subject} || die "No subject provided to send_mail method!";
+    my $data = $params{body} || die "No messsage body provied to send_mail method!";
+    my $from = $params{from} || sprintf('%s@genome.wustl.edu', $ENV{'USER'});
+    my $cc = $params{cc} || '';
+    my $to = $params{to} || die "No to parameters provided to send_mail method!"; 
+
+    my $msg = MIME::Lite->new(
+        From => $from,
+        To => $to,
+        Subject => $subject,
+        Data => $data,
+        Cc => $cc,
+    );
+    $msg->send();
+}
+
 1;
