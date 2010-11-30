@@ -5,6 +5,7 @@ use warnings;
 use MIME::Lite;
 
 use Users;
+use Library;
 
 my $hudson_build_number = $ENV{BUILD_NUMBER};
 unless (defined $hudson_build_number) {
@@ -55,11 +56,11 @@ if ($@ or $?) {
     my $exit_code = $@ ? $@ : ($? >> 8);
     print "Problems executing diff command\nExit code: $exit_code\nOutput:\n$diff_out";
     my $failure_msg_body = "Hudson diff build $hudson_build_number failed to execute! To see raw output, go to $hudson_build_url";
-    send_mail(
+    Library::send_mail(
         subject => '[fail] Test Build Diff Failed to Execute!', 
         body => $failure_msg_body,
         from => 'ssmith@genome.wustl.edu',
-        to => users_to_addresses(Users::apipe()),
+        to => Library::users_to_addresses(Users::apipe()),
     );
     exit 1;
 }
@@ -100,10 +101,10 @@ while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
         $failure_subject = "[fail] problem executing build differ, model $model_id, $build_type - " . join(",", @to);
     }
 
-    send_mail(
-        to => users_to_addresses(@to),
-        from => 'ssmith@genome.wustl.edu',
-        cc => users_to_addresses(@cc),
+    Library::send_mail(
+        to => Library::users_to_addresses(@to),
+        from => 'apipe-tester@genome.wustl.edu',
+        cc => Library::users_to_addresses(@cc),
         subject => $failure_subject,
         body => $failure_msg,
     );
@@ -119,25 +120,3 @@ else {
     exit 0;
 }
 
-sub users_to_addresses {
-    my @users = @_;
-    return join(',', map { $_ . '@genome.wustl.edu' } @users);
-}
-
-sub send_mail {
-    my %params = @_;
-    my $subject = $params{subject} || die "No subject provided to send_mail method!";
-    my $data = $params{body} || die "No messsage body provied to send_mail method!";
-    my $from = $params{from} || sprintf('%s@genome.wustl.edu', $ENV{'USER'});
-    my $cc = $params{cc} || '';
-    my $to = $params{to} || die "No to parameters provided to send_mail method!"; 
-
-    my $msg = MIME::Lite->new(
-        From => $from,
-        To => $to,
-        Subject => $subject,
-        Data => $data,
-        Cc => $cc,
-    );
-    $msg->send();
-}
