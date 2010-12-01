@@ -66,7 +66,8 @@ for my $git_hash (@ARGV) {
     print $patch_fh join('', @git_patch);
 
     my $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
-    print $hotfixes_fh $git_msg;
+    my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-//;
+    print $hotfixes_fh "$fix_version: $git_msg";
 
     unless(system("patch -p 1 -d $new_path -i $new_path/$git_hash.patch") == 0) {
         print "ERROR: Failed to patch $new_path!\n";
