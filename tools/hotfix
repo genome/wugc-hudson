@@ -65,6 +65,19 @@ for my $argv (@ARGV) {
         $git_hash = $argv;
     }
 
+    my $git_repo_name;
+    my $git_remote = `cd $git_repo && git remote -v | grep origin | head -n 1 ; cd -`;
+    if ($git_remote) {
+        chomp $git_remote;
+        my @git_remote = split('/', $git_remote);
+        $git_repo_name = $git_remote[-1];
+        $git_repo_name =~ s/\ \(.*\)//;
+        $git_repo_name =~ s/\.git//;
+    }
+    else {
+        $git_repo_name = 'unknown';
+    }
+
     my @git_data = `cd $git_repo && git show --oneline $git_hash ; cd -`;
     my $git_msg = shift @git_data;
     print "Generating patch for $git_msg and applying to $new_path...\n";
@@ -77,7 +90,7 @@ for my $argv (@ARGV) {
 
     my $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
     my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-//;
-    print $hotfixes_fh "$fix_version: $git_msg";
+    print $hotfixes_fh "$fix_version: $git_repo_name $git_msg";
 
     unless(system("patch -p 1 -d $new_path -i $new_path/$git_hash.patch") == 0) {
         print "ERROR: Failed to patch $new_path!\n";
