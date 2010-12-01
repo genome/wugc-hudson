@@ -54,8 +54,18 @@ unless(system("cp -a $old_path $new_path") == 0) {
     exit;
 }
 
-for my $git_hash (@ARGV) {
-    my @git_data = `cd $git_repo && git show --oneline $git_hash`;
+for my $argv (@ARGV) {
+    my $git_hash;
+
+    if ( -d $argv ) {
+        $git_repo = $argv;
+        next;
+    }
+    else {
+        $git_hash = $argv;
+    }
+
+    my @git_data = `cd $git_repo && git show --oneline $git_hash ; cd -`;
     my $git_msg = shift @git_data;
     print "Generating patch for $git_msg and applying to $new_path...\n";
 
