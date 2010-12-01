@@ -1,0 +1,162 @@
+#!/gsc/bin/perl
+
+use warnings;
+use strict;
+
+use above 'Genome';
+use above 'UR';
+
+use Users;
+use Library;
+
+my $LOOP_SLEEP_MINS = 1;
+my $TIMEOUT_HOURS = 30;
+
+# Get models, start builds, and commit
+my @models = Genome::Model->get(
+    'name like' => 'apipe-test%',
+);
+die "Found no models with name like apipe-test!" unless @models;
+
+print "Found " . scalar @models . " test models:\n" . join("\n", map { $_->id . ' ' . $_->class } @models) . "\n\n";
+
+my $build_start_command= Genome::Model::Build::Command::Start->create(
+    models => \@models,
+    force => 1,
+);
+die "Could not create build start command object!" unless $build_start_command;
+
+my $build_start_rv = $build_start_command->execute;
+die "Could not start test builds!" unless defined $build_start_rv and $build_start_rv == 1;
+
+my $commit_rv = UR::Context->commit;
+die "Could not commit changes!" unless defined $commit_rv and $commit_rv == 1;
+
+# Get information about builds and master events for monitoring
+my %builds;
+my @builds_started = $build_start_command->builds;
+for my $build (@builds_started) {
+    $builds{$build->id} = $build;
+}
+my %build_master_events;
+foreach my $build (values %builds) {
+    $build_master_events{$build->build_id} = $build->the_master_event->id;
+}
+
+my @build_ids = sort keys %builds;
+
+# Print out information about the builds that were started so they're recorded in the Hudson raw output
+print "\n\nBuilds started for models, waiting for them to finish:\n";
+for my $build_id (sort keys %builds) {
+    my $build = $builds{$build_id};
+    my $model = $build->model;
+    my $type_string = Library::model_class_name_to_string($model->class);
+    print "\tbuild $build_id ($type_string), model " . $model->id . " (" . $model->name . ")\n";
+}
+print "\n";
+
+# Record current status of each build, continue until no builds are running or the timeout limit is reached
+my %failures;
+my %others;
+my %successes;
+my ($all_done, $total_wait_time) = (0,0);
+while (!$all_done) {
+    $total_wait_time++;
+    sleep (60 * $LOOP_SLEEP_MINS);
+
+    # Record status of each build, count number of running builds
+    my $running = 0;
+    %failures = ();
+    %others = ();
+    %successes = ();
+    foreach my $build_id (@build_ids) {
+        my $build = UR::Context->current->reload("Genome::Model::Build", id=>$build_id);
+        my $event = UR::Context->current->reload("Genome::Model::Event", id=>$build_master_events{$build_id});
+        if ($event->event_status =~ /Failed/ or $event->event_status =~ /Crashed/) {
+            $failures{$build->id} = $event->event_status;
+        } elsif ($event->event_status =~ /Succeeded/) {
+            $successes{$build->id} = $event->event_status;
+        } elsif ($event->event_status =~ /Running/ or $event->event_status =~ /Scheduled/) {
+            $running++;
+            $others{$build_id} = $event->event_status;
+        } else {
+            $others{$build->id} = $event->event_status;
+        }
+    }
+    $all_done = 1 if $running == 0;
+
+    # Just so we know that the script hasn't gone belly up, and lets us know how many builds we're waiting on
+    if ($total_wait_time % 10 == 0) {
+        print "Waited $total_wait_time minutes for builds to finish, $running of " . scalar @build_ids . " are still running\n";
+    }
+
+    # Time to die, send email and exit
+    if ($total_wait_time > ($TIMEOUT_HOURS * 60)) {
+        print "Timeout period exceeded, sending email and dying!\n";
+
+        my $msg = "The test builds have been running for more than $TIMEOUT_HOURS hours, which has been set as the timeout period. " .
+            "Here are the statuses of all of the builds:\n";
+        for my $hash (\%successes, \%failures, \%others) {
+            for my $build_id (sort keys %{$hash}) {
+                my $build = $builds{$build_id};
+                my $model = $build->model;
+                my $type_string = Library::model_class_name_to_string($build->model->class);
+                $msg .= "Build $build_id (type $type_string), Model " . $model->id . " (" . $model->name . ") : " . $hash->{$build_id} . "\n";
+            }
+        }
+
+        Library::send_mail(
+            from => 'apipe-tester@genome.wustl.edu',
+            to => Library::users_to_addresses(Users::apipe()),
+            subject => '[fail] Build Tests Timed Out!',
+            body => $msg,
+        );
+
+        exit 1;
+    }
+}
+
+print "Builds are done, checking statuses and sending failure emails (if necessary)\n";
+
+# Send email to build owners and cc apipe (or just send to apipe if no owners for type are found) for every failure
+if (scalar keys %failures or scalar keys %others) {
+    for my $hash (\%failures, \%others) {
+        for my $key (sort keys %{$hash}) {
+            my $build = $builds{$key}; 
+            my $model = $build->model;
+            my $status = $hash->{$key};
+            my $type_string = Library::model_class_name_to_string($build->model->class);
+
+            print "Build $key, type $type_string, failed (status $status), sending mail\n";
+
+            my $build_url = "https://imp.gsc.wustl.edu/view/Genome/Model/Build/status.html?id=$key";
+            my $msg = "Test build $key of type $type_string finished with status $status! Model is " . $model->id . " (" . $model->name . ").\n\n" . 
+                "Check out the status page at $build_url and fix it!\n";
+            
+            my @to;
+            my @cc;
+            if (Users->can($type_string)) {
+                @to = Users->$type_string;
+                @cc = Users::apipe();
+            } else {
+                @to = Users::apipe();
+                @cc = '';
+            }
+
+            Library::send_mail(
+                from => 'apipe-tester@genome.wustl.edu',
+                to => Library::users_to_addresses(@to),
+                cc => Library::users_to_addresses(@cc),
+                subject => "[fail] test build $key failed, type $type_string",
+                body => $msg,
+            );
+        }
+    }
+    exit 1;
+}
+else {
+    print "No test build failures found!\n";
+    exit 0;
+}
+
+1;
