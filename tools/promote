@@ -7,13 +7,14 @@ set -o nounset   # fail if an env var is used but unset
 # run from "deploy" host
 
 DEPLOY_PATH="/gsc/scripts/opt"
-HUDSON_CODE_PATH="/gscuser/jlolofie/dev/wugc-hudson-dev"
+HUDSON_CODE_PATH="/gscuser/jlolofie/dev/wugc-hudson"
 
+#OLD_BUILD_NAME=`ls -l /gsc/scripts/opt/genome-stable | perl -e '$j=<>; $j=~/(genome-\d+)/; print $1'`
 OLD_BUILD_NAME=`perl -e '$path = readlink("/gsc/scripts/opt/genome-stable"); $path =~ s/.*\///; print $path'`
 OLD_BUILD_VERSION=`echo $OLD_BUILD_NAME | sed 's/-fix.*//'`
 
 if [ -n "${1+x}" ]; then
-    BUILD_NUMBER=`echo $1 | sed 's/genome-//'`
+    BUILD_NUMBER=$1
     NEW_BUILD_NAME="genome-$BUILD_NUMBER"
     NEW_BUILD_VERSION=`echo $NEW_BUILD_NAME | sed 's/-fix.*//'`
     BUILD_PATH="./passed-model-tests/$NEW_BUILD_NAME"
@@ -56,4 +57,6 @@ if [ -f $DEPLOY_PATH/CHANGES ]; then
     fi
     echo "Subject: Changes for $NEW_BUILD_NAME " | cat - $DEPLOY_PATH/CHANGES | sendmail -F $USER_NAME@genome.wustl.edu -t apipe@genome.wustl.edu
 fi
+
+# /gsc/scripts/lib
 
