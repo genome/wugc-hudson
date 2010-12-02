@@ -41,7 +41,10 @@ ln -s $BUILD_PATH new-genome-webapp
 mv -Tf new-genome-webapp genome-webapp
 
 
-perl $HUDSON_CODE_PATH/tools/changelog.pl $OLD_BUILD_VERSION $NEW_BUILD_VERSION > $DEPLOY_PATH/git-changes
+if [ ! -f $DEPLOY_PATH/git-changes ]; then
+    perl $HUDSON_CODE_PATH/tools/changelog.pl $OLD_BUILD_VERSION $NEW_BUILD_VERSION > $DEPLOY_PATH/git-changes
+fi
+
 if [ -f $DEPLOY_PATH/hotfixes ]; then
     echo 'Hotfixes:' > $DEPLOY_PATH/CHANGES
     cat $DEPLOY_PATH/hotfixes >> $DEPLOY_PATH/CHANGES
@@ -50,12 +53,7 @@ if [ -f $DEPLOY_PATH/git-changes ]; then
     cat $DEPLOY_PATH/git-changes >> $DEPLOY_PATH/CHANGES
 fi
 if [ -f $DEPLOY_PATH/CHANGES ]; then
-    if [ -n "$USER" ]; then
-        USER_NAME=$USER
-    else
-        USER_NAME=apipe-tester
-    fi
-    echo "Subject: Changes for $NEW_BUILD_NAME " | cat - $DEPLOY_PATH/CHANGES | sendmail -F $USER_NAME@genome.wustl.edu -t apipe@genome.wustl.edu
+    echo "Subject: Changes for $NEW_BUILD_NAME " | cat - $DEPLOY_PATH/CHANGES | sendmail -t apipe@genome.wustl.edu
 fi
 
 # /gsc/scripts/lib
