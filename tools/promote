@@ -53,7 +53,7 @@ if [ -f $BUILD_PATH/git-changes ]; then
     cat $BUILD_PATH/git-changes >> $BUILD_PATH/CHANGES
 fi
 if [ -f $BUILD_PATH/CHANGES ]; then
-    echo "Subject: Changes for $NEW_BUILD_NAME " | cat - $BUILD_PATH/CHANGES | sendmail -t apipe@genome.wustl.edu
+    cat $BUILD_PATH/CHANGES | mail -s "Changes for $NEW_BUILD_NAME" apipe@genome.wustl.edu
 fi
 
 # /gsc/scripts/lib
