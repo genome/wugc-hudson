@@ -7,7 +7,7 @@ use File::chdir '$CWD';
 #genome-250, genome-388
 my ($rev1, $rev2) = @ARGV;
 die "Whoops! Try: changelog.pl [REV1] [REV2]" if !$rev1 || !$rev2;
-die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2
+die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2;
 
 local $CWD = '/gscuser/jlolofie/dev/git/genome/lib/perl';
 
