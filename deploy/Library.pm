@@ -47,7 +47,7 @@ sub snapshot_namespaces {
 # http://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags/1732454#1732454
 ####
 sub check_for_new_build { # returns new build number or 0 if none.
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
     $mon = ($mon+1); # mon is 0 indexed by default.
 
     my $rss_feed = get($Defaults::RSS_FEED_URL);
