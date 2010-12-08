@@ -2,6 +2,14 @@
 
 use IO::File;
 
+unless (@ARGV) {
+	print "Usage:\n";
+	print "./hotfix <version> <git_path_A> <git_hash_A1> <git_path_B> <git_hash_B1> <git_hash_B2>\n";
+	print "\nExample:\n";
+	print "./hotfix genome-9000 ~/genome-git 21c4f97\n";
+	exit;
+}
+
 my $base_path = '/gsc/scripts/opt/passed-model-tests';
 my $old_path = shift @ARGV;
 if ($old_path =~ /stable/) {
