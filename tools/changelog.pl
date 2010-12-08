@@ -28,7 +28,7 @@ print<<"_TOP_";
 
 Change Log for $rev2
 This is a summary of important changes (since $rev1).
-For an exhaustive list try:  $ git log $rev1..$rev2
+For an exhaustive list try:  \$ git log $rev1..$rev2
 ($now)
 ****************
 
