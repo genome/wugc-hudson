@@ -51,14 +51,23 @@ ln -s $BUILD_PATH new-genome-webapp
 mv -Tf new-genome-webapp genome-webapp
 
 echo "Deploying $NEW_BUILD_NAME to /gsc/scripts/lib/perl"
-for namespace in $(find $BUILD_PATH/lib/perl -mindepth 1 -maxdepth 1 -type d | sed 's/.*\///'); do
-	if [ -z "$namespace" ]; then
-		echo "Got an empty namespace, not rsyncing!"
-	else
-		rsync --archive --delete $BUILD_PATH/lib/perl/$namespace/ /gsc/scripts/lib/perl/$namespace/
-		cp --force --preserve=all $BUILD_PATH/lib/perl/$namespace.pm /gsc/scripts/lib/perl/
-	fi
+for dir in $(find $BUILD_PATH/lib/perl -mindepth 1 -maxdepth 1 -type d | sed 's/.*\///'); do
+    if [ -z "$dir" ]; then
+        echo "Got an empty dir, not rsyncing!"
+    else
+        echo "Syncing $dir to /gsc/scripts/lib/perl/..."
+        rsync -rltoD --delete $BUILD_PATH/lib/perl/$dir/ /gsc/scripts/lib/perl/$dir/
+    fi
 done
+for file in $(find $BUILD_PATH/lib/perl -mindepth 1 -maxdepth 1 -type f | sed 's/.*\///'); do
+    if [ -z "$file" ]; then
+        echo "Got an empty file, not copying!"
+    else
+        echo "Copying $file to /gsc/scripts/lib/perl/..."
+        cp --force --preserve=all $BUILD_PATH/lib/perl/$file /gsc/scripts/lib/perl/
+    fi
+done
+
 
 
 if [ ! -f $BUILD_PATH/git-changes ]; then
