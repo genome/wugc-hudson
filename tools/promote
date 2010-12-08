@@ -42,12 +42,12 @@ fi
 
 
 echo "Changing stable symlink ($NEW_BUILD_NAME)"
-ln -s $BUILD_PATH new-genome-stable
+ln -sf $BUILD_PATH new-genome-stable
 mv -Tf new-genome-stable genome-stable
 
 
 echo "Changing web symlink (needs a restart)"
-ln -s $BUILD_PATH new-genome-webapp
+ln -sf $BUILD_PATH new-genome-webapp
 mv -Tf new-genome-webapp genome-webapp
 
 echo "Deploying $NEW_BUILD_NAME to /gsc/scripts/lib/perl"
@@ -64,7 +64,7 @@ for file in $(find $BUILD_PATH/lib/perl -mindepth 1 -maxdepth 1 -type f | sed 's
         echo "Got an empty file, not copying!"
     else
         echo "Copying $file to /gsc/scripts/lib/perl/..."
-        cp --force --preserve=all $BUILD_PATH/lib/perl/$file /gsc/scripts/lib/perl/
+        cp --force --preserve=timestamps $BUILD_PATH/lib/perl/$file /gsc/scripts/lib/perl/
     fi
 done
 
@@ -82,8 +82,6 @@ if [ -f $BUILD_PATH/git-changes ]; then
     cat $BUILD_PATH/git-changes >> $BUILD_PATH/CHANGES
 fi
 if [ -f $BUILD_PATH/CHANGES ]; then
+	echo "Sending annnouncement mail to apipe mailing list..."
     cat $BUILD_PATH/CHANGES | mail -s "Changes for $NEW_BUILD_NAME" apipe@genome.wustl.edu
 fi
-
-# /gsc/scripts/lib
-
