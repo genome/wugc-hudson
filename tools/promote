@@ -4,7 +4,7 @@ set -o errexit   # exit if any command fails
 set -o pipefail  # fail if any command in a pipe fails
 set -o nounset   # fail if an env var is used but unset
 
-if [ ! -n "$*" ]; then
+if [ -z "$*" ]; then
 	echo "Usage:"
 	echo "./promote <version>"
 	echo ""
@@ -49,6 +49,16 @@ mv -Tf new-genome-stable genome-stable
 echo "Changing web symlink (needs a restart)"
 ln -s $BUILD_PATH new-genome-webapp
 mv -Tf new-genome-webapp genome-webapp
+
+echo "Deploying $NEW_BUILD_NAME to /gsc/scripts/lib/perl"
+for namespace in $(find $BUILD_PATH/lib/perl -mindepth 1 -maxdepth 1 -type d | sed 's/.*\///'); do
+	if [ -z "$namespace" ]; then
+		echo "Got an empty namespace, not rsyncing!"
+	else
+		rsync --archive --delete $BUILD_PATH/lib/perl/$namespace/ /gsc/scripts/lib/perl/$namespace/
+		cp --force --preserve=all $BUILD_PATH/lib/perl/$namespace.pm /gsc/scripts/lib/perl/
+	fi
+done
 
 
 if [ ! -f $BUILD_PATH/git-changes ]; then
