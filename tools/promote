@@ -3,6 +3,7 @@
 require File::Basename;
 require IO::File;
 require File::Slurp;
+require Mail::Sender;
 
 use strict;
 use warnings;
@@ -24,10 +25,10 @@ promote_symlinks(build_name => $NEW_BUILD_NAME) || die;
 
 sync_snapshot_to_lib_perl(build_name => $NEW_BUILD_NAME) || die;
 
-my $changes_summary = create_changes_summary(build_name => $NEW_BUILD_NAME, old_version => $OLD_BUILD_VERSION, new_version => $NEW_BUILD_VERSION);
-if ( -s $changes_summary ) {
-	# send_announcement_email(to => 'apipe\@genome.wustl.edu', subject => "Changes for $NEW_BUILD_NAME", msg => `cat $changes_summary`);
-	send_announcement_email(to => 'nnutter\@genome.wustl.edu', subject => "Changes for $NEW_BUILD_NAME", msg => `cat $changes_summary`);
+my $changes_summary_file = create_changes_summary(build_name => $NEW_BUILD_NAME, old_version => $OLD_BUILD_VERSION, new_version => $NEW_BUILD_VERSION);
+if ( -s $changes_summary_file ) {
+    my $changes_summary = File::Slurp::read_file($changes_summary_file);
+	send_announcement_email(to => 'apipe\@genome.wustl.edu', subject => "Changes for $NEW_BUILD_NAME", msg => $changes_summary);
 }
 
 ### Methods ###
@@ -52,12 +53,12 @@ sub promote_symlinks {
 	}
 	
 	print "Changing stable symlink ($build_name)\n";
-	# qx(cd $deploy_path && ln -sf $build_path new-genome-stable);
-	# qx(cd $deploy_path && mv -Tf new-genome-stable genome-stable);
+	qx(cd $deploy_path && ln -sf $build_path new-genome-stable);
+	qx(cd $deploy_path && mv -Tf new-genome-stable genome-stable);
 	
 	print "Changing web symlink (needs a restart)\n";
-	# qx(cd $deploy_path && ln -sf $build_path new-genome-webapp);
-	# qx(cd $deploy_path && mv -Tf new-genome-webapp genome-webapp);
+	qx(cd $deploy_path && ln -sf $build_path new-genome-webapp);
+	qx(cd $deploy_path && mv -Tf new-genome-webapp genome-webapp);
 	
 	return 1;
 }
@@ -79,14 +80,14 @@ sub sync_snapshot_to_lib_perl {
 		$basename =~ s/\/$//;
 		$basename =~ s/.*\///;
 		print "\tSyncing $basename...\n";
-		qx(rsync -rltoD --delete $build_path/lib/perl/$dir/ /gsc/scripts/lib/perl/$dir/)
+        qx(rsync -rltoD --delete $build_path/lib/perl/$dir/ /gsc/scripts/lib/perl/$dir/)
 	}
 
 	my @files = glob("$build_path/lib/perl/*.pm");
 	my @short_files = map { File::Basename::basename($_) } @files;
 	print "\tSyncing top-level files (" . join(', ', @short_files) . ")...\n";
 	for my $file (@files) {
-		qx(cp --force --preserve=timestamps $build_path/lib/perl/$file /gsc/scripts/lib/perl/)
+        qx(cp --force --preserve=timestamps $build_path/lib/perl/$file /gsc/scripts/lib/perl/)
 	}
 	
 	return 1;
@@ -105,7 +106,7 @@ sub create_changes_summary {
 	
 	# create git-changelog
 	unless ( -s "$build_path/git-changelog" ) {
-		qx(perl /gscuser/jlolofie/dev/wugc-hudson/tools/changelog.pl $old_version $new_version > $build_path/git-changelog);
+		qx(/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog);
 	}
 	
 	# create CHANGE_SUMMARY
@@ -113,16 +114,19 @@ sub create_changes_summary {
 	my @change_summary;
 	if ( -s "$build_path/git-changelog" ) {
 		my @git_changelog_lines = File::Slurp::read_file("$build_path/git-changelog");
-		push @change_summary, "== Highlighted Changes From $old_version to $new_version ==", '', @git_changelog_lines;
+		push @change_summary, "== Highlighted Changes From $old_version to $new_version ==\n\n", @git_changelog_lines;
 	}
 	if ( -s "$build_path/hotfixes" ) {
 		my @hotfixes_lines = File::Slurp::read_file("$build_path/hotfixes");
 		my @hotfixes_reasons = grep { $_ =~ /^Fix/ } @hotfixes_lines;
 		my @hotfixes_details = grep { $_ !~ /^Fix/ } @hotfixes_lines;
-		unshift @change_summary, "== Hotfix History ==", '', @hotfixes_reasons;
-		push @change_summary, "== Hotfix Commit Details ==", '', @hotfixes_details;
+		unshift @change_summary, "== Hotfix History ==\n\n", @hotfixes_reasons, "\n";
+		push @change_summary, "== Hotfix Commit Details ==\n\n", @hotfixes_details;
 	}
-	push @change_summary, "== Discalimer ==", '', "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For an exhaustive list try 'git log $old_version..$new_version'.\n";
+    if (@change_summary == 0) {
+        push @change_summary, "No changes highlighted.\n\n";
+    }
+	push @change_summary, "== Discalimer ==\n\n", "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For an exhaustive list try 'git log $old_version..$new_version'.\n";
 	File::Slurp::write_file("$build_path/CHANGE_SUMMARY", @change_summary);
 	return "$build_path/CHANGE_SUMMARY";
 }
@@ -149,7 +153,7 @@ sub send_announcement_email {
         subject => $mail_subject,
         msg     => $mail_msg,
     });
-	print "Sent annnouncement mail to $mail_to...";
+	print "Sent annnouncement mail to $mail_to...\n";
     return 1;
 };
 
