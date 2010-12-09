@@ -1,28 +1,19 @@
 #!/usr/bin/env perl
 
 use strict;
+use warnings;
 
 use Data::Dumper;
-use File::chdir '$CWD';
 
 #genome-250, genome-388
 my ($rev1, $rev2) = @ARGV;
 die "Whoops! Try: changelog.pl [REV1] [REV2]" if !$rev1 || !$rev2;
 die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2;
 
-local $CWD = '/gscuser/jlolofie/dev/git/genome/lib/perl';
-
+my $git_repo = '/gscuser/jlolofie/dev/git/genome/lib/perl';
 my $rev = join('..',$rev1, $rev2);
-my $cmd = q[git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " ] . $rev;
-
-my $c = `$cmd`;
-
-
-#undef $/;
-#open(my $fh, '/gscuser/jlolofie/tmp/changelog');
-#my $c = <$fh>;
-#close($fh);
-
+system("cd $git_repo && git fetch &> /dev/null");
+my $c = qx[cd $git_repo && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
 
 my $now = localtime();
 
@@ -72,8 +63,4 @@ sub print_log_entry {
     my $log = join('', @{$r->{'log'}});
     printf("%s\n%s (%s)\n\n", $log, $r->{'email'}, $r->{'hash'});
 }
-
-
-
-
 
