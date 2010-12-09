@@ -105,9 +105,13 @@ sub create_changes_summary {
 	}
 	
 	# create git-changelog
-	unless ( -s "$build_path/git-changelog" ) {
-		qx(/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog);
+	if ( -s "$build_path/previous_version" ) {
+		chomp($old_version = qx(cat $build_path/previous_version));
 	}
+	else {
+		qx(echo $old_version > $build_path/previous_version)
+	}
+	qx(/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog);
 	
 	# create CHANGE_SUMMARY
 	unlink("$build_path/CHANGE_SUMMARY");
