@@ -1,87 +1,165 @@
-#!/bin/bash
+#!/usr/bin/env perl
 
-set -o errexit   # exit if any command fails
-set -o pipefail  # fail if any command in a pipe fails
-set -o nounset   # fail if an env var is used but unset
+require File::Basename;
+require IO::File;
+require File::Slurp;
 
-if [ -z "$*" ]; then
-	echo "Usage:"
-	echo "./promote <version>"
-	echo ""
-	echo "Example:"
-	echo "./promote genome-400-fix1"
-	exit
-fi
+use strict;
+use warnings;
 
-# run from "deploy" host
+if ( @ARGV != 1 ) {;
+	print help_message();
+	exit;
+};
 
-DEPLOY_PATH="/gsc/scripts/opt"
-HUDSON_CODE_PATH="/gscuser/jlolofie/dev/wugc-hudson"
+my $NEW_BUILD_IDENTIFIER = shift @ARGV;
 
-#OLD_BUILD_NAME=`ls -l /gsc/scripts/opt/genome-stable | perl -e '$j=<>; $j=~/(genome-\d+)/; print $1'`
-OLD_BUILD_NAME=`perl -e '$path = readlink("/gsc/scripts/opt/genome-stable"); $path =~ s/.*\///; print $path'`
-OLD_BUILD_VERSION=`echo $OLD_BUILD_NAME | sed 's/-fix.*//'`
+(my $OLD_BUILD_NAME = readlink("/gsc/scripts/opt/genome-stable")) =~ s/.*\///;
+(my $OLD_BUILD_VERSION = $OLD_BUILD_NAME) =~ s/-fix.*//;
 
-if [ -n "${1+x}" ]; then
-    BUILD_NUMBER=$1
-    NEW_BUILD_NAME="genome-$BUILD_NUMBER"
-	NEW_BUILD_NAME=`echo $NEW_BUILD_NAME | sed 's/genome-genome/genome/'`
-    NEW_BUILD_VERSION=`echo $NEW_BUILD_NAME | sed 's/-fix.*//'`
-    BUILD_PATH="./passed-model-tests/$NEW_BUILD_NAME"
-else
-    echo "Error: first arg should be a hudson genome build number"
-    exit
-fi
+(my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
+(my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/-fix.*//;
 
-cd $DEPLOY_PATH
+promote_symlinks(build_name => $NEW_BUILD_NAME) || die;
 
-if [ ! -d $BUILD_PATH ]; then
-    echo "Error: cant find build path: \"$BUILD_PATH\""
-    exit
-fi
+sync_snapshot_to_lib_perl(build_name => $NEW_BUILD_NAME) || die;
 
+my $changes_summary = create_changes_summary(build_name => $NEW_BUILD_NAME, old_version => $OLD_BUILD_VERSION, new_version => $NEW_BUILD_VERSION);
+if ( -s $changes_summary ) {
+	# send_announcement_email(to => 'apipe\@genome.wustl.edu', subject => "Changes for $NEW_BUILD_NAME", msg => `cat $changes_summary`);
+	send_announcement_email(to => 'nnutter\@genome.wustl.edu', subject => "Changes for $NEW_BUILD_NAME", msg => `cat $changes_summary`);
+}
 
-echo "Changing stable symlink ($NEW_BUILD_NAME)"
-ln -sf $BUILD_PATH new-genome-stable
-mv -Tf new-genome-stable genome-stable
+### Methods ###
 
+sub help_message {
+	my $help_message;;
+	$help_message .= "Usage:\n";;
+	$help_message .= "./promote <version>\n\n";;
+	$help_message .= "Example:\n";;
+	$help_message .= "./promote genome-400-fix1\n";;
+	return $help_message;;
+};
 
-echo "Changing web symlink (needs a restart)"
-ln -sf $BUILD_PATH new-genome-webapp
-mv -Tf new-genome-webapp genome-webapp
+sub promote_symlinks {
+	my (%params) = @_;
+	my $build_name = delete $params{build_name} || die;
+	my $deploy_path = "/gsc/scripts/opt";
+	my $build_path = build_path($build_name);
+		
+	if (my @params_keys = keys %params) {
+		die "Invalid params passed to promote_symlinks: '" . join(', ', @params_keys) . "'\n";
+	}
+	
+	print "Changing stable symlink ($build_name)\n";
+	# qx(cd $deploy_path && ln -sf $build_path new-genome-stable);
+	# qx(cd $deploy_path && mv -Tf new-genome-stable genome-stable);
+	
+	print "Changing web symlink (needs a restart)\n";
+	# qx(cd $deploy_path && ln -sf $build_path new-genome-webapp);
+	# qx(cd $deploy_path && mv -Tf new-genome-webapp genome-webapp);
+	
+	return 1;
+}
 
-echo "Deploying $NEW_BUILD_NAME to /gsc/scripts/lib/perl"
-for dir in $(find $BUILD_PATH/lib/perl -mindepth 1 -maxdepth 1 -type d | sed 's/.*\///'); do
-    if [ -z "$dir" ]; then
-        echo "Got an empty dir, not rsyncing!"
-    else
-        echo "Syncing $dir to /gsc/scripts/lib/perl/..."
-        rsync -rltoD --delete $BUILD_PATH/lib/perl/$dir/ /gsc/scripts/lib/perl/$dir/
-    fi
-done
-for file in $(find $BUILD_PATH/lib/perl -mindepth 1 -maxdepth 1 -type f | sed 's/.*\///'); do
-    if [ -z "$file" ]; then
-        echo "Got an empty file, not copying!"
-    else
-        echo "Copying $file to /gsc/scripts/lib/perl/..."
-        cp --force --preserve=timestamps $BUILD_PATH/lib/perl/$file /gsc/scripts/lib/perl/
-    fi
-done
+sub sync_snapshot_to_lib_perl {
+	my (%params) = @_;
+	my $build_name = delete $params{build_name} || die;
+	my $build_path = build_path($build_name);
+		
+	if (my @params_keys = keys %params) {
+		die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
+	}
+	
+	print "Deploying $build_name to /gsc/scripts/lib/perl...\n";
+	
+	my @dirs = glob("$build_path/lib/perl/*/");
+	for my $dir (@dirs) {
+		my $basename = $dir;
+		$basename =~ s/\/$//;
+		$basename =~ s/.*\///;
+		print "\tSyncing $basename...\n";
+		qx(rsync -rltoD --delete $build_path/lib/perl/$dir/ /gsc/scripts/lib/perl/$dir/)
+	}
 
+	my @files = glob("$build_path/lib/perl/*.pm");
+	my @short_files = map { File::Basename::basename($_) } @files;
+	print "\tSyncing top-level files (" . join(', ', @short_files) . ")...\n";
+	for my $file (@files) {
+		qx(cp --force --preserve=timestamps $build_path/lib/perl/$file /gsc/scripts/lib/perl/)
+	}
+	
+	return 1;
+}
 
+sub create_changes_summary {
+	my (%params) = @_;
+	my $build_name = delete $params{build_name} || die;
+	my $old_version = delete $params{old_version} || die;
+	my $new_version = delete $params{new_version} || die;
+	my $build_path = build_path($build_name);
+	
+	if (my @params_keys = keys %params) {
+		die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
+	}
+	
+	# create git-changelog
+	unless ( -s "$build_path/git-changelog" ) {
+		qx(perl /gscuser/jlolofie/dev/wugc-hudson/tools/changelog.pl $old_version $new_version > $build_path/git-changelog);
+	}
+	
+	# create CHANGE_SUMMARY
+	unlink("$build_path/CHANGE_SUMMARY");
+	my @change_summary;
+	if ( -s "$build_path/git-changelog" ) {
+		my @git_changelog_lines = File::Slurp::read_file("$build_path/git-changelog");
+		push @change_summary, "== Highlighted Changes From $old_version to $new_version ==", '', @git_changelog_lines;
+	}
+	if ( -s "$build_path/hotfixes" ) {
+		my @hotfixes_lines = File::Slurp::read_file("$build_path/hotfixes");
+		my @hotfixes_reasons = grep { $_ =~ /^Fix/ } @hotfixes_lines;
+		my @hotfixes_details = grep { $_ !~ /^Fix/ } @hotfixes_lines;
+		unshift @change_summary, "== Hotfix History ==", '', @hotfixes_reasons;
+		push @change_summary, "== Hotfix Commit Details ==", '', @hotfixes_details;
+	}
+	push @change_summary, "== Discalimer ==", '', "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For an exhaustive list try 'git log $old_version..$new_version'.\n";
+	File::Slurp::write_file("$build_path/CHANGE_SUMMARY", @change_summary);
+	return "$build_path/CHANGE_SUMMARY";
+}
 
-if [ ! -f $BUILD_PATH/git-changes ]; then
-    perl $HUDSON_CODE_PATH/tools/changelog.pl $OLD_BUILD_VERSION $NEW_BUILD_VERSION > $BUILD_PATH/git-changes
-fi
+sub send_announcement_email {
+	my (%params) = @_;
+	my $mail_to = delete $params{to} || die;
+	my $mail_subject = delete $params{subject} || die;
+	my $mail_msg = delete $params{msg} || die;
+	
+	if (my @params_keys = keys %params) {
+		die "Invalid params passed to send_announcement_email: " . join(', ', @params_keys) . ".\n";
+	}
+	
+	my $user_name = getpwuid($<);
+	my $mail_from = $user_name . '\@genome.wustl.edu';
+	
+    my $sender = Mail::Sender->new({
+        smtp => 'gscsmtp.wustl.edu',
+        from => $mail_from,
+    });
+    $sender->MailMsg({
+        to => $mail_to,
+        subject => $mail_subject,
+        msg     => $mail_msg,
+    });
+	print "Sent annnouncement mail to $mail_to...";
+    return 1;
+};
 
-if [ -f $BUILD_PATH/hotfixes ]; then
-    echo 'Hotfixes:' > $BUILD_PATH/CHANGES
-    cat $BUILD_PATH/hotfixes >> $BUILD_PATH/CHANGES
-fi
-if [ -f $BUILD_PATH/git-changes ]; then
-    cat $BUILD_PATH/git-changes >> $BUILD_PATH/CHANGES
-fi
-if [ -f $BUILD_PATH/CHANGES ]; then
-	echo "Sending annnouncement mail to apipe mailing list..."
-    cat $BUILD_PATH/CHANGES | mail -s "Changes for $NEW_BUILD_NAME" apipe@genome.wustl.edu
-fi
+sub build_path {
+	my $build_name = shift;
+	my $build_path = "./passed-model-tests/$build_name";
+	
+	unless ( -d $build_path ) {
+		die "Build path is not a directory: '$build_path'\n";
+	}
+	
+	return $build_path;
+};
