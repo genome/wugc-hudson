@@ -53,12 +53,12 @@ sub promote_symlinks {
 	}
 	
 	print "Changing stable symlink ($build_name)\n";
-	qx(cd $deploy_path && ln -sf $build_path new-genome-stable);
-	qx(cd $deploy_path && mv -Tf new-genome-stable genome-stable);
+	system("cd $deploy_path && ln -sf $build_path new-genome-stable");
+	system("cd $deploy_path && mv -Tf new-genome-stable genome-stable");
 	
 	print "Changing web symlink (needs a restart)\n";
-	qx(cd $deploy_path && ln -sf $build_path new-genome-webapp);
-	qx(cd $deploy_path && mv -Tf new-genome-webapp genome-webapp);
+	system("cd $deploy_path && ln -sf $build_path new-genome-webapp");
+	system("cd $deploy_path && mv -Tf new-genome-webapp genome-webapp");
 	
 	return 1;
 }
@@ -80,14 +80,14 @@ sub sync_snapshot_to_lib_perl {
 		$basename =~ s/\/$//;
 		$basename =~ s/.*\///;
 		print "\tSyncing $basename...\n";
-        qx(rsync -rltoD --delete $dir/ /gsc/scripts/lib/perl/$basename/)
+        system("rsync -rltoD --delete $dir/ /gsc/scripts/lib/perl/$basename/")
 	}
 
 	my @files = glob("$build_path/lib/perl/*.pm");
 	my @short_files = map { File::Basename::basename($_) } @files;
 	print "\tSyncing top-level files (" . join(', ', @short_files) . ")...\n";
 	for my $file (@files) {
-        qx(cp --force --preserve=timestamps $file /gsc/scripts/lib/perl/)
+        system("cp --force --preserve=timestamps $file /gsc/scripts/lib/perl/")
 	}
 	
 	return 1;
@@ -106,12 +106,12 @@ sub create_changes_summary {
 	
 	# create git-changelog
 	if ( -s "$build_path/previous_version" ) {
-		chomp($old_version = qx(cat $build_path/previous_version));
+		chomp($old_version = qx[cat $build_path/previous_version]);
 	}
 	else {
-		qx(echo $old_version > $build_path/previous_version)
+		system("echo $old_version > $build_path/previous_version")
 	}
-	qx(/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog);
+	system("/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog");
 	
 	# create CHANGE_SUMMARY
 	unlink("$build_path/CHANGE_SUMMARY");
