@@ -28,7 +28,7 @@ sync_snapshot_to_lib_perl(build_name => $NEW_BUILD_NAME) || die;
 my $changes_summary_file = create_changes_summary(build_name => $NEW_BUILD_NAME, old_version => $OLD_BUILD_VERSION, new_version => $NEW_BUILD_VERSION);
 if ( -s $changes_summary_file ) {
     my $changes_summary = File::Slurp::read_file($changes_summary_file);
-	send_announcement_email(to => 'apipe\@genome.wustl.edu', subject => "Changes for $NEW_BUILD_NAME", msg => $changes_summary);
+	send_announcement_email(to => 'apipe@genome.wustl.edu', subject => "Changes for $NEW_BUILD_NAME", msg => $changes_summary);
 }
 
 ### Methods ###
