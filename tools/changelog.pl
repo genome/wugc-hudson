@@ -24,15 +24,6 @@ my $c = `$cmd`;
 
 
 my $now = localtime();
-print<<"_TOP_";
-
-Change Log for $rev2
-This is a summary of important changes (since $rev1).
-For an exhaustive list try:  \$ git log $rev1..$rev2
-($now)
-****************
-
-_TOP_
 
 my @lines = split(/JAGVILLSOVA/,$c);
 my $i;
