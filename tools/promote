@@ -80,14 +80,14 @@ sub sync_snapshot_to_lib_perl {
 		$basename =~ s/\/$//;
 		$basename =~ s/.*\///;
 		print "\tSyncing $basename...\n";
-        qx(rsync -rltoD --delete $build_path/lib/perl/$dir/ /gsc/scripts/lib/perl/$dir/)
+        qx(rsync -rltoD --delete $dir/ /gsc/scripts/lib/perl/$basename/)
 	}
 
 	my @files = glob("$build_path/lib/perl/*.pm");
 	my @short_files = map { File::Basename::basename($_) } @files;
 	print "\tSyncing top-level files (" . join(', ', @short_files) . ")...\n";
 	for my $file (@files) {
-        qx(cp --force --preserve=timestamps $build_path/lib/perl/$file /gsc/scripts/lib/perl/)
+        qx(cp --force --preserve=timestamps $file /gsc/scripts/lib/perl/)
 	}
 	
 	return 1;
