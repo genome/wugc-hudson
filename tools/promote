@@ -37,6 +37,7 @@ if ( -s $changes_summary_file ) {
     my $subject;
     if ( $announce_only ) {
         $subject = "Promoting $NEW_BUILD_NAME in one hour";
+        $changes_summary = "Please let us know if there are any concerns with promoting this version to genome-stable.\n\n" . $changes_summary;
     }
     else {
         $subject = "$NEW_BUILD_NAME promoted to genome-stable";
