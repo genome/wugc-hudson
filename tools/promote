@@ -4,11 +4,16 @@ require File::Basename;
 require IO::File;
 require File::Slurp;
 require Mail::Sender;
+require Getopt::Long;
 
 use strict;
 use warnings;
 
-if ( @ARGV != 1 ) {;
+my ($help, $announce_only) = ('', '');
+unless(Getopt::Long::GetOptions('help' => \$help, 'announce-only' => \$announce_only)) {
+    exit;
+}
+if ( @ARGV != 1 || $help ) {;
 	print help_message();
 	exit;
 };
@@ -21,25 +26,36 @@ my $NEW_BUILD_IDENTIFIER = shift @ARGV;
 (my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
 (my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/-fix.*//;
 
-promote_symlinks(build_name => $NEW_BUILD_NAME) || die;
-
-sync_snapshot_to_lib_perl(build_name => $NEW_BUILD_NAME) || die;
+unless ( $announce_only ) {
+    promote_symlinks(build_name => $NEW_BUILD_NAME) || die;
+    sync_snapshot_to_lib_perl(build_name => $NEW_BUILD_NAME) || die;
+}
 
 my $changes_summary_file = create_changes_summary(build_name => $NEW_BUILD_NAME, old_version => $OLD_BUILD_VERSION, new_version => $NEW_BUILD_VERSION);
 if ( -s $changes_summary_file ) {
     my $changes_summary = File::Slurp::read_file($changes_summary_file);
-	send_announcement_email(to => 'apipe@genome.wustl.edu', subject => "$NEW_BUILD_NAME promoted to genome-stable", msg => $changes_summary);
+    my $subject;
+    if ( $announce_only ) {
+        $subject = "Promoting $NEW_BUILD_NAME in one hour";
+    }
+    else {
+        $subject = "$NEW_BUILD_NAME promoted to genome-stable";
+    }
+	send_announcement_email(to => 'apipe@genome.wustl.edu', subject => $subject, msg => $changes_summary);
 }
+
+print "Symlinks point to:\n";
+print "genome-stable: " . readlink('/gsc/scripts/opt/genome-stable') . "\n";
+print "genome-webapp: " . readlink('/gsc/scripts/opt/genome-webapp') . "\n";
 
 ### Methods ###
 
 sub help_message {
-	my $help_message;;
-	$help_message .= "Usage:\n";;
-	$help_message .= "./promote <version>\n\n";;
-	$help_message .= "Example:\n";;
-	$help_message .= "./promote genome-400-fix1\n";;
-	return $help_message;;
+	my $help_message;
+	$help_message .= "Usage:\n";
+    $help_message .= "./promote <version>                \t-- promotes version and announces it to apipe\n";
+    $help_message .= "./promote --announce-only <version>\t-- only announces that promotion will occur in one hour\n";
+	return $help_message;
 };
 
 sub promote_symlinks {
