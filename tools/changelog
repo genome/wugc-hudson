@@ -12,8 +12,7 @@ die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2;
 
 my $git_repo = '/gscuser/jlolofie/dev/git/genome/lib/perl';
 my $rev = join('..',$rev1, $rev2);
-system("cd $git_repo && git fetch &> /dev/null");
-my $c = qx[cd $git_repo && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
+my $c = qx[cd $git_repo && git fetch && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
 
 my $now = localtime();
 
