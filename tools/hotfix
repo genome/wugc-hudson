@@ -1,12 +1,15 @@
 #!/usr/bin/env perl
 
 require IO::File;
+require Getopt::Long;
 
-unless (@ARGV) {
-	print "Usage:\n";
-	print "./hotfix <version> <git_path_A> <git_hash_A1> <git_path_B> <git_hash_B1> <git_hash_B2>\n";
-	print "\nExample:\n";
-	print "./hotfix genome-9000 ~/genome-git 21c4f97\n";
+my $help = '';
+unless(Getopt::Long::GetOptions('help' => \$help)) {
+    exit;
+}
+
+if ( @ARGV < 3 || $help) {
+	print "Usage: ./hotfix <version> <git_path_A> <git_hash_A1> <git_path_B> <git_hash_B1> <git_hash_B2>\n";
 	exit;
 }
 
