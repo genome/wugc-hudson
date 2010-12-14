@@ -5,9 +5,9 @@ our $BASE_DIR = '/gsc/scripts/opt/genome';
 our $BUILD_PATH = $BASE_DIR . '/snapshots/unstable';
 our $TESTED_PATH = $BASE_DIR . '/snapshots/tested';
 our $STABLE_PATH = $BASE_DIR . '/snapshots/stable';
-our $STABLE_PIPELINE = $BASE_DIR . '/stable-pipeline';
-our $STABLE_WEB = $BASE_DIR . '/stable-web';
-our $STABLE_USER = $BASE_DIR . '/stable-user';
+our $STABLE_PIPELINE = $BASE_DIR . '/current-stable';
+our $STABLE_WEB = $BASE_DIR . '/current-web';
+our $STABLE_USER = $BASE_DIR . '/current-tested';
 our $SNAPSHOT_PATH = $ENV{HOME} . '/.hudson_snapshot';
 
 our $UR_REPOSITORY = 'git://github.com/sakoht/UR.git';
