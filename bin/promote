@@ -59,8 +59,9 @@ if ( -s $changes_summary_file ) {
 }
 
 print "Symlinks point to:\n";
-print "genome-stable: " . readlink($Defaults::STABLE_PIPELINE) . "\n";
-print "genome-webapp: " . readlink($Defaults::STABLE_WEB) . "\n";
+print "stable-pipeline: " . readlink($Defaults::STABLE_PIPELINE) . "\n";
+print "stable-web: " . readlink($Defaults::STABLE_WEB) . "\n";
+print "stable-user: " . readlink($Defaults::STABLE_USER) . "\n";
 
 ### Methods ###
 
@@ -82,45 +83,49 @@ sub promote_symlinks {
 	}
 	
 	print "Changing stable symlink ($build_name)\n";
-	system("cd $Defaults::BASE_DIR && ln -sf $build_path new-$Default::STABLE_PIPELINE");
-	system("cd $Defaults::BASE_DIR && mv -Tf new-$Default::STABLE_PIPELINE $Default::STABLE_PIPELINE");
+	system("cd $Defaults::BASE_DIR && ln -sf $build_path $Defaults::STABLE_PIPELINE-new");
+	system("cd $Defaults::BASE_DIR && mv -Tf $Defaults::STABLE_PIPELINE-new $Defaults::STABLE_PIPELINE");
 	
-	print "Changing web symlink (needs a restart)\n";
-	system("cd $Defaults::BASE_DIR && ln -sf $build_path new-$Defaults::STABLE_WEB");
-	system("cd $Defaults::BASE_DIR && mv -Tf new-$Defaults::STABLE_WEB $Defaults::STABLE_WEB");
+	print "Changing web symlink ($build_name, needs a restart)\n";
+	system("cd $Defaults::BASE_DIR && ln -sf $build_path $Defaults::STABLE_WEB-new");
+	system("cd $Defaults::BASE_DIR && mv -Tf $Defaults::STABLE_WEB-new $Defaults::STABLE_WEB");
 	
+	print "Changing user symlink ($build_name)\n";
+	system("cd $Defaults::BASE_DIR && ln -sf $build_path $Defaults::STABLE_USER-new");
+	system("cd $Defaults::BASE_DIR && mv -Tf $Defaults::STABLE_USER-new $Defaults::STABLE_USER");
+
 	return 1;
 }
 
-# sub sync_snapshot_to_lib_perl {
-# 	my (%params) = @_;
-# 	my $build_name = delete $params{build_name} || die;
-# 	my $build_path = build_path($build_name);
-# 		
-# 	if (my @params_keys = keys %params) {
-# 		die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
-# 	}
-# 	
-# 	print "Deploying $build_name to /gsc/scripts/lib/perl...\n";
-# 	
-# 	my @dirs = glob("$build_path/lib/perl/*/");
-# 	for my $dir (@dirs) {
-# 		my $basename = $dir;
-# 		$basename =~ s/\/$//;
-# 		$basename =~ s/.*\///;
-# 		print "\tSyncing $basename...\n";
-#         system("rsync -rltoD --delete $dir/ /gsc/scripts/lib/perl/$basename/")
-# 	}
-# 
-# 	my @files = glob("$build_path/lib/perl/*.pm");
-# 	my @short_files = map { File::Basename::basename($_) } @files;
-# 	print "\tSyncing top-level files (" . join(', ', @short_files) . ")...\n";
-# 	for my $file (@files) {
-#         system("cp --force --preserve=timestamps $file /gsc/scripts/lib/perl/")
-# 	}
-# 	
-# 	return 1;
-# }
+sub sync_snapshot_to_lib_perl {
+    my (%params) = @_;
+    my $build_name = delete $params{build_name} || die;
+    my $build_path = build_path($build_name);
+
+    if (my @params_keys = keys %params) {
+        die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
+    }
+
+    print "Deploying $build_name to /gsc/scripts/lib/perl...\n";
+
+    my @dirs = glob("$build_path/lib/perl/*/");
+    for my $dir (@dirs) {
+        my $basename = $dir;
+        $basename =~ s/\/$//;
+        $basename =~ s/.*\///;
+        print "\tSyncing $basename...\n";
+        system("rsync -rltoD --delete $dir/ /gsc/scripts/lib/perl/$basename/")
+    }
+
+	my @files = glob("$build_path/lib/perl/*.pm");
+	my @short_files = map { File::Basename::basename($_) } @files;
+	print "\tSyncing top-level files (" . join(', ', @short_files) . ")...\n";
+	for my $file (@files) {
+        system("cp --force --preserve=timestamps $file /gsc/scripts/lib/perl/")
+	}
+	
+	return 1;
+}
 
 sub create_changes_summary {
 	my (%params) = @_;
