@@ -23,7 +23,7 @@ my $base_path = $Defaults::STABLE_PATH;
 my $old_path = shift @ARGV;
 if ($old_path =~ /stable/) {
     $old_path = readlink($Defaults::STABLE_PIPELINE);
-    $old_path =~ s/^\.\//$Default::STABLE_PIPELINE/;
+    $old_path =~ s/^\.\//$Defaults::BASE_DIR\//;
 }
 else {
     $old_path = $base_path . '/genome-' . $old_path;
