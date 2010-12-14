@@ -195,7 +195,12 @@ sub send_announcement_email {
 
 sub build_path {
 	my $build_name = shift;
-	my $build_path = "./snapshots/stable/$build_name";
+	my $build_path;
+    if ( $build_name =~ /-fix\d+$/ ) {
+        $build_path = "./snapshots/custom/$build_name";
+    } else {
+        $build_path = "./snapshots/stable/$build_name";
+    }
 	
 	unless ( -d $build_path ) {
 		die "Build path is not a directory: '$build_path'\n";
