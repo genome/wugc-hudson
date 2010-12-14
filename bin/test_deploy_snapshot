@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # this "test" copies a snapshot to /tmp
 # GENOME_DEV_MODE = 1 (see Genome::Config)
