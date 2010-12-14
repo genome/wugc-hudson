@@ -22,7 +22,7 @@ use Library;
 # -b is for recent builds. -g is for genome rev. -u is for ur hash.
 
 if ($#ARGV == -1) { # no args. print usage message.
-    print "USAGE: perl deploy_script.pl --name=genome-number [--deploy] AND [--recent] OR [--build] OR [--genome and --ur and --workflow]\n";
+    print "USAGE: $0 --name=genome-number [--deploy] AND [--recent] OR [--build] OR [--genome and --ur and --workflow]\n";
     print "OPTIONS:\n";
     print "   --deploy        \tDeploy to /gsc/scripts/opt after local snapshot\n";
     print "\n\n";    
@@ -161,13 +161,13 @@ die "Error: exit code $? for update tab-completion-spec Genome::Command" if $?;
 
 print "Finished copying to local machine. Snapshot available at $snapshot_path\n";
 
-my $passed_unit_test_path = qq{/gsc/scripts/opt/passed-unit-tests/$snapshot_name};
-my $passed_model_test_path = qq{/gsc/scripts/opt/passed-model-tests/$snapshot_name};
+my $passed_unit_test_path = qq{/gsc/scripts/opt/genome/snapshots/tested/$snapshot_name};
+my $passed_model_test_path = qq{/gsc/scripts/opt/genome/snapshots/stable/$snapshot_name};
 
 if ( defined $testing ) {
 
-    # deploy to /gsc/scripts/opt if used the --deploy flag
-    my $cmd = "scp -pqr $snapshot_path deploy:/gsc/scripts/opt/passed-unit-tests/"; 
+    # deploy to /gsc/scripts/opt/genome/tested if used the --deploy flag
+    my $cmd = "scp -pqr $snapshot_path deploy:/gsc/scripts/opt/genome/tested/"; 
     print "$cmd\n";
     my $out = `$cmd`;
     print "-----output from scp-----\n$out\n----------\n";
@@ -196,7 +196,7 @@ if ( defined $testing ) {
 }
 
 
-    my $cmd = "scp -pqr $passed_unit_test_path deploy:/gsc/scripts/opt/passed-model-tests/"; 
+    my $cmd = "scp -pqr $passed_unit_test_path deploy:/gsc/scripts/opt/genome/snapshots/tested/"; 
     print "$cmd\n";
     my $out = `$cmd`;
     print "-----output from scp-----\n$out\n----------\n";

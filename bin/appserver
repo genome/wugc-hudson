@@ -19,7 +19,7 @@ unless ($hudson_build_number and $hudson_build_number =~ /^\d+$/) {
     die "the first parameter should be the hudson build number to deploy";
 }
 
-my $snapshot_dir = "/gsc/scripts/opt/passed-model-tests/genome-$hudson_build_number";
+my $snapshot_dir = "/gsc/scripts/opt/genome/snapshots/stable/genome-$hudson_build_number";
 
 unless (-d $snapshot_dir) { 
     die "cannot find a snapshot for hudson build $hudson_build_number at expected path $snapshot_dir";

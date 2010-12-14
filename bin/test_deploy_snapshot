@@ -24,7 +24,7 @@ tar -xvvf $BASE_DIR/deploy_snapshot.tar.gz
 
 echo "executing deploy_snapshot"
 
-GENOME_DEV_MODE=1 perl -I /gscuser/jlolofie/dev/git/genome/lib/perl/ $BASE_DIR/deploy_snapshot.pl $HUDSON_BUILD
+GENOME_DEV_MODE=1 perl -I /gscuser/jlolofie/dev/git/genome/lib/perl/ $BASE_DIR/deploy_snapshot $HUDSON_BUILD
 
 
 

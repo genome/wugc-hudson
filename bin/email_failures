@@ -9,7 +9,7 @@ use Data::Dumper;
 use Mail::Sendmail;
 use File::chdir '$CWD';
 
-use lib "/gscuser/jlolofie/dev/wugc-hudson/deploy/";
+use lib "/gscuser/nnutter/git/wugc-hudson/lib/";
 use Users;
 
 #

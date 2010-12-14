@@ -17,7 +17,7 @@ my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20O
 
 # The nightly build runner runs on snapshots in the passed unit tests directory, so we need
 # to look for builds run on snapshots in this diretory
-my $passed_unit_tests_dir = "/gsc/scripts/opt/passed-unit-tests";
+my $passed_unit_tests_dir = "/gsc/scripts/opt/genome/snapshots/tested";
 my @snapshots = glob("$passed_unit_tests_dir/*");
 
 print "Found " . scalar @snapshots . " snapshots in $passed_unit_tests_dir\n";
@@ -35,9 +35,9 @@ for my $snapshot (@snapshots) {
 }
 
 # Figure out what the current genome-stable snapshot is
-my $stable_target = readlink("/gsc/scripts/opt/genome-stable");
-die "Could not readlink genome-stable symlink!" unless defined $stable_target;
-my $stable_snapshot = '/gsc/scripts/opt/' . $stable_target . '/lib/perl/';
+my $stable_target = readlink("/gsc/scripts/opt/genome/stable-pipeline");
+die "Could not readlink stable-pipeline symlink!" unless defined $stable_target;
+my $stable_snapshot = '/gsc/scripts/opt/genome/snapshots/stable/' . $stable_target . '/lib/perl/';
 die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
 
 # Need to remove any fix# from the stable snapshot path, since the nightly builds aren't run against patched snapshots

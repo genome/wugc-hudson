@@ -20,7 +20,7 @@ if ( @ARGV != 1 || $help ) {;
 
 my $NEW_BUILD_IDENTIFIER = shift @ARGV;
 
-(my $OLD_BUILD_NAME = readlink("/gsc/scripts/opt/genome-stable")) =~ s/.*\///;
+(my $OLD_BUILD_NAME = readlink("/gsc/scripts/opt/genome/stable-pipeline")) =~ s/.*\///;
 (my $OLD_BUILD_VERSION = $OLD_BUILD_NAME) =~ s/-fix.*//;
 
 (my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
@@ -51,8 +51,8 @@ if ( -s $changes_summary_file ) {
 }
 
 print "Symlinks point to:\n";
-print "genome-stable: " . readlink('/gsc/scripts/opt/genome-stable') . "\n";
-print "genome-webapp: " . readlink('/gsc/scripts/opt/genome-webapp') . "\n";
+print "genome-stable: " . readlink('/gsc/scripts/opt/genome/stable-pipeline') . "\n";
+print "genome-webapp: " . readlink('/gsc/scripts/opt/genome/stable-webapp') . "\n";
 
 ### Methods ###
 
@@ -67,7 +67,7 @@ sub help_message {
 sub promote_symlinks {
 	my (%params) = @_;
 	my $build_name = delete $params{build_name} || die;
-	my $deploy_path = "/gsc/scripts/opt";
+	my $deploy_path = "/gsc/scripts/opt/genome/";
 	my $build_path = build_path($build_name);
 		
 	if (my @params_keys = keys %params) {
@@ -136,7 +136,7 @@ sub create_changes_summary {
             system("echo $old_version > $build_path/previous_version")
         }
     }
-    system("/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog");
+    system("/gscuser/nnutter/git/wugc-hudson/bin/changelog $old_version $new_version > $build_path/git-changelog");
 
 	# create CHANGE_SUMMARY
 	unlink("$build_path/CHANGE_SUMMARY");
