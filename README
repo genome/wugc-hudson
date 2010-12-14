@@ -1,0 +1,22 @@
+
+SYMLINKS:
+stable-pipeline     The default snapshot for the cron.  (Must pass model tests.)
+stable-user         The in the new PERL5LIB and PATH for users.  (Must pass the test suite.)
+stable-web          The default snapshot for the web interface. (Typically matches stable-user).
+
+SUB-DIRECTORIES:
+snapshots/custom    Snapshots which have been custom built.
+snapshots/old       Snapshots which have been superceded and which have no more builds running on them.
+snapshots/stable    Snapshots which have passed builds (and tests).
+snapshots/tested    Snapshots which have passed tests (but not builds).
+snapshots/unstable  Snapshots which are being tested.
+
+Naming convention:
+    $hudsonbuild
+or
+    $hudsonbuild-fixM
+
+Each Hudson build contains a file called revisions.txt which contains the revision numbers for all repos at that build.
+In addition, the genome.git repository gets a tag for Hudson build N like "genome-N".
+
+
