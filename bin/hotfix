@@ -52,6 +52,8 @@ elsif ($old_path =~ /genome-\d+-fix(\d+)/) {
     $new_path =~ s/\d+$/$new_fix/;
 }
 
+$new_path =~ s/stable/custom/;
+
 unless ( -d $old_path ) {
     print "ERROR: old_path does not exists: $old_path\n";
     exit;
