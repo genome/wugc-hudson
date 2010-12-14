@@ -25,7 +25,6 @@ sub apipe {
         bdericks
         boberkfe
         ebelter
-        eclark
         fdu
         gsanders
         jeldred
