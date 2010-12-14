@@ -9,7 +9,10 @@ use Data::Dumper;
 use Mail::Sendmail;
 use File::chdir '$CWD';
 
-use lib "/gscuser/nnutter/git/wugc-hudson/lib/";
+BEGIN {
+	require File::Basename;
+	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
 use Users;
 
 #

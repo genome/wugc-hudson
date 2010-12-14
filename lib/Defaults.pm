@@ -1,9 +1,13 @@
 package Defaults;
 
-our $RSS_FEED_URL = 'http://hudson:8090/job/Genome/rssAll';
-our $BUILD_PATH = '/gsc/scripts/opt/genome/snapshots/unstable';
-our $TESTED_PATH = '/gsc/scripts/opt/genome/snapshots/tested';
-our $STABLE_PATH = '/gsc/scripts/opt/genome/snapshots/stable';
+our $RSS_FEED_URL = 'http://hudson.gsc.wustl.edu/job/Genome/rssAll';
+our $BASE_DIR = '/gsc/scripts/opt/genome';
+our $BUILD_PATH = $BASE_DIR . '/snapshots/unstable';
+our $TESTED_PATH = $BASE_DIR . '/snapshots/tested';
+our $STABLE_PATH = $BASE_DIR . '/snapshots/stable';
+our $STABLE_PIPELINE = $BASE_DIR . '/stable-pipeline';
+our $STABLE_WEB = $BASE_DIR . '/stable-web';
+our $STABLE_USER = $BASE_DIR . '/stable-user';
 our $SNAPSHOT_PATH = $ENV{HOME} . '/.hudson_snapshot';
 
 our $UR_REPOSITORY = 'git://github.com/sakoht/UR.git';
