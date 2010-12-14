@@ -127,7 +127,7 @@ sub create_changes_summary {
 	my $build_name = delete $params{build_name} || die;
 	my $old_version = delete $params{old_version} || die;
 	my $new_version = delete $params{new_version} || die;
-    my $announce_only = delete $params{announce_only} || die;
+    my $announce_only = delete $params{announce_only};
 	my $build_path = build_path($build_name);
 	
 	if (my @params_keys = keys %params) {
