@@ -24,14 +24,12 @@ unless ( $workspace =~ /^$hudson_project_path/ ) {
 }
 system("ssh deploy.gsc.wustl.edu rm -rf $workspace/*") && die;
 
-## tag genome
-system("cd $code_storage_base/genome && $Defaults::GIT_BIN tag $build_name && $Defaults::GIT_BIN push origin master --tags") && die;
-
 ## create snapshot
 my @source_dirs = ("$code_storage_base/genome", "$code_storage_base/UR", "$code_storage_base/workflow");
 for my $source_dir (@source_dirs) {
 	system("cd $source_dir && git reset --hard && git pull") && die;
 }
+system("cd $code_storage_base/genome && $Defaults::GIT_BIN tag $build_name && $Defaults::GIT_BIN push origin master --tags") && die;
 my $snapshot = Snapshot->create(
 	snapshot_dir => "$Defaults::UNSTABLE_PATH/$build_name",
 	source_dirs => \@source_dirs,
