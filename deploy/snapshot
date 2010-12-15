@@ -152,12 +152,12 @@ for my $sqlite_dump (@dump_files) {
 }
 
 print "FIXME MISSING SO FILES: Generating auto-competition opt files\n";
-`cd $snapshot_path/lib/perl/; ur create-completion-spec-file Genome::Command`;
-die "Error: exit code $? for create-completion-spec-file Genome::Command" if $?;
-`cd $snapshot_path/lib/perl/; ur create-completion-spec-file Genome::Model::Tools`;
-die "Error: exit code $? for create-completion-spec-file Genome::Command" if $?;
-`cd $snapshot_path/lib/perl/; ur create-completion-spec-file UR::Namespace::Command`;
-die "Error: exit code $? for create-completion-spec-file Genome::Command" if $?;
+`cd $snapshot_path/lib/perl/; ur update tab-completion-spec Genome::Command`;
+die "Error: exit code $? for update tab-completion-spec Genome::Command" if $?;
+`cd $snapshot_path/lib/perl/; ur update tab-completion-spec Genome::Model::Tools`;
+die "Error: exit code $? for update tab-completion-spec Genome::Command" if $?;
+`cd $snapshot_path/lib/perl/; ur update tab-completion-spec UR::Namespace::Command`;
+die "Error: exit code $? for update tab-completion-spec Genome::Command" if $?;
 
 print "Finished copying to local machine. Snapshot available at $snapshot_path\n";
 

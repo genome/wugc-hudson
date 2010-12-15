@@ -31,7 +31,12 @@ unless ( $announce_only ) {
     sync_snapshot_to_lib_perl(build_name => $NEW_BUILD_NAME) || die;
 }
 
-my $changes_summary_file = create_changes_summary(build_name => $NEW_BUILD_NAME, old_version => $OLD_BUILD_VERSION, new_version => $NEW_BUILD_VERSION);
+my $changes_summary_file = create_changes_summary(
+    build_name => $NEW_BUILD_NAME,
+    old_version => $OLD_BUILD_VERSION,
+    new_version => $NEW_BUILD_VERSION,
+    announce_only => $announce_only
+);
 if ( -s $changes_summary_file ) {
     my $changes_summary = File::Slurp::read_file($changes_summary_file);
     my $subject;
@@ -115,6 +120,7 @@ sub create_changes_summary {
 	my $build_name = delete $params{build_name} || die;
 	my $old_version = delete $params{old_version} || die;
 	my $new_version = delete $params{new_version} || die;
+    my $announce_only = delete $params{announce_only} || die;
 	my $build_path = build_path($build_name);
 	
 	if (my @params_keys = keys %params) {
@@ -122,14 +128,16 @@ sub create_changes_summary {
 	}
 	
 	# create git-changelog
-	if ( -s "$build_path/previous_version" ) {
-		chomp($old_version = qx[cat $build_path/previous_version]);
-	}
-	else {
-		system("echo $old_version > $build_path/previous_version")
-	}
-	system("/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog");
-	
+    if (not $announce_only) {
+        if ( -s "$build_path/previous_version" ) {
+            chomp($old_version = qx[cat $build_path/previous_version]);
+        }
+        else {
+            system("echo $old_version > $build_path/previous_version")
+        }
+    }
+    system("/gscuser/jlolofie/dev/wugc-hudson/tools/changelog $old_version $new_version > $build_path/git-changelog");
+
 	# create CHANGE_SUMMARY
 	unlink("$build_path/CHANGE_SUMMARY");
 	my @change_summary;
