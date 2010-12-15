@@ -50,8 +50,8 @@ sub create {
 		$self = $class->new(@_);
 	}
 	
-	my $snapshot_dir = $self->snapshot_dir;
-	my @source_dirs = @{ $self->source_dirs };
+	my $snapshot_dir = $self->{snapshot_dir};
+	my @source_dirs = @{ $self->{source_dirs} };
 	
 	for my $source_dir (@source_dirs) {
 		unless ( -d $source_dir ) {
@@ -60,7 +60,7 @@ sub create {
 	}
 	
 	if ( -d $snapshot_dir ) {
-		if ($self->overwrite) {
+		if ($self->{overwrite}) {
 			unless ( File::Path::rmtree($snapshot_dir) ) {
 				die "Error: failed to remove $snapshot_dir.\n";
 			}
@@ -69,7 +69,7 @@ sub create {
 		}
 	}
 	
-	unless ( File::Path::mkpath($self->snapshot_dir) ) {
+	unless ( File::Path::mkpath($self->{snapshot_dir}) ) {
 		die "Error: failed to create $snapshot_dir.\n";
 	}
 	
@@ -84,7 +84,7 @@ sub create {
 		push @revisions, "$origin_name $origin_hash";
 	}
 	my (%revisions) = map { split(" ", $_) } @revisions;
-	$self->revisions = \%revisions;
+	$self->{revisions} = \%revisions;
 	unless ( File::Slurp::write_file("$snapshot_dir/revisions.txt", join("\n", @revisions)) ) {
 		die "Error: failed to write $snapshot_dir/revisions.txt.\n";
 	}
@@ -112,7 +112,7 @@ sub announce {
 
 sub promote {
 	my $self = shift;
-	my $snapshot_dir = $self->snapshot_dir;
+	my $snapshot_dir = $self->{snapshot_dir};
 	
 	if ( $snapshot_dir =~ /$Defaults::UNSTABLE_PATH/ ) {
 		(my $new_snapshot_dir = $snapshot_dir) =~ s/$Defaults::UNSTABLE_PATH/$Defaults::TESTED_PATH/;
