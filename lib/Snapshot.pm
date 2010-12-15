@@ -47,7 +47,7 @@ sub create {
 	if ( ref $class ) {
 		$self = $class;
 	} else {
-		$self = $self->new(@_);
+		$self = $class->new(@_);
 	}
 	
 	my $snapshot_dir = $self->snapshot_dir;
