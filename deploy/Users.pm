@@ -15,6 +15,7 @@ sub apipe_ignore {
         rmeyer
         jschindl
         ccarey
+        eclark
     );
 }
 
@@ -25,7 +26,6 @@ sub apipe {
         bdericks
         boberkfe
         ebelter
-        eclark
         fdu
         gsanders
         jeldred
