@@ -51,10 +51,13 @@ my $cmd  = "cd " . $snapshot->{snapshot_dir} . " &&";
    $cmd .= " -I $Defaults::UNSTABLE_PATH/$build_name/lib/perl";
    $cmd .= " $Defaults::UNSTABLE_PATH/$build_name/bin/ur test run --recurse --junit --lsf --jobs=10";
    $cmd .= " --lsf-params=\"-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'\"";
-system($cmd) && die;
+my $tests_passed = !system($cmd);
 
-## email failures
-system("bsub -u $Defaults::EMAIL -q short $Defaults::BIN_DIR/email_failures $build_number") && die;
+if ( $tests_passed ) {
+	$snapshot->promote;
+} else {
+	system("bsub -u $Defaults::EMAIL -q short $Defaults::BIN_DIR/email_failures $build_number") && die;
+}
 
 ## update sqlitedb
 my $update_sql = "UPDATE unit_test SET status = 'done' where BUILD_NUMBER = $build_number;";
