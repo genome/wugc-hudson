@@ -61,7 +61,7 @@ sub create {
 	
 	if ( -d $snapshot_dir ) {
 		if ($self->{overwrite}) {
-			unless ( File::Path::rmtree($snapshot_dir) ) {
+			unless ( system("ssh deploy.gsc.wustl.edu rm -rf $snapshot_dir") ) {
 				die "Error: failed to remove $snapshot_dir.\n";
 			}
 		} else {
@@ -69,12 +69,15 @@ sub create {
 		}
 	}
 	
-	unless ( File::Path::mkpath($snapshot_dir) ) {
+	unless ( system("ssh deploy.gsc.wustl.edu mkdir -p $snapshot_dir") ) {
 		die "Error: failed to create $snapshot_dir.\n";
 	}
 	
-	unless ( File::Slurp::write_file("$snapshot_dir/source_dirs.txt", join("\n", @source_dirs)) ) {
-		die "Error: failed to write $snapshot_dir/source_dirs.txt.\n";
+	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/source_dirs.txt", join("\n", @source_dirs)) ) {
+		die "Error: failed to write /gsc/var/cache/testsuite/source_dirs.txt.\n";
+	}
+	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/source_dirs.txt $snapshot_dir/source_dirs.txt") ) {
+		die "Error: failed to move $snapshot_dir/source_dirs.txt.\n";
 	}
 	
 	my @revisions;
@@ -85,12 +88,15 @@ sub create {
 	}
 	my (%revisions) = map { split(" ", $_) } @revisions;
 	$self->{revisions} = \%revisions;
-	unless ( File::Slurp::write_file("$snapshot_dir/revisions.txt", join("\n", @revisions)) ) {
-		die "Error: failed to write $snapshot_dir/revisions.txt.\n";
+	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/revisions.txt", join("\n", @revisions)) ) {
+		die "Error: failed to write /gsc/var/cache/testsuite/revisions.txt.\n";
+	}
+	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") ) {
+		die "Error: failed to move $snapshot_dir/revisions.txt.\n";
 	}
 	
 	for my $source_dir (@source_dirs) {
-        my $exit = system("rsync -rltoD --exclude .git $source_dir/ $snapshot_dir/");
+        my $exit = system("rsync -e ssh -rltoD --exclude .git $source_dir/ deploy:$snapshot_dir/");
 		unless ( $exit == 0 ) {
 			die "Error: failed to rsync $source_dir.\n";
 		}
@@ -100,7 +106,7 @@ sub create {
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)\// } @paths;
 	for my $path (@paths) {
 		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
-		rename($path, $new_path);
+		system("ssh deploy.gsc.wustl.edu mv $path $new_path");
 	}
 	
 	return 1;
@@ -116,11 +122,11 @@ sub promote {
 	
 	if ( $snapshot_dir =~ /$Defaults::UNSTABLE_PATH/ ) {
 		(my $new_snapshot_dir = $snapshot_dir) =~ s/$Defaults::UNSTABLE_PATH/$Defaults::TESTED_PATH/;
-		return rename($snapshot_dir, $new_snapshot_dir);
+		return !system("ssh deploy.gsc.wustl.edu mv $snapshot_dir $new_snapshot_dir");
 	}
 	if ( $snapshot_dir =~ /$Defaults::TESTED_PATH/ ) {
 		(my $new_snapshot_dir = $snapshot_dir) =~ s/$Defaults::TESTED_PATH/$Defaults::STABLE_PATH/;
-		return rename($snapshot_dir, $new_snapshot_dir);
+		return !system("ssh deploy.gsc.wustl.edu mv $snapshot_dir $new_snapshot_dir");
 	}
 	
 	die "Error: tried to promote a directory is not in unstable nor tested path.\n";
