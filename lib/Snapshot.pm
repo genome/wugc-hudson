@@ -61,7 +61,7 @@ sub create {
 	
 	if ( -d $snapshot_dir ) {
 		if ($self->{overwrite}) {
-			unless ( system("ssh deploy.gsc.wustl.edu rm -rf $snapshot_dir") ) {
+			unless ( system("ssh deploy.gsc.wustl.edu rm -rf $snapshot_dir") == 0) {
 				die "Error: failed to remove $snapshot_dir.\n";
 			}
 		} else {
@@ -69,14 +69,14 @@ sub create {
 		}
 	}
 	
-	unless ( system("ssh deploy.gsc.wustl.edu mkdir -p $snapshot_dir") ) {
+	unless ( system("ssh deploy.gsc.wustl.edu mkdir -p $snapshot_dir") == 0) {
 		die "Error: failed to create $snapshot_dir.\n";
 	}
 	
 	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/source_dirs.txt", join("\n", @source_dirs)) ) {
 		die "Error: failed to write /gsc/var/cache/testsuite/source_dirs.txt.\n";
 	}
-	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/source_dirs.txt $snapshot_dir/source_dirs.txt") ) {
+	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/source_dirs.txt $snapshot_dir/source_dirs.txt") == 0) {
 		die "Error: failed to move $snapshot_dir/source_dirs.txt.\n";
 	}
 	
@@ -91,13 +91,12 @@ sub create {
 	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/revisions.txt", join("\n", @revisions)) ) {
 		die "Error: failed to write /gsc/var/cache/testsuite/revisions.txt.\n";
 	}
-	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") ) {
+	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") == 0 ) {
 		die "Error: failed to move $snapshot_dir/revisions.txt.\n";
 	}
 	
 	for my $source_dir (@source_dirs) {
-        my $exit = system("rsync -e ssh -rltoD --exclude .git $source_dir/ deploy:$snapshot_dir/");
-		unless ( $exit == 0 ) {
+		unless ( system("rsync -e ssh -rltoD --exclude .git $source_dir/ deploy:$snapshot_dir/") == 0 ) {
 			die "Error: failed to rsync $source_dir.\n";
 		}
 	}
@@ -106,7 +105,9 @@ sub create {
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)\// } @paths;
 	for my $path (@paths) {
 		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
-		system("ssh deploy.gsc.wustl.edu mv $path $new_path");
+		unless ( system("ssh deploy.gsc.wustl.edu mv $path $new_path") == 0 ) {
+			die "Error: failed to move $path to $new_path.\n";
+		}
 	}
 	
 	return 1;
