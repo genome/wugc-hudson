@@ -69,7 +69,7 @@ sub create {
 		}
 	}
 	
-	unless ( File::Path::mkpath($self->{snapshot_dir}) ) {
+	unless ( File::Path::mkpath($snapshot_dir) ) {
 		die "Error: failed to create $snapshot_dir.\n";
 	}
 	
@@ -90,7 +90,7 @@ sub create {
 	}
 	
 	for my $source_dir (@source_dirs) {
-        my $exit = system("rsync -e ssh -rltoD --exclude .git $source_dir/ deploy:$snapshot_dir/");
+        my $exit = system("rsync -rltoD --exclude .git $source_dir/ $snapshot_dir/");
 		unless ( $exit == 0 ) {
 			die "Error: failed to rsync $source_dir.\n";
 		}
@@ -100,7 +100,7 @@ sub create {
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)\// } @paths;
 	for my $path (@paths) {
 		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
-		system("ssh deploy.gsc.wustl.edu mv $path $new_path");
+		rename($path, $new_path);
 	}
 	
 	return 1;
