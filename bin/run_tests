@@ -37,9 +37,9 @@ my $snapshot = Snapshot->create(
 
 ## record stuff in sqlitedb
 my $sqlite_db = '/gsc/var/cache/testsuite/hudson.db';
-my $genome_hash = $snapshot->revisions->{genome};
-my $ur_hash = $snapshot->revisions->{UR};
-my $workflow_hash = $snapshot->revisions->{workflow};
+my $genome_hash = $snapshot->{revisions}{genome};
+my $ur_hash = $snapshot->{revisions}{UR};
+my $workflow_hash = $snapshot->{revisions}{workflow};
 my $now = `date +"%Y-%m-%d %H:%M:%S"`;
 my $insert_sql  = "INSERT INTO unit_test (date, status, build_number, genome_hash, ur_hash, workflow_hash )";
    $insert_sql .= " values (\"$now\", \"started\", \"$build_number\", \"$genome_hash\", \"$ur_hash\", \"$workflow_hash\");";
