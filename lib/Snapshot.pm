@@ -102,9 +102,9 @@ sub create {
 	}
 	
 	my @paths = glob("$snapshot_dir/lib/*");
-	@paths = grep { $_ !~ /\/lib\/(?:perl|java)\// } @paths;
+	@paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
 	for my $path (@paths) {
-		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
+		(my $new_path = $path) =~ s/\/lib/\/lib\/perl/;
 		unless ( system("ssh deploy.gsc.wustl.edu mv $path $new_path") == 0 ) {
 			die "Error: failed to move $path to $new_path.\n";
 		}
