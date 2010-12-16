@@ -17,6 +17,7 @@ my $code_storage_base = $ENV{CODE_STORAGE_BASE} || die;
 my $hudson_project_path = $ENV{HUDSON_PROJECT_PATH} || die;
 
 my $build_name = "genome-$build_number";
+print "Build Name: $build_name\n";
 
 ## cleanup workspace
 unless ( -d $workspace ) {
@@ -25,20 +26,25 @@ unless ( -d $workspace ) {
 unless ( $workspace =~ /^$hudson_project_path/ ) {
 	die "Error: $workspace does not appear to be a sub-directory of $hudson_project_path, aborting.\n";
 }
+print "Cleaing workspace ($workspace)\n";
 system("ssh deploy.gsc.wustl.edu rm -rf $workspace/*") && die;
 
 ## create snapshot
 my @source_dirs = ("$code_storage_base/genome", "$code_storage_base/UR", "$code_storage_base/workflow");
+print "Updating Git repos\n";
 for my $source_dir (@source_dirs) {
 	system("cd $source_dir && git reset --hard && git pull") && die;
 }
+print "Tagging Genome with $build_name\n";
 system("cd $code_storage_base/genome && $Defaults::GIT_BIN tag $build_name && $Defaults::GIT_BIN push origin master --tags") && die;
+print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
 	snapshot_dir => "$Defaults::UNSTABLE_PATH/$build_name",
 	source_dirs => \@source_dirs,
 );
 
 ## record stuff in sqlitedb
+print "Recording test in Hudson DB\n";
 my $sqlite_db = '/gsc/var/cache/testsuite/hudson.db';
 my $genome_hash = $snapshot->{revisions}{genome};
 my $ur_hash = $snapshot->{revisions}{UR};
@@ -49,6 +55,7 @@ my $insert_sql  = "INSERT INTO unit_test (date, status, build_number, genome_has
 system("sqlite3 $sqlite_db '$insert_sql'") && die;
 
 ## run tests
+print "Running tests\n";
 my $cmd  = "cd " . $snapshot->{snapshot_dir} . "/lib/perl/Genome &&";
    $cmd .= " PERL_TEST_HARNESS_DUMP_TAP='$workspace/test_result' /gsc/scripts/sbin/gsc-cron /gsc/bin/perl";
    $cmd .= " -I $Defaults::UNSTABLE_PATH/$build_name/lib/perl";
