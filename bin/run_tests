@@ -1,0 +1,64 @@
+#!/usr/bin/env perl
+
+BEGIN {
+	require File::Basename;
+	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
+
+require Defaults;
+require Snapshot;
+
+my $workspace = $ENV{WORKSPACE} || die;
+my $build_number = $ENV{BUILD_NUMBER} || die;
+my $code_storage_base = $ENV{CODE_STORAGE_BASE} || die;
+my $hudson_project_path = $ENV{HUDSON_PROJECT_PATH} || die;
+
+my $build_name = "genome-$build_number";
+
+## cleanup workspace
+unless ( -d $workspace ) {
+	die "Error: $workspace is not a directory.\n";
+}
+unless ( $workspace =~ /^$hudson_project_path/ ) {
+	die "Error: $workspace does not appear to be a sub-directory of $hudson_project_path, aborting.\n";
+}
+system("ssh deploy.gsc.wustl.edu rm -rf $workspace/*") && die;
+
+## create snapshot
+my @source_dirs = ("$code_storage_base/genome", "$code_storage_base/UR", "$code_storage_base/workflow");
+for my $source_dir (@source_dirs) {
+	system("cd $source_dir && git reset --hard && git pull") && die;
+}
+system("cd $code_storage_base/genome && $Defaults::GIT_BIN tag $build_name && $Defaults::GIT_BIN push origin master --tags") && die;
+my $snapshot = Snapshot->create(
+	snapshot_dir => "$Defaults::UNSTABLE_PATH/$build_name",
+	source_dirs => \@source_dirs,
+);
+
+## record stuff in sqlitedb
+my $sqlite_db = '/gsc/var/cache/testsuite/hudson.db';
+my $genome_hash = $snapshot->{revisions}{genome};
+my $ur_hash = $snapshot->{revisions}{UR};
+my $workflow_hash = $snapshot->{revisions}{workflow};
+my $now = `date +"%Y-%m-%d %H:%M:%S"`;
+my $insert_sql  = "INSERT INTO unit_test (date, status, build_number, genome_hash, ur_hash, workflow_hash )";
+   $insert_sql .= " values (\"$now\", \"started\", \"$build_number\", \"$genome_hash\", \"$ur_hash\", \"$workflow_hash\");";
+system("sqlite3 $sqlite_db '$insert_sql'") && die;
+
+## run tests
+my $cmd  = "cd " . $snapshot->{snapshot_dir} . "/lib/perl/Genome &&";
+   $cmd .= " PERL_TEST_HARNESS_DUMP_TAP='$workspace/test_result' /gsc/scripts/sbin/gsc-cron /gsc/bin/perl";
+   $cmd .= " -I $Defaults::UNSTABLE_PATH/$build_name/lib/perl";
+   $cmd .= " $Defaults::UNSTABLE_PATH/$build_name/bin/ur test run --recurse --junit --lsf --jobs=10";
+   $cmd .= " --lsf-params=\"-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'\"";
+my $tests_passed = !system($cmd);
+
+if ( $tests_passed ) {
+	$snapshot->promote;
+} else {
+	system("bsub -u $Defaults::EMAIL -q short $Defaults::BIN_DIR/email_failures $build_number") && die;
+}
+
+## update sqlitedb
+my $update_sql = "UPDATE unit_test SET status = 'done' where BUILD_NUMBER = $build_number;";
+system("sqlite3 $sqlite_db '$update_sql'") && die;
