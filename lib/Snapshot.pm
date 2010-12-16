@@ -112,11 +112,11 @@ sub create {
 		}
 	}
 	
+	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'debian', 'doc', 'inc', 't') {
+		system("ssh deploy.gsc.wustl.edu rm -rf $snapshot_dir/$unwanted_file");
+	}
+	
 	return 1;
-}
-
-sub announce {
-	my $self = shift;
 }
 
 sub promote {
@@ -133,14 +133,6 @@ sub promote {
 	}
 	
 	die "Error: tried to promote a directory is not in unstable nor tested path.\n";
-}
-
-sub symlink {
-	my $self = shift;
-}
-
-sub hotfix {
-	my $self = shift;
 }
 
 1;
