@@ -46,7 +46,7 @@ my $insert_sql  = "INSERT INTO unit_test (date, status, build_number, genome_has
 system("sqlite3 $sqlite_db '$insert_sql'") && die;
 
 ## run tests
-my $cmd  = "cd " . $snapshot->{snapshot_dir} . " &&";
+my $cmd  = "cd " . $snapshot->{snapshot_dir} . "/lib/perl/Genome &&";
    $cmd .= " PERL_TEST_HARNESS_DUMP_TAP='$workspace/test_result' /gsc/scripts/sbin/gsc-cron /gsc/bin/perl";
    $cmd .= " -I $Defaults::UNSTABLE_PATH/$build_name/lib/perl";
    $cmd .= " $Defaults::UNSTABLE_PATH/$build_name/bin/ur test run --recurse --junit --lsf --jobs=10";
