@@ -40,7 +40,7 @@ fi
 
 
 export PERL_TEST_HARNESS_DUMP_TAP=$WORKSPACE/test_result
-BIN="/gscuser/nnutter/git/wugc-hudson/bin/"
+BIN="/gsc/scipts/opt/genome/bin/"
 GIT_CMD="/gsc/bin/git "
 BUILD_NAME="genome-$BUILD_NUMBER"
 BUILD_DIR="$HUDSON_PROJECT_PATH/$JOB_NAME/builds/$BUILD_NUMBER"
