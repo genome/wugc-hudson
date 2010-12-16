@@ -5,6 +5,9 @@ BEGIN {
 	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
 }
 
+use strict;
+use warnings;
+
 require Defaults;
 require Snapshot;
 
