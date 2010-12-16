@@ -69,6 +69,20 @@ sub create {
 		}
 	}
 	
+	$self->create_snapshot_dir;
+	
+	$self->post_create_cleanup;
+	
+	$self->update_tab_completion;
+	
+	return $self;
+}
+
+sub create_snapshot_dir {
+	my $self = shift;
+	my $snapshot_dir = $self->{snapshot_dir};
+	my @source_dirs = @{ $self->{source_dirs} };
+	
 	unless ( system("ssh deploy.gsc.wustl.edu mkdir -p $snapshot_dir") == 0) {
 		die "Error: failed to create $snapshot_dir.\n";
 	}
@@ -102,6 +116,11 @@ sub create {
 			die "Error: failed to rsync $source_dir.\n";
 		}
 	}
+}
+
+sub post_create_cleanup {
+	my $self = shift;
+	my $snapshot_dir = $self->{snapshot_dir};
 	
 	my @paths = glob("$snapshot_dir/lib/*");
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
@@ -115,8 +134,23 @@ sub create {
 	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'debian', 'doc', 'inc', 't') {
 		system("ssh deploy.gsc.wustl.edu rm -rf $snapshot_dir/$unwanted_file");
 	}
+}
+
+sub update_tab_completion {
+	my $self = shift;
+	my $snapshot_dir = $self->{snapshot_dir};
 	
-	return 1;
+	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec Genome::Command");
+	die "Error: exit code $? for update tab-completion-spec Genome::Command" if $?;
+	
+	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec Genome::Model::Tools");
+	die "Error: exit code $? for update tab-completion-spec Genome::Model::Tools" if $?;
+	
+	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec UR::Namespace::Command");
+	die "Error: exit code $? for update tab-completion-spec UR::Namespace::Command" if $?;
+	
+	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec Workflow::Command");
+	die "Error: exit code $? for update tab-completion-spec Workflow::Command" if $?;
 }
 
 sub promote {
