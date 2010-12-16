@@ -15,6 +15,7 @@ sub apipe_ignore {
         rmeyer
         jschindl
         ccarey
+        eclark
     );
 }
 
