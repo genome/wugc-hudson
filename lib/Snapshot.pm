@@ -207,7 +207,7 @@ sub execute_on_deploy {
 	my $exit = system("ssh deploy.gsc.wustl.edu '$cmd'");
 	die "Error: exit code $? for '$cmd'" if $?;
 	
-	print "Command exited $exit: $cmd\n";
+	# print "Command exited $exit: $cmd\n";
 	
 	my $rv = 0;
 	$rv = 1 if ( $exit == 0 );
