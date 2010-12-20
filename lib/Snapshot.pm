@@ -169,20 +169,24 @@ sub update_tab_completion {
 	return 1;
 }
 
-sub promote {
+sub move_to {
 	my $self = shift;
+	my $move_to = shift || die;
 	my $snapshot_dir = $self->{snapshot_dir};
 	
-	if ( $snapshot_dir =~ /$Defaults::UNSTABLE_PATH/ ) {
-		(my $new_snapshot_dir = $snapshot_dir) =~ s/$Defaults::UNSTABLE_PATH/$Defaults::TESTED_PATH/;
-		return execute_on_deploy("mv $snapshot_dir $new_snapshot_dir");
+	(my $snapshot_name = $snapshot_dir) =~ s/.*\///;
+	
+	if ( $move_to =~ /unstable/ ) {
+		return execute_on_deploy("mv $snapshot_dir $Defaults::UNSTABLE_PATH/$snapshot_name");
 	}
-	if ( $snapshot_dir =~ /$Defaults::TESTED_PATH/ ) {
-		(my $new_snapshot_dir = $snapshot_dir) =~ s/$Defaults::TESTED_PATH/$Defaults::STABLE_PATH/;
-		return execute_on_deploy("mv $snapshot_dir $new_snapshot_dir");
+	if ( $move_to =~ /tested/ ) {
+		return execute_on_deploy("mv $snapshot_dir $Defaults::TESTED_PATH/$snapshot_name");
+	}
+	if ( $move_to =~ /stable/ ) {
+		return execute_on_deploy("mv $snapshot_dir $Defaults::STABLE_PATH/$snapshot_name");
 	}
 	
-	die "Error: tried to promote a directory is not in unstable nor tested path.\n";
+	die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
 }
 
 sub wait_for_path {
