@@ -84,7 +84,7 @@ sub create_snapshot_dir {
 	my @source_dirs = @{ $self->{source_dirs} };
 	
 	unless ( execute_on_deploy("mkdir -p $snapshot_dir") ) {
-		die "Error: failed to create $snapshot_dir.\n";
+		die "Error: failed to create directory: '$snapshot_dir'.\n";
 	}
 	
 	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/source_dirs.txt", join("\n", @source_dirs)) ) {
@@ -169,10 +169,15 @@ sub execute_on_deploy {
 		die "No command specified to execute_on_deploy\n";
 	}
 	
-	my $rv = !system("ssh deploy.gsc.wustl.edu '$cmd'");
+	my $exit = system("ssh deploy.gsc.wustl.edu '$cmd'");
 	die "Error: exit code $? for '$cmd'" if $?;
 	
-	return !$rv;
+	print "Command exited $exit: $cmd\n";
+	
+	my $rv = 0;
+	$rv = 1 if ( $exit == 0 );
+	
+	return $rv;
 }
 
 1;
