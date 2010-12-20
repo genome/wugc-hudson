@@ -123,6 +123,7 @@ sub post_create_cleanup {
 	my $snapshot_dir = $self->{snapshot_dir};
 	
 	my @paths = glob("$snapshot_dir/lib/*");
+    print "Found " . @paths . " files/dirs in lib/ but should only be lib/java and lib/perl, moving others...\n";
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
 	for my $path (@paths) {
 		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
