@@ -42,7 +42,7 @@ $dbh->disconnect();
 
 if ( $builds_passed ) {
 	print "Passed builds, promoting snapshot\n";
-	$snapshot->promote;
+	$snapshot->move_to('stable');
 	exit;
 } else {
 	print "Failed builds\n";
