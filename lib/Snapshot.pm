@@ -118,22 +118,19 @@ sub create_snapshot_dir {
 	}
 	
 	wait_for_path($snapshot_dir); # $snapshot_dir doesn't instantly show up on other NFS shares...
-	my @dump_files = `find $snapshot_dir -iname '*sqlite3-dump'`;
+	my @dump_files = qx[find $snapshot_dir -iname '*sqlite3-dump'];
 	for my $sqlite_dump (@dump_files) {
-	    my $sqlite_db = $sqlite_dump;
-	    chomp $sqlite_db;
-	    $sqlite_db =~ s/-dump//;
+	    chomp $sqlite_dump;
+	    (my $sqlite_db = $sqlite_dump) =~ s/-dump//;
 	    if (-e $sqlite_db) {
-	        print "SQLite DB $sqlite_db already exists, skipping";
+	        print "SQLite DB $sqlite_db already exists, skipping\n";
 	    } else {
 			print "Updating SQLite DB ($sqlite_db) from dump\n";
 	        my $sqlite_path = $ENV{SQLITE_PATH} || 'sqlite3';
 	        execute_on_deploy("$sqlite_path $sqlite_db < $sqlite_dump");
-	        die "Error: died building sqlite db for $sqlite_dump" if $?;
 	    }
-		wait_for_path($sqlite_db); # NFS
-	    unless (-e $sqlite_db) {
-	        die "Failed to reconstitute $sqlite_dump as $sqlite_db!";
+	    unless ( wait_for_path($sqlite_db) ) {
+	        die "Failed to reconstitute $sqlite_dump as $sqlite_db!\n";
 	    }
 	}
 	
