@@ -140,10 +140,10 @@ sub update_tab_completion {
 	my $self = shift;
 	my $snapshot_dir = $self->{snapshot_dir};
 
-	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec Genome\:\:Command");
-	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec Genome\:\:Model\:\:Tools");
-	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec UR\:\:Namespace\:\:Command");	
-	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec Workflow\:\:Command");
+	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Command");
+	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Model\:\:Tools");
+	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec UR\:\:Namespace\:\:Command");	
+	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Workflow\:\:Command");
 }
 
 sub promote {
