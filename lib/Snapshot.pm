@@ -61,7 +61,7 @@ sub create {
 	
 	if ( -d $snapshot_dir ) {
 		if ($self->{overwrite}) {
-			unless ( execute_on_deploy("rm -rf $snapshot_dir") ) {
+			unless ( system("rm -rf $snapshot_dir") == 0) {
 				die "Error: failed to remove $snapshot_dir.\n";
 			}
 		} else {
@@ -83,15 +83,12 @@ sub create_snapshot_dir {
 	my $snapshot_dir = $self->{snapshot_dir};
 	my @source_dirs = @{ $self->{source_dirs} };
 	
-	unless ( execute_on_deploy("mkdir -p $snapshot_dir") ) {
+	unless ( system("mkdir -p $snapshot_dir") == 0 ) {
 		die "Error: failed to create directory: '$snapshot_dir'.\n";
 	}
 	
-	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/source_dirs.txt", join("\n", @source_dirs)) ) {
+	unless ( File::Slurp::write_file("$snapshot_dir/source_dirs.txt", join("\n", @source_dirs)) ) {
 		die "Error: failed to write /gsc/var/cache/testsuite/source_dirs.txt.\n";
-	}
-	unless ( execute_on_deploy("mv /gsc/var/cache/testsuite/source_dirs.txt $snapshot_dir/source_dirs.txt") ) {
-		die "Error: failed to move $snapshot_dir/source_dirs.txt.\n";
 	}
 	
 	my @revisions;
@@ -107,7 +104,7 @@ sub create_snapshot_dir {
 	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/revisions.txt", join("\n", @revisions)) ) {
 		die "Error: failed to write /gsc/var/cache/testsuite/revisions.txt.\n";
 	}
-	unless ( execute_on_deploy("mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") ) {
+	unless ( system("mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") == 0) {
 		die "Error: failed to move $snapshot_dir/revisions.txt.\n";
 	}
 	
@@ -127,7 +124,7 @@ sub create_snapshot_dir {
 	    } else {
 			print "Updating SQLite DB ($sqlite_db) from dump\n";
 	        my $sqlite_path = $ENV{SQLITE_PATH} || 'sqlite3';
-	        execute_on_deploy("$sqlite_path $sqlite_db < $sqlite_dump");
+	        system("$sqlite_path $sqlite_db < $sqlite_dump");
 	    }
 	    unless ( wait_for_path($sqlite_db) ) {
 	        die "Failed to reconstitute $sqlite_dump as $sqlite_db!\n";
@@ -145,13 +142,13 @@ sub post_create_cleanup {
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
 	for my $path (@paths) {
 		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
-		unless ( execute_on_deploy("mv $path $new_path") ) {
+		unless ( system("mv $path $new_path") == 0 ) {
 			die "Error: failed to move $path to $new_path.\n";
 		}
 	}
 	
 	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'debian', 'doc', 'inc', 't') {
-		execute_on_deploy("rm -rf $snapshot_dir/$unwanted_file");
+		system("rm -rf $snapshot_dir/$unwanted_file");
 	}
 	
 	return 1;
@@ -161,10 +158,10 @@ sub update_tab_completion {
 	my $self = shift;
 	my $snapshot_dir = $self->{snapshot_dir};
 
-	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Command");
-	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Model\:\:Tools");
-	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec UR\:\:Namespace\:\:Command");	
-	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Workflow\:\:Command");
+	system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Command");
+	system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Model\:\:Tools");
+	system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec UR\:\:Namespace\:\:Command");	
+	system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Workflow\:\:Command");
 	
 	return 1;
 }
