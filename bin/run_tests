@@ -10,6 +10,7 @@ use warnings;
 
 require Defaults;
 require Snapshot;
+require XML::Simple;
 
 my $workspace = $ENV{WORKSPACE} || die;
 my $build_number = $ENV{BUILD_NUMBER} || die;
@@ -39,7 +40,7 @@ print "Tagging Genome with $build_name\n";
 system("cd $code_storage_base/genome && $Defaults::GIT_BIN tag $build_name && $Defaults::GIT_BIN push origin master --tags") && die;
 print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
-	snapshot_dir => "$Defaults::UNSTABLE_PATH/$build_name",
+	snapshot_dir => "$workspace/$build_name",
 	source_dirs => \@source_dirs,
 );
 
@@ -67,7 +68,7 @@ my $cmd  = "cd " . $snapshot->{snapshot_dir} . "/lib/perl/Genome &&";
    $cmd .= " -I $Defaults::UNSTABLE_PATH/$build_name/lib/perl";
    $cmd .= " $Defaults::UNSTABLE_PATH/$build_name/bin/ur test run --recurse --junit --lsf --jobs=10";
    $cmd .= " --lsf-params=\"-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'\"";
-my $tests_passed = !system($cmd);
+system($cmd);
 
 ## update sqlitedb
 print "Recording test completion in Hudson DB\n";
@@ -78,12 +79,24 @@ print "Recording test completion in Hudson DB\n";
 	$dbh->disconnect() || die;
 }
 
+my $tests_passed = 1;
+my @xml_files = qx[find $workspace/test_result -name '*.junit.xml'];
+for my $xml_file (@xml_files) {
+	my $test_xml = XML::Simple::XMLin($xml_file);
+	if ( $test_xml->{testsuite}{failures} || $test_xml->{testsuite}{errors} ) {
+		$tests_passed = 0;
+		print "Test failures/errors\n";
+		last;
+	}
+}
+
 if ( $tests_passed ) {
 	print "Passed tests, promoting snapshot\n";
-	$snapshot->promote;
+	$snapshot->move_to('tested');
 	exit;
 } else {
-	print "Tests failed, emailing failures\n";
+	print "Emailing failures\n";
+	$snapshot->move_to('unstable');
 	system("bsub -u $Defaults::EMAIL -q short $Defaults::BIN_DIR/email_failures $build_number") && die;
 	exit 1;
 }
