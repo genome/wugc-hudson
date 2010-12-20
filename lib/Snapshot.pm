@@ -61,7 +61,7 @@ sub create {
 	
 	if ( -d $snapshot_dir ) {
 		if ($self->{overwrite}) {
-			unless ( system("ssh deploy.gsc.wustl.edu rm -rf $snapshot_dir") == 0) {
+			unless ( execute_on_deploy("rm -rf $snapshot_dir") ) {
 				die "Error: failed to remove $snapshot_dir.\n";
 			}
 		} else {
@@ -83,14 +83,14 @@ sub create_snapshot_dir {
 	my $snapshot_dir = $self->{snapshot_dir};
 	my @source_dirs = @{ $self->{source_dirs} };
 	
-	unless ( system("ssh deploy.gsc.wustl.edu mkdir -p $snapshot_dir") == 0) {
+	unless ( execute_on_deploy("mkdir -p $snapshot_dir") ) {
 		die "Error: failed to create $snapshot_dir.\n";
 	}
 	
 	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/source_dirs.txt", join("\n", @source_dirs)) ) {
 		die "Error: failed to write /gsc/var/cache/testsuite/source_dirs.txt.\n";
 	}
-	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/source_dirs.txt $snapshot_dir/source_dirs.txt") == 0) {
+	unless ( execute_on_deploy("mv /gsc/var/cache/testsuite/source_dirs.txt $snapshot_dir/source_dirs.txt") ) {
 		die "Error: failed to move $snapshot_dir/source_dirs.txt.\n";
 	}
 	
@@ -107,7 +107,7 @@ sub create_snapshot_dir {
 	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/revisions.txt", join("\n", @revisions)) ) {
 		die "Error: failed to write /gsc/var/cache/testsuite/revisions.txt.\n";
 	}
-	unless ( system("ssh deploy.gsc.wustl.edu mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") == 0 ) {
+	unless ( execute_on_deploy("mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") ) {
 		die "Error: failed to move $snapshot_dir/revisions.txt.\n";
 	}
 	
@@ -126,31 +126,24 @@ sub post_create_cleanup {
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
 	for my $path (@paths) {
 		(my $new_path = $path) =~ s/\/lib/\/lib\/perl/;
-		unless ( system("ssh deploy.gsc.wustl.edu mv $path $new_path") == 0 ) {
+		unless ( execute_on_deploy("mv $path $new_path") ) {
 			die "Error: failed to move $path to $new_path.\n";
 		}
 	}
 	
 	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'debian', 'doc', 'inc', 't') {
-		system("ssh deploy.gsc.wustl.edu rm -rf $snapshot_dir/$unwanted_file");
+		execute_on_deploy("rm -rf $snapshot_dir/$unwanted_file");
 	}
 }
 
 sub update_tab_completion {
 	my $self = shift;
 	my $snapshot_dir = $self->{snapshot_dir};
-	
-	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec Genome::Command");
-	die "Error: exit code $? for update tab-completion-spec Genome::Command" if $?;
-	
-	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec Genome::Model::Tools");
-	die "Error: exit code $? for update tab-completion-spec Genome::Model::Tools" if $?;
-	
-	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec UR::Namespace::Command");
-	die "Error: exit code $? for update tab-completion-spec UR::Namespace::Command" if $?;
-	
-	system("cd $snapshot_dir/lib/perl/ && ur update tab-completion-spec Workflow::Command");
-	die "Error: exit code $? for update tab-completion-spec Workflow::Command" if $?;
+
+	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec Genome\:\:Command");
+	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec Genome\:\:Model\:\:Tools");
+	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec UR\:\:Namespace\:\:Command");	
+	execute_on_deploy("cd $snapshot_dir && ur update tab-completion-spec Workflow\:\:Command");
 }
 
 sub promote {
@@ -159,14 +152,27 @@ sub promote {
 	
 	if ( $snapshot_dir =~ /$Defaults::UNSTABLE_PATH/ ) {
 		(my $new_snapshot_dir = $snapshot_dir) =~ s/$Defaults::UNSTABLE_PATH/$Defaults::TESTED_PATH/;
-		return !system("ssh deploy.gsc.wustl.edu mv $snapshot_dir $new_snapshot_dir");
+		return execute_on_deploy("mv $snapshot_dir $new_snapshot_dir");
 	}
 	if ( $snapshot_dir =~ /$Defaults::TESTED_PATH/ ) {
 		(my $new_snapshot_dir = $snapshot_dir) =~ s/$Defaults::TESTED_PATH/$Defaults::STABLE_PATH/;
-		return !system("ssh deploy.gsc.wustl.edu mv $snapshot_dir $new_snapshot_dir");
+		return execute_on_deploy("mv $snapshot_dir $new_snapshot_dir");
 	}
 	
 	die "Error: tried to promote a directory is not in unstable nor tested path.\n";
+}
+
+sub execute_on_deploy {
+	my $cmd = shift;
+	
+	unless ( $cmd ) {
+		die "No command specified to execute_on_deploy\n";
+	}
+	
+	my $rv = !system("ssh deploy.gsc.wustl.edu '$cmd'");
+	die "Error: exit code $? for '$cmd'" if $?;
+	
+	return !$rv;
 }
 
 1;
