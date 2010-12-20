@@ -116,6 +116,26 @@ sub create_snapshot_dir {
 			die "Error: failed to rsync $source_dir.\n";
 		}
 	}
+	
+	my @dump_files = `find $snapshot_dir -iname '*sqlite3-dump'`;
+	for my $sqlite_dump (@dump_files) {
+	    my $sqlite_db = $sqlite_dump;
+	    chomp $sqlite_db;
+	    $sqlite_db =~ s/-dump//;
+	    if (-e $sqlite_db) {
+	        print "SQLite DB $sqlite_db already exists, skipping";
+	    } else {
+			print "Updating SQLite DB ($sqlite_db) from dump\n";
+	        my $sqlite_path = $ENV{SQLITE_PATH} || 'sqlite3';
+	        `$sqlite_path $sqlite_db < $sqlite_dump`;
+	        die "Error: died building sqlite db for $sqlite_dump" if $?;
+	    }
+	    unless (-e $sqlite_db) {
+	        die "Failed to reconstitute $sqlite_dump as $sqlite_db!";
+	    }
+	}
+	
+	return 1;
 }
 
 sub post_create_cleanup {
