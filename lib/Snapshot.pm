@@ -111,14 +111,13 @@ sub create_snapshot_dir {
 		die "Error: failed to move $snapshot_dir/revisions.txt.\n";
 	}
 	
-	sleep(5);
 	for my $source_dir (@source_dirs) {
 		unless ( system("rsync -e ssh -rltoD --exclude .git $source_dir/ deploy:$snapshot_dir/") == 0 ) {
 			die "Error: failed to rsync $source_dir.\n";
 		}
 	}
 	
-	sleep(5);
+	sleep(30); # $snapshot_dir doesn't instantly show up on other NFS shares...
 	my @dump_files = `find $snapshot_dir -iname '*sqlite3-dump'`;
 	for my $sqlite_dump (@dump_files) {
 	    my $sqlite_db = $sqlite_dump;
