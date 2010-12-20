@@ -80,7 +80,7 @@ print "Recording test completion in Hudson DB\n";
 
 if ( $tests_passed ) {
 	print "Passed tests, promoting snapshot\n";
-	$snapshot->promote;
+	$snapshot->move_to('tested');
 	exit;
 } else {
 	print "Tests failed, emailing failures\n";
