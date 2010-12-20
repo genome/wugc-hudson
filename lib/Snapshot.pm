@@ -124,8 +124,10 @@ sub post_create_cleanup {
 	
 	my @paths = glob("$snapshot_dir/lib/*");
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
+	print join("\n", @paths) . "\n";
 	for my $path (@paths) {
-		(my $new_path = $path) =~ s/\/lib/\/lib\/perl/;
+		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
+		print "$path $new_path\n";
 		unless ( execute_on_deploy("mv $path $new_path") ) {
 			die "Error: failed to move $path to $new_path.\n";
 		}
