@@ -129,7 +129,7 @@ sub create_snapshot_dir {
 	    } else {
 			print "Updating SQLite DB ($sqlite_db) from dump\n";
 	        my $sqlite_path = $ENV{SQLITE_PATH} || 'sqlite3';
-	        `$sqlite_path $sqlite_db < $sqlite_dump`;
+	        execute_on_deploy("$sqlite_path $sqlite_db < $sqlite_dump");
 	        die "Error: died building sqlite db for $sqlite_dump" if $?;
 	    }
 	    unless (-e $sqlite_db) {
