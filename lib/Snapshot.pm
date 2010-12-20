@@ -117,7 +117,7 @@ sub create_snapshot_dir {
 		}
 	}
 	
-	sleep(30); # $snapshot_dir doesn't instantly show up on other NFS shares...
+	wait_for_path($snapshot_dir); # $snapshot_dir doesn't instantly show up on other NFS shares...
 	my @dump_files = `find $snapshot_dir -iname '*sqlite3-dump'`;
 	for my $sqlite_dump (@dump_files) {
 	    my $sqlite_db = $sqlite_dump;
@@ -131,6 +131,7 @@ sub create_snapshot_dir {
 	        execute_on_deploy("$sqlite_path $sqlite_db < $sqlite_dump");
 	        die "Error: died building sqlite db for $sqlite_dump" if $?;
 	    }
+		wait_for_path($sqlite_db); # NFS
 	    unless (-e $sqlite_db) {
 	        die "Failed to reconstitute $sqlite_dump as $sqlite_db!";
 	    }
@@ -185,6 +186,18 @@ sub promote {
 	}
 	
 	die "Error: tried to promote a directory is not in unstable nor tested path.\n";
+}
+
+sub wait_for_path {
+	my $path = shift || die;
+	my $max_time = shift || 300;
+	my $count = 0;
+	while ( not -e $path && $count <= $max_time) {
+		sleep(1);
+		$count++;
+	}
+	
+	return ( -e $path );
 }
 
 sub execute_on_deploy {
