@@ -111,12 +111,14 @@ sub create_snapshot_dir {
 		die "Error: failed to move $snapshot_dir/revisions.txt.\n";
 	}
 	
+	sleep(5);
 	for my $source_dir (@source_dirs) {
 		unless ( system("rsync -e ssh -rltoD --exclude .git $source_dir/ deploy:$snapshot_dir/") == 0 ) {
 			die "Error: failed to rsync $source_dir.\n";
 		}
 	}
 	
+	sleep(5);
 	my @dump_files = `find $snapshot_dir -iname '*sqlite3-dump'`;
 	for my $sqlite_dump (@dump_files) {
 	    my $sqlite_db = $sqlite_dump;
@@ -143,7 +145,6 @@ sub post_create_cleanup {
 	my $snapshot_dir = $self->{snapshot_dir};
 	
 	my @paths = glob("$snapshot_dir/lib/*");
-    print "Found " . @paths . " files/dirs in lib/ but should only be lib/java and lib/perl, moving others...\n";
 	@paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
 	for my $path (@paths) {
 		(my $new_path = $path) =~ s/\/lib\//\/lib\/perl\//;
