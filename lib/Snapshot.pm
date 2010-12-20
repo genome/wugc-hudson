@@ -155,6 +155,8 @@ sub post_create_cleanup {
 	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'debian', 'doc', 'inc', 't') {
 		execute_on_deploy("rm -rf $snapshot_dir/$unwanted_file");
 	}
+	
+	return 1;
 }
 
 sub update_tab_completion {
@@ -165,6 +167,8 @@ sub update_tab_completion {
 	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Model\:\:Tools");
 	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec UR\:\:Namespace\:\:Command");	
 	execute_on_deploy("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Workflow\:\:Command");
+	
+	return 1;
 }
 
 sub promote {
