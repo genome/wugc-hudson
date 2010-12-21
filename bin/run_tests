@@ -66,7 +66,7 @@ print "Running tests\n";
 my $cmd  = "cd " . $snapshot->{snapshot_dir} . "/lib/perl/Genome &&";
    $cmd .= " PERL_TEST_HARNESS_DUMP_TAP='$workspace/test_result' /gsc/scripts/sbin/gsc-cron /gsc/bin/perl";
    $cmd .= " -I " . $snapshot->{snapshot_dir} . "/lib/perl";
-   $cmd .= " " . $snapshot->{snapshot_dir} . "/bin/ur test run --recurse --junit --lsf --jobs=10";
+   $cmd .= " " . $snapshot->{snapshot_dir} . "/bin/ur test run --recurse --junit --lsf --jobs=15";
    $cmd .= " --lsf-params=\"-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'\"";
 system($cmd);
 
