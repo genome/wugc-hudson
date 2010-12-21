@@ -21,11 +21,13 @@ require Defaults;
 # at junit files in the workspace which is overwritten each time
 #
 
-my $hudson_build_id = $ARGV[0] || die 'first argument should be a hudson build id';
+our $code_storage_base = $ENV{CODE_STORAGE_BASE} || die;
+our $hudson_project_path = $ENV{HUDSON_PROJECT_PATH} || die;
+our $hudson_build_id = $ARGV[0] || die 'first argument should be a hudson build id';
 chomp($hudson_build_id);
 
-my $test_result_base_path = '/gscuser/jlolofie/.hudson/jobs/Genome/workspace/test_result';
-my $build_base_path = join('/', $Defaults::UNSTABLE_PATH, 'genome-' . $hudson_build_id);
+my $test_result_base_path = "$hudson_project_path/Genome/workspace/test_result";
+my $build_base_path = "$hudson_project_path/Genome/builds/$hudson_build_id";
 
 my $url = join('/', 'http://hudson:8090/job/Genome', $hudson_build_id);
 
@@ -60,15 +62,15 @@ my $xml = XMLin($junit_pathname) || die "failed to parse junit results file: $ju
 exit;
 
 sub get_revision_info {
-
     my $r = {};
-    my $path = join ('/', $build_base_path, 'revision.txt');
+    my $path = join ('/', $Defaults::UNSTABLE_PATH, "genome-$hudson_build_id", 'revision.txt');
 
-    open(my $fh, $path);
-        while(<$fh>) {
-            my ($ns, $revision) = split(/\s+/);
-            $r->{$ns} = $revision;
-        }
+	my $fh;
+    open($fh, $path) || die;
+	while(<$fh>) {
+	    my ($ns, $revision) = split(/\s+/);
+	    $r->{$ns} = $revision;
+	}
     close($fh);
 
     return $r;
@@ -198,7 +200,7 @@ sub git_blame {
     my @us = map { $_ . '@genome.wustl.edu' } Users::apipe();
 
     my @ignore = Users::apipe_ignore();
-    $test_pathname = join('/', '/gscuser/jlolofie/dev/git/genome/lib/perl/Genome', $test_pathname);
+    $test_pathname = "$code_storage_base/genome/lib/perl/Genome/$test_pathname";
 
     my $module_pathname = $test_pathname;
     $module_pathname =~ s/^(.*)\.t$/$1.pm/;
@@ -208,7 +210,12 @@ sub git_blame {
     # 1. last commit
     my ($base_path) = $module_pathname =~ /^(.*)\/.*$/;
     local $CWD = $base_path; # git requires --git-dir or pwd being git checkout
-    my $log_cmd = "git log $module_pathname";
+	my $log_cmd;
+	if ( -e $module_pathname ) {
+		$log_cmd = "git log -- $module_pathname";
+	} elsif ( -e $test_pathname ) {
+		$log_cmd = "git log -- $test_pathname";
+	}
     my @log_out = `$log_cmd`;
 
     for my $log_line (@log_out) {
