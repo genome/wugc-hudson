@@ -98,6 +98,6 @@ if ( $tests_passed ) {
 } else {
 	print "Emailing failures\n";
 	$snapshot->move_to('unstable');
-	system("$Defaults::BIN_DIR/email_failures $build_number") && die;
+	system("bsub -u $Defaults::EMAIL -q short $Defaults::BIN_DIR/email_failures $build_number") && die;
 	exit 1;
 }
