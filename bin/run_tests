@@ -81,6 +81,7 @@ print "Recording test completion in Hudson DB\n";
 
 my $tests_passed = 1;
 my @xml_files = qx[find $workspace/test_result -name '*.junit.xml'];
+map { chomp $_ } @xml_files;
 for my $xml_file (@xml_files) {
 	my $test_xml = XML::Simple::XMLin($xml_file);
 	if ( $test_xml->{testsuite}{failures} || $test_xml->{testsuite}{errors} ) {
