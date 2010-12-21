@@ -63,10 +63,9 @@ exit;
 
 sub get_revision_info {
     my $r = {};
-    my $path = join ('/', $Defaults::UNSTABLE_PATH, "genome-$hudson_build_id", 'revision.txt');
+    my $path = join ('/', $Defaults::UNSTABLE_PATH, "genome-$hudson_build_id", 'revisions.txt');
 
-	my $fh;
-    open($fh, $path) || die;
+    open(my $fh, '<', $path) || die;
 	while(<$fh>) {
 	    my ($ns, $revision) = split(/\s+/);
 	    $r->{$ns} = $revision;
