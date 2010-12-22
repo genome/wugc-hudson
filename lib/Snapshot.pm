@@ -176,13 +176,13 @@ sub move_to {
 	my $dest_dir;
 	if ( $move_to =~ /unstable/ ) {
 		$dest_dir = "$Defaults::UNSTABLE_PATH/$snapshot_name";
-	}
-	if ( $move_to =~ /tested/ ) {
+	} elsif ( $move_to =~ /tested/ ) {
 		$dest_dir = "$Defaults::TESTED_PATH/$snapshot_name";
-	}
-	if ( $move_to =~ /stable/ ) {
+	} elsif ( $move_to =~ /stable/ ) {
 		$dest_dir = "$Defaults::STABLE_PATH/$snapshot_name/";
-	}
+	} else {
+        die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
+    }
 	
 	execute_on_deploy("rsync -rltoD $snapshot_dir/ $dest_dir/");
 	for my $symlink ($Defaults::STABLE_USER, $Defaults::STABLE_WEB, $Defaults::STABLE_PIPELINE) {
@@ -193,8 +193,8 @@ sub move_to {
 		}
 	}
 	execute_on_deploy("rm -rf $snapshot_dir/");
-	
-	die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
+
+    return 1;
 }
 
 sub wait_for_path {
