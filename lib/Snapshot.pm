@@ -173,15 +173,26 @@ sub move_to {
 	
 	(my $snapshot_name = $snapshot_dir) =~ s/.*\///;
 	
+	my $dest_dir;
 	if ( $move_to =~ /unstable/ ) {
-		return execute_on_deploy("mv $snapshot_dir $Defaults::UNSTABLE_PATH/$snapshot_name");
+		$dest_dir = "$Defaults::UNSTABLE_PATH/$snapshot_name";
 	}
 	if ( $move_to =~ /tested/ ) {
-		return execute_on_deploy("mv $snapshot_dir $Defaults::TESTED_PATH/$snapshot_name");
+		$dest_dir = "$Defaults::TESTED_PATH/$snapshot_name";
 	}
 	if ( $move_to =~ /stable/ ) {
-		return execute_on_deploy("mv $snapshot_dir $Defaults::STABLE_PATH/$snapshot_name");
+		$dest_dir = "$Defaults::STABLE_PATH/$snapshot_name/";
 	}
+	
+	execute_on_deploy("rsync -rltoD $snapshot_dir/ $dest_dir/");
+	for my $symlink ($Defaults::STABLE_USER, $Defaults::STABLE_WEB, $Defaults::STABLE_PIPELINE) {
+		if ( readlink($symlink) =~ /^$snapshot_dir\/?$/ ) {
+			print "Updating symlink ($symlink) since we are moving the snapshot.\n";
+			execute_on_deploy("ln -sf $dest_dir $symlink-new");
+			execute_on_deploy("mv -Tf $symlink-new $symlink");
+		}
+	}
+	execute_on_deploy("rm -rf $snapshot_dir/");
 	
 	die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
 }
@@ -214,6 +225,29 @@ sub execute_on_deploy {
 	$rv = 1 if ( $exit == 0 );
 	
 	return $rv;
+}
+
+sub find_snapshot {
+	my $build_name = shift;
+	$build_name =~ s/genome-genome/genome/;
+	my $snapshot_path;
+	
+	if ( -d "$Defaults::STABLE_PATH/$build_name" ) {
+		$snapshot_path = "$Defaults::STABLE_PATH/$build_name";
+	} elsif ( -d "$Defaults::TESTED_PATH/$build_name" ) {
+		$snapshot_path = "$Defaults::TESTED_PATH/$build_name";
+	} elsif ( -d "$Defaults::CUSTOM_PATH/$build_name" ) {
+		$snapshot_path = "$Defaults::CUSTOM_PATH/$build_name";
+	} 	elsif ( -d "$Defaults::UNSTABLE_PATH/$build_name") {
+		$snapshot_path = "$Defaults::UNSTABLE_PATH/$build_name";
+	}	elsif ( -d "$Defaults::OLD_PATH/$build_name") {
+		$snapshot_path = "$Defaults::OLD_PATH/$build_name";
+	} else {
+		die "Unable to find $build_name in $Defaults::BASE_DIR/snapshots/{stable,tested,custom}\n";
+	}
+	$Defaults::BASE_DIR = $Defaults::BASE_DIR; # to prevent warning
+	
+	return $snapshot_path;
 }
 
 1;
