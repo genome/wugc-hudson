@@ -45,7 +45,7 @@ die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
 
 print "Latest snapshot seems to be $latest_snapshot, diffing against current genome-stable $stable_snapshot\n";
 
-my $diff_cmd = "perl -I $stable_snapshot `which genome` model diff --first-revision " .
+my $diff_cmd = "perl -I $stable_snapshot $stable_snapshot/bin/genome model diff --first-revision " .
     "$latest_snapshot --second-revision $stable_snapshot apipe-test%";
 
 # Run command and check return values. Send out failure email if necessary.
