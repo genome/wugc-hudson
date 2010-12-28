@@ -63,10 +63,10 @@ sub promote {
 	my $OLD_BUILD_NAME = readlink($symlink);
 	$OLD_BUILD_NAME =~ s/\/+$//;
 	$OLD_BUILD_NAME =~ s/.*\///;
-	(my $OLD_BUILD_VERSION = $OLD_BUILD_NAME) =~ s/(genome-\d+)/$1/;
+	(my $OLD_BUILD_VERSION = $OLD_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
 
 	(my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
-	(my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/(genome-\d+)/$1/;
+	(my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
 
 	unless ( $announce_only ) {
 	    update_symlinks(build_name => $NEW_BUILD_NAME, symlink_name => $symlink_name) || die;
@@ -185,8 +185,8 @@ sub create_changes_summary {
         push @change_summary, "No changes highlighted.\n\n";
     }
 
-	(my $old_git_version = $old_version) =~ s/(genome-\d+)/$1/;
-	(my $new_git_version = $new_version) =~ s/(genome-\d+)/$1/;
+	(my $old_git_version = $old_version) =~ s/.*(genome-\d+).*/$1/;
+	(my $new_git_version = $new_version) =~ s/.*(genome-\d+).*/$1/;
 	push @change_summary, "== Disclaimer ==\n\n", "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For a more exhaustive list try 'git log $old_git_version..$new_git_version'.\n";
 	File::Slurp::write_file("$snapshot_path/CHANGE_SUMMARY", @change_summary);
 	return "$snapshot_path/CHANGE_SUMMARY";
