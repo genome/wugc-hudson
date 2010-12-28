@@ -1,33 +1,37 @@
-#!/usr/bin/env perl
+#!/gsc/bin/perl
 
 use strict;
 use warnings;
 use MIME::Lite;
 
-use Users;
-use Library;
+BEGIN {
+    require File::Basename;
+    push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
 
+require Users;
+require Library;
+require Defaults;
+require Snapshot;
+
+# Get hudson build number and construct URL
+# FIXME Hudson is supposed to store the URL in an environment variable, but I couldn't get it to work
 my $hudson_build_number = $ENV{BUILD_NUMBER};
 unless (defined $hudson_build_number) {
     print "BUILD_NUMBER environment variable (corresponds to hudson build ID) not set, using dummy value!\n";
     $hudson_build_number = -42;
 }
-
 my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20Output', $hudson_build_number);
 
-# The nightly build runner runs on snapshots in the passed unit tests directory, so we need
-# to look for builds run on snapshots in this diretory
-my $passed_unit_tests_dir = "/gsc/scripts/opt/genome/snapshots/tested";
-my @snapshots = glob("$passed_unit_tests_dir/*");
-
-print "Found " . scalar @snapshots . " snapshots in $passed_unit_tests_dir\n";
-
-# Get the most recent snapshot in the passed-unit-tests directory 
-# TODO Use the sqlite database Justin is setting up instead of this
+# Get the most recent snapshot in the testing directory 
+my $tested_snapshot_dir = $Defaults::TESTED_PATH;
+my @snapshots = glob("$tested_snapshot_dir/*");
+print "Found " . scalar @snapshots . " snapshots in $tested_snapshot_dir\n";
 my $latest_hudson_id = 0;
 my $latest_snapshot;
 for my $snapshot (@snapshots) {
     my ($id) = $snapshot =~ /.*genome-(\d+).*/;
+    next unless defined $id;
     if ($id > $latest_hudson_id) {
         $latest_hudson_id = $id;
         $latest_snapshot = $snapshot . '/lib/perl';
@@ -35,22 +39,16 @@ for my $snapshot (@snapshots) {
 }
 
 # Figure out what the current genome-stable snapshot is
-my $stable_target = readlink("/gsc/scripts/opt/genome/stable-pipeline");
-die "Could not readlink stable-pipeline symlink!" unless defined $stable_target;
-my $stable_snapshot = '/gsc/scripts/opt/genome/snapshots/stable/' . $stable_target . '/lib/perl/';
+my $stable_snapshot = readlink $Defaults::STABLE_PIPELINE; 
+$stable_snapshot .= '/lib/perl/';
 die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
-
-# Need to remove any fix# from the stable snapshot path, since the nightly builds aren't run against patched snapshots
-$stable_snapshot =~ s/-fix\d+//;
-# Also need to point to the corresponding passed-unit-tests directory, again since the nightly builder doesn't start
-# builds in the passed-model-tests directory
-$stable_snapshot =~ s/passed-model-tests/passed-unit-tests/;
 
 print "Latest snapshot seems to be $latest_snapshot, diffing against current genome-stable $stable_snapshot\n";
 
-my $diff_cmd = "perl -I /gscuser/bdericks/genome/clean/lib/perl `which genome` model diff --first-revision " .
+my $diff_cmd = "perl -I $stable_snapshot $stable_snapshot/bin/genome model diff --first-revision " .
     "$latest_snapshot --second-revision $stable_snapshot apipe-test%";
 
+# Run command and check return values. Send out failure email if necessary.
 my $diff_out = eval { `$diff_cmd 2>&1` };
 if ($@ or $?) {
     my $exit_code = $@ ? $@ : ($? >> 8);
@@ -59,7 +57,7 @@ if ($@ or $?) {
     Library::send_mail(
         subject => '[fail] Test Build Diff Failed to Execute!', 
         body => $failure_msg_body,
-        from => 'ssmith@genome.wustl.edu',
+        from => 'apipe-tester@genome.wustl.edu',
         to => Library::users_to_addresses(Users::apipe()),
     );
     exit 1;
@@ -68,7 +66,6 @@ if ($@ or $?) {
 # Now that the command is run, see if there were any differences or if some builds couldn't be found and
 # send emails to the appropriate people.
 print "Diff command output:\n$diff_out\n";
-
 my $problems = 0;
 while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
     my $error_type = $1;
@@ -115,8 +112,10 @@ if ($problems) {
     exit 1;
 }
 else {
-    print "Test build differ completed successfully and no differences found!\n";
-    print "Fin.\n";
+    print "Test build differ completed successfully and no differences found, moving to stable!\n";
+    my $snapshot = Snapshot->open($latest_snapshot) or die "Could not get snapshot object for $latest_snapshot";
+    $snapshot->move_to('stable');
+    print "Snapshot $latest_snapshot has been moved to stable directory, test successful!\n";
     exit 0;
 }
 

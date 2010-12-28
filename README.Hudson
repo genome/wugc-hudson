@@ -1,3 +1,6 @@
+*** May be outdated ***
+
+
 First, run make install to put create a ~/.UR directory to use in your builds.
 
 Then, create a Hudson project that gets the SVN repo, then your Hudson "command"

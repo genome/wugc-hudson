@@ -64,9 +64,9 @@ my $insert_sql  = "INSERT INTO unit_test (date, status, build_number, genome_has
 ## run tests
 print "Running tests\n";
 my $cmd  = "cd " . $snapshot->{snapshot_dir} . "/lib/perl/Genome &&";
-   $cmd .= " PERL_TEST_HARNESS_DUMP_TAP='$workspace/test_result' /gsc/scripts/sbin/gsc-cron /gsc/bin/perl";
-   $cmd .= " -I $Defaults::UNSTABLE_PATH/$build_name/lib/perl";
-   $cmd .= " $Defaults::UNSTABLE_PATH/$build_name/bin/ur test run --recurse --junit --lsf --jobs=10";
+   $cmd .= " PERL_TEST_HARNESS_DUMP_TAP='$workspace/test_result' /gsc/bin/perl";
+   $cmd .= " -I " . $snapshot->{snapshot_dir} . "/lib/perl";
+   $cmd .= " " . $snapshot->{snapshot_dir} . "/bin/ur test run --recurse --junit --lsf --jobs=15";
    $cmd .= " --lsf-params=\"-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'\"";
 system($cmd);
 
@@ -81,6 +81,7 @@ print "Recording test completion in Hudson DB\n";
 
 my $tests_passed = 1;
 my @xml_files = qx[find $workspace/test_result -name '*.junit.xml'];
+map { chomp $_ } @xml_files;
 for my $xml_file (@xml_files) {
 	my $test_xml = XML::Simple::XMLin($xml_file);
 	if ( $test_xml->{testsuite}{failures} || $test_xml->{testsuite}{errors} ) {
