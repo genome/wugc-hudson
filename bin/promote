@@ -47,7 +47,7 @@ if ( $web ) {
 sub promote {
 	my $symlink_name = shift;
 	
-	my $NEW_BUILD_IDENTIFIER = shift @ARGV;
+	my $NEW_BUILD_IDENTIFIER = $ARGV[0];
 	
 	my $symlink;
 	if ( $symlink_name =~ /pipeline/ ) {
