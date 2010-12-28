@@ -1,6 +1,6 @@
 SYMLINKS:
-current/stable      The default snapshot for the cron.  (Must pass model tests.)
-current/tested      The in the new PERL5LIB and PATH for users.  (Must pass the test suite.)
+current/pipeline    The default snapshot for the cron/pipeline. (Must pass model tests and build diffs.)
+current/user        The in the new PERL5LIB and PATH for users. (Must pass the test suite.)
 current/web         The default snapshot for the web interface. (Typically matches stable-user).
 
 SUB-DIRECTORIES:
