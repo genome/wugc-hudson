@@ -24,11 +24,11 @@ if ( @ARGV < 3 || $help) {
 my $version = shift @ARGV;
 my $old_path;
 if ( $version =~ /stable/ ) {
-    $old_path = readlink($Defaults::STABLE_PIPELINE);
+    $old_path = readlink($Defaults::CURRENT_PIPELINE);
 } elsif ( $version =~ /tested/ ) {
-	$old_path = readlink($Defaults::STABLE_USER);
+	$old_path = readlink($Defaults::CURRENT_USER);
 } elsif ( $version =~ /web/ ) {
-	$old_path = readlink($Defaults::STABLE_WEB);
+	$old_path = readlink($Defaults::CURRENT_WEB);
 } else {
     $old_path = Snapshot::find_snapshot($version);
 }

@@ -18,12 +18,12 @@ use warnings;
 
 our $BIN_DIR = File::Basename::dirname(__FILE__);
 
-my ($help, $announce_only, $stable, $tested, $web) = ('', '', '', '', '');
+my ($help, $announce_only, $pipeline, $user, $web) = ('', '', '', '', '');
 my $getoptions_rv = Getopt::Long::GetOptions(
 	'help' => \$help,
 	'announce-only' => \$announce_only,
-	'stable' => \$stable,
-	'tested' => \$tested,
+	'pipeline' => \$pipeline,
+	'user' => \$user,
 	'web' => \$web,
 );
 unless($getoptions_rv) {
@@ -34,11 +34,11 @@ if ( @ARGV != 1 || $help ) {;
 	exit;
 };
 
-if ( $stable ) {
-	promote('stable');
+if ( $pipeline ) {
+	promote('pipeline');
 }
-if ( $tested ) {
-	promote('tested');
+if ( $user ) {
+	promote('user');
 }
 if ( $web ) {
 	promote('web');
@@ -50,14 +50,14 @@ sub promote {
 	my $NEW_BUILD_IDENTIFIER = shift @ARGV;
 	
 	my $symlink;
-	if ( $symlink_name =~ /stable/ || $symlink_name =~ /pipeline/ ) {
-		$symlink = $Defaults::STABLE_PIPELINE;
+	if ( $symlink_name =~ /pipeline/ ) {
+		$symlink = $Defaults::CURRENT_PIPELINE;
 	}
-	if ( $symlink_name =~ /tested/ || $symlink_name =~ /user/ ) {
-		$symlink = $Defaults::STABLE_USER;
+	if ( $symlink_name =~ /user/ ) {
+		$symlink = $Defaults::CURRENT_USER;
 	}
 	if ( $symlink_name =~ /web/ ) {
-		$symlink = $Defaults::STABLE_WEB;
+		$symlink = $Defaults::CURRENT_WEB;
 	}
 	
 	my $OLD_BUILD_NAME = readlink($symlink);
@@ -96,20 +96,20 @@ sub promote {
 	}
 
 	print "Symlinks point to:\n";
-	print "current/pipeline: " . readlink($Defaults::STABLE_PIPELINE) . "\n";
-	print "current/web: " . readlink($Defaults::STABLE_WEB) . "\n";
-	print "current/user: " . readlink($Defaults::STABLE_USER) . "\n";
+	print "current/pipeline: " . readlink($Defaults::CURRENT_PIPELINE) . "\n";
+	print "current/web: " . readlink($Defaults::CURRENT_WEB) . "\n";
+	print "current/user: " . readlink($Defaults::CURRENT_USER) . "\n";
 }
 
 sub help_message {
 	my $help_message;
 	$help_message .= "Usage:\n";
-    $help_message .= "\t$0 <version> --stable --web \t-- promotes version and announces it to apipe\n";
+    $help_message .= "\t$0 <version> --pipeline --web \t-- promotes version and announces it to apipe\n";
 	$help_message .= "Options:\n";
-    $help_message .= "\t--announce-only             \t\t-- only announces that promotion will occur in one hour\n";
-	$help_message .= "\t--pipeline                  \t\t-- promote the current/stable symlink\n";
-	$help_message .= "\t--user                      \t\t-- promote the current/tested symlink\n";
-	$help_message .= "\t--web                       \t\t-- promote the current/web symlink\n";
+    $help_message .= "\t--announce-only               \t\t-- only announces that promotion will occur in one hour\n";
+	$help_message .= "\t--pipeline                    \t\t-- promote the current/pipeline symlink\n";
+	$help_message .= "\t--user                        \t\t-- promote the current/user symlink\n";
+	$help_message .= "\t--web                         \t\t-- promote the current/web symlink\n";
 	return $help_message;
 };
 
@@ -123,22 +123,22 @@ sub update_symlinks {
 		die "Invalid params passed to promote_symlinks: '" . join(', ', @params_keys) . "'\n";
 	}
 	
-	if ( $symlink_name =~ /stable/ ) {
-		print "Changing stable symlink ($build_name)\n";
-		system("ln -sf $snapshot_path $Defaults::STABLE_PIPELINE-new");
-		system("mv -Tf $Defaults::STABLE_PIPELINE-new $Defaults::STABLE_PIPELINE");
+	if ( $symlink_name =~ /pipeline/ ) {
+		print "Changing pipeline symlink ($build_name)\n";
+		system("ln -sf $snapshot_path $Defaults::CURRENT_PIPELINE-new");
+		system("mv -Tf $Defaults::CURRENT_PIPELINE-new $Defaults::CURRENT_PIPELINE");
 	}
 	
 	if ( $symlink_name =~ /web/ ) {
 		print "Changing web symlink ($build_name, needs a restart)\n";
-		system("ln -sf $snapshot_path $Defaults::STABLE_WEB-new");
-		system("mv -Tf $Defaults::STABLE_WEB-new $Defaults::STABLE_WEB");
+		system("ln -sf $snapshot_path $Defaults::CURRENT_WEB-new");
+		system("mv -Tf $Defaults::CURRENT_WEB-new $Defaults::CURRENT_WEB");
 	}
 	
-	if ( $symlink_name =~ /tested/ ) {
-		print "Changing tested symlink ($build_name)\n";
-		system("ln -sf $snapshot_path $Defaults::STABLE_USER-new");
-		system("mv -Tf $Defaults::STABLE_USER-new $Defaults::STABLE_USER");
+	if ( $symlink_name =~ /user/ ) {
+		print "Changing user symlink ($build_name)\n";
+		system("ln -sf $snapshot_path $Defaults::CURRENT_USER-new");
+		system("mv -Tf $Defaults::CURRENT_USER-new $Defaults::CURRENT_USER");
 	}
 
 	return 1;

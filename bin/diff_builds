@@ -39,7 +39,7 @@ for my $snapshot (@snapshots) {
 }
 
 # Figure out what the current genome-stable snapshot is
-my $stable_snapshot = readlink $Defaults::STABLE_PIPELINE; 
+my $stable_snapshot = readlink $Defaults::CURRENT_PIPELINE; 
 $stable_snapshot .= '/lib/perl/';
 die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
 

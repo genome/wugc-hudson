@@ -185,7 +185,7 @@ sub move_to {
     }
 	
 	execute_on_deploy("rsync -rltoD $snapshot_dir/ $dest_dir/");
-	for my $symlink ($Defaults::STABLE_USER, $Defaults::STABLE_WEB, $Defaults::STABLE_PIPELINE) {
+	for my $symlink ($Defaults::CURRENT_USER, $Defaults::CURRENT_WEB, $Defaults::CURRENT_PIPELINE) {
 		if ( readlink($symlink) =~ /^$snapshot_dir\/?$/ ) {
 			print "Updating symlink ($symlink) since we are moving the snapshot.\n";
 			execute_on_deploy("ln -sf $dest_dir $symlink-new");
