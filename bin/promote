@@ -184,7 +184,10 @@ sub create_changes_summary {
     if (@change_summary == 0) {
         push @change_summary, "No changes highlighted.\n\n";
     }
-	push @change_summary, "== Discalimer ==\n\n", "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For an exhaustive list try 'git log $old_version..$new_version'.\n";
+
+	(my $old_git_version = $old_version) =~ s/(genome-\d+)/$1/;
+	(my $new_git_version = $new_version) =~ s/(genome-\d+)/$1/;
+	push @change_summary, "== Disclaimer ==\n\n", "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For a more exhaustive list try 'git log $old_git_version..$new_git_version'.\n";
 	File::Slurp::write_file("$snapshot_path/CHANGE_SUMMARY", @change_summary);
 	return "$snapshot_path/CHANGE_SUMMARY";
 }
