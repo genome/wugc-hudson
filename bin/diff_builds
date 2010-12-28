@@ -39,14 +39,14 @@ for my $snapshot (@snapshots) {
 }
 
 # Figure out what the current genome-stable snapshot is
-my $stable_snapshot = readlink $Defaults::CURRENT_PIPELINE; 
-$stable_snapshot .= '/lib/perl/';
-die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
+my $current_pipeline_snapshot = readlink($Defaults::CURRENT_PIPELINE) . '/lib/perl/'; 
+my $current_user_snapshot = readlink($Defaults::CURRENT_USER) . '/lib/perl';
+die "No current/pipeline snapshot found at $current_pipeline_snapshot" unless -d $current_pipeline_snapshot;
 
-print "Latest snapshot seems to be $latest_snapshot, diffing against current genome-stable $stable_snapshot\n";
+print "Latest snapshot seems to be $latest_snapshot, diffing against current/pipeline $current_pipeline_snapshot\n";
 
-my $diff_cmd = "perl -I $stable_snapshot $stable_snapshot/bin/genome model diff --first-revision " .
-    "$latest_snapshot --second-revision $stable_snapshot apipe-test%";
+my $diff_cmd = "perl -I $current_user_snapshot $current_user_snapshot/bin/genome model diff --first-revision " .
+    "$latest_snapshot --second-revision $current_pipeline_snapshot apipe-test%";
 
 # Run command and check return values. Send out failure email if necessary.
 my $diff_out = eval { `$diff_cmd 2>&1` };
@@ -88,12 +88,12 @@ while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
     my ($failure_msg, $failure_subject);
     if ($error_type =~ /DIFFERENCES FOUND/) {
         $failure_msg = "Output differences detected when comparing builds of type $build_type from model $model_id " .
-            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot.\n\nTo see raw output, go to $hudson_build_url.";
+            "run on latest snapshot $latest_snapshot and current/pipeline snapshot $current_pipeline_snapshot.\n\nTo see raw output, go to $hudson_build_url.";
         $failure_subject = "[fail] differences found, model $model_id, $build_type - " . join(",", @to);
     }
     else {
         $failure_msg = "Problem occurred when attempting to compare builds of type $build_type from model $model_id " .
-            "run on latest snapshot $latest_snapshot and stable snapshot $stable_snapshot.\n\n" .
+            "run on latest snapshot $latest_snapshot and current/pipeline snapshot $current_pipeline_snapshot.\n\n" .
             "Please take a look at $hudson_build_url.";
         $failure_subject = "[fail] problem executing build differ, model $model_id, $build_type - " . join(",", @to);
     }
@@ -112,10 +112,10 @@ if ($problems) {
     exit 1;
 }
 else {
-    print "Test build differ completed successfully and no differences found, moving to stable!\n";
+    print "Test build differ completed successfully and no differences found, moving to snapshots/stable!\n";
     my $snapshot = Snapshot->open($latest_snapshot) or die "Could not get snapshot object for $latest_snapshot";
     $snapshot->move_to('stable');
-    print "Snapshot $latest_snapshot has been moved to stable directory, test successful!\n";
+    print "Snapshot $latest_snapshot has been moved to snapshots/stable directory, test successful!\n";
     exit 0;
 }
 
