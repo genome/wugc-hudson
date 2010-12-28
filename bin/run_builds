@@ -1,0 +1,60 @@
+#!/usr/bin/env perl
+
+BEGIN {
+	require File::Basename;
+	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
+
+use strict;
+use warnings;
+
+require Defaults;
+require Snapshot;
+
+my $hudson_builds_number = $ENV{'BUILD_NUMBER'};
+
+# get most recent passed tests
+my $hudson_tests_number = Library::check_for_new_build();
+unless ( $hudson_tests_number ) {
+	print "Could not find successful build from today\n";
+	exit 1;
+}
+print "Most recent successful build from today is $hudson_tests_number\n";
+
+my $snapshot = Snapshot->open("$Defaults::TESTED_PATH/genome-$hudson_tests_number");
+my $snapshot_dir = $snapshot->{snapshot_dir};
+print "Opened snapshot at $snapshot_dir\n";
+
+print "Recording test in Hudson DB\n";
+my $hudson_db = '/gsc/var/cache/testsuite/hudson.db';
+my $dbh = DBI->connect("dbi:SQLite:dbname=$hudson_db","","") || die 'cant open sqlite db';
+my $s = $dbh->prepare("INSERT INTO model_test ('date','status','build_number','unit_test_build_number') values (?,?,?,?)") || die 'couldnt prepare query';
+$s->execute(now(), 'started', $hudson_builds_number, $hudson_tests_number);
+$dbh->disconnect();
+
+my $builds_passed = !system("cd $snapshot_dir/lib/perl && $Defaults::BIN_DIR/apipe_tests");
+
+print "Recording test completion in Hudson DB\n";
+$dbh = DBI->connect("dbi:SQLite:dbname=$hudson_db","","") || die 'cant open sqlite db';
+$s = $dbh->prepare("UPDATE model_test SET status = 'done' WHERE build_number = ?") || die 'couldnt prepare query';
+$s->execute($hudson_builds_number);
+$dbh->disconnect();
+
+if ( $builds_passed ) {
+	print "Passed builds\n";
+	exit;
+} else {
+	print "Failed builds\n";
+	exit 1;
+}
+
+sub now {
+    my ($sec,$min,$hour,$day,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    $mon++;
+    $year += 1900;
+
+    my $now = join('-',$year,$mon,$day). ' ' . join(':',$hour,$min,$sec) . "\n";
+    chomp($now);
+    return $now;
+}
+

@@ -1,12 +1,20 @@
-First, run make install to put create a ~/.UR directory to use in your builds.
+SYMLINKS:
+current/pipeline    The default snapshot for the cron/pipeline. (Must pass model tests and build diffs.)
+current/user        The in the new PERL5LIB and PATH for users. (Must pass the test suite.)
+current/web         The default snapshot for the web interface. (Typically matches stable-user).
 
-Then, create a Hudson project that gets the SVN repo, then your Hudson "command"
-should point to the hudson.sh scripts in this directory.
+SUB-DIRECTORIES:
+snapshots/custom    Snapshots which have been custom built, e.g. hotfixes.
+snapshots/old       Snapshots which have been superceded and which have no running builds.
+snapshots/stable    Snapshots which have passed tests and builds.
+snapshots/tested    Snapshots which have passed tests but not builds.
+snapshots/unstable  Snapshots which have failed tests.
 
-Finally, check "Publish JUnit test result report" and put something like:
-test_result/**/*.xml in the box.
+Naming convention:
+    genome-$hudsonbuild
+or
+    genome-$hudsonbuild-fixM
 
-From there, it's up to you. You can have it email you or whatever.
+Each Hudson build contains a file called revisions.txt which contains the revision numbers for all repos at that build.
+In addition, the genome.git repository gets a tag for Hudson build N like "genome-N".
 
-TODO:
-Use Devel::Cover to see test coverage.

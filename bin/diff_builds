@@ -4,10 +4,15 @@ use strict;
 use warnings;
 use MIME::Lite;
 
-use Users;
-use Library;
-use Defaults;
+BEGIN {
+    require File::Basename;
+    push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
 
+require Users;
+require Library;
+require Defaults;
+require Snapshot;
 
 # Get hudson build number and construct URL
 # FIXME Hudson is supposed to store the URL in an environment variable, but I couldn't get it to work
@@ -18,15 +23,10 @@ unless (defined $hudson_build_number) {
 }
 my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20Output', $hudson_build_number);
 
-# The nightly build runner runs on snapshots in the passed unit tests directory, so we need
-# to look for builds run on snapshots in this diretory
-my $tested_snapshot_dir = $Defaults::TESTED_SNAPSHOT_DIR;
+# Get the most recent snapshot in the testing directory 
+my $tested_snapshot_dir = $Defaults::TESTED_PATH;
 my @snapshots = glob("$tested_snapshot_dir/*");
-
 print "Found " . scalar @snapshots . " snapshots in $tested_snapshot_dir\n";
-
-# Get the most recent snapshot in the passed-unit-tests directory 
-# TODO Use the sqlite database Justin is setting up instead of this
 my $latest_hudson_id = 0;
 my $latest_snapshot;
 for my $snapshot (@snapshots) {
@@ -39,26 +39,13 @@ for my $snapshot (@snapshots) {
 }
 
 # Figure out what the current genome-stable snapshot is
-my $stable_symlink = $Defaults::STABLE_SYMLINK;
-my $stable_snapshot = readlink $stable_symlink; 
+my $stable_snapshot = readlink $Defaults::STABLE_PIPELINE; 
 $stable_snapshot .= '/lib/perl/';
 die "No stable snapshot found at $stable_snapshot" unless -d $stable_snapshot;
 
-# Snapshots that are patched are placed in the custom snapshot directory. The fix-## needs to be removed
-# and the custom path needs to be replaced with the tested snapshot path (since that's where the snapshot
-# lives when nightly builds are run)
-if ($stable_snapshot =~ /-fix\d+/) {
-    $stable_snapshot =~ s/-fix\d+//;
-    $stable_snapshot =~ s/$Defaults::CUSTOM_SNAPSHOT_DIR/$Defaults::TESTED_SNAPSHOT_DIR/;
-}
-# If there is no fix on the snapshot, it'll be in the stable snapshot directory
-else {
-    $stable_snapshot =~ s/$Defaults::STABLE_SNAPSHOT_DIR/$Defaults::TESTED_SNAPSHOT_DIR/;
-}
-
 print "Latest snapshot seems to be $latest_snapshot, diffing against current genome-stable $stable_snapshot\n";
 
-my $diff_cmd = "perl -I $stable_snapshot `which genome` model diff --first-revision " .
+my $diff_cmd = "perl -I $stable_snapshot $stable_snapshot/bin/genome model diff --first-revision " .
     "$latest_snapshot --second-revision $stable_snapshot apipe-test%";
 
 # Run command and check return values. Send out failure email if necessary.
@@ -79,7 +66,6 @@ if ($@ or $?) {
 # Now that the command is run, see if there were any differences or if some builds couldn't be found and
 # send emails to the appropriate people.
 print "Diff command output:\n$diff_out\n";
-
 my $problems = 0;
 while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
     my $error_type = $1;
@@ -126,8 +112,10 @@ if ($problems) {
     exit 1;
 }
 else {
-    print "Test build differ completed successfully and no differences found!\n";
-    print "Fin.\n";
+    print "Test build differ completed successfully and no differences found, moving to stable!\n";
+    my $snapshot = Snapshot->open($latest_snapshot) or die "Could not get snapshot object for $latest_snapshot";
+    $snapshot->move_to('stable');
+    print "Snapshot $latest_snapshot has been moved to stable directory, test successful!\n";
     exit 0;
 }
 
