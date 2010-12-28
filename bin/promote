@@ -50,10 +50,10 @@ sub promote {
 	my $NEW_BUILD_IDENTIFIER = shift @ARGV;
 	
 	my $symlink;
-	if ( $symlink_name =~ /stable/ ) {
+	if ( $symlink_name =~ /stable/ || $symlink_name =~ /pipeline/ ) {
 		$symlink = $Defaults::STABLE_PIPELINE;
 	}
-	if ( $symlink_name =~ /tested/ ) {
+	if ( $symlink_name =~ /tested/ || $symlink_name =~ /user/ ) {
 		$symlink = $Defaults::STABLE_USER;
 	}
 	if ( $symlink_name =~ /web/ ) {
@@ -96,9 +96,9 @@ sub promote {
 	}
 
 	print "Symlinks point to:\n";
-	print "current/stable: " . readlink($Defaults::STABLE_PIPELINE) . "\n";
+	print "current/pipeline: " . readlink($Defaults::STABLE_PIPELINE) . "\n";
 	print "current/web: " . readlink($Defaults::STABLE_WEB) . "\n";
-	print "current/tested: " . readlink($Defaults::STABLE_USER) . "\n";
+	print "current/user: " . readlink($Defaults::STABLE_USER) . "\n";
 }
 
 sub help_message {
@@ -107,8 +107,8 @@ sub help_message {
     $help_message .= "\t$0 <version> --stable --web \t-- promotes version and announces it to apipe\n";
 	$help_message .= "Options:\n";
     $help_message .= "\t--announce-only             \t\t-- only announces that promotion will occur in one hour\n";
-	$help_message .= "\t--stable                    \t\t-- promote the current/stable symlink\n";
-	$help_message .= "\t--tested                    \t\t-- promote the current/tested symlink\n";
+	$help_message .= "\t--pipeline                  \t\t-- promote the current/stable symlink\n";
+	$help_message .= "\t--user                      \t\t-- promote the current/tested symlink\n";
 	$help_message .= "\t--web                       \t\t-- promote the current/web symlink\n";
 	return $help_message;
 };
