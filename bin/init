@@ -8,7 +8,7 @@ require Defaults;
 
 my $git_bin = $Defaults::GIT_BIN;
 my $git_base = $Defaults::GIT_REPOS_BASE;
-for my $repo (keys $Defaults::REPOSITORIES) {
+for my $repo (keys %Defaults::REPOSITORIES) {
 	my $repo_path = $Defaults::REPOSITORIES{$repo};
 	system("$git_bin $repo_path $git_base/$repo");
 }
