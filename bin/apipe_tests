@@ -6,6 +6,11 @@ use strict;
 use above 'Genome';
 use above 'UR';
 
+BEGIN {
+	require File::Basename;
+	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
+
 use Users;
 use Library;
 
