@@ -1,8 +1,13 @@
 package Defaults;
 
-our $EMAIL = 'jlolofie@genome.wustl.edu';
+our $BSUB_EMAIL_TO = 'nnutter@genome.wustl.edu';
+our $ANNOUNCE_EMAIL_TO = 'apipe@genome.wustl.edu';
+
 our $GIT_BIN = '/gsc/bin/git';
+
 our $RSS_FEED_URL = 'http://hudson.gsc.wustl.edu/job/Genome/rssAll';
+
+our $HUDSON_DB = '/gsc/var/cache/testsuite/hudson.db';
 
 our $BASE_DIR 			= '/gsc/scripts/opt/genome';
 our $BIN_DIR 			= $BASE_DIR . '/bin';
