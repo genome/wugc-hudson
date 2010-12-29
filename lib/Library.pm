@@ -1,5 +1,10 @@
 package Library;
 
+BEGIN {
+	require File::Basename;
+	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
+
 use UR;
 use LWP::Simple;
 use Defaults;
