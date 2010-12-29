@@ -1,20 +1,39 @@
-SYMLINKS:
-current/pipeline    The default snapshot for the cron/pipeline. (Must pass model tests and build diffs.)
-current/user        The in the new PERL5LIB and PATH for users. (Must pass the test suite.)
-current/web         The default snapshot for the web interface. (Typically matches stable-user).
+SYMLINKS
+========
+current/pipeline        The default snapshot for the cron/pipeline. (Must pass the test suite, build tests and build diffs.)
+current/user            The in the new PERL5LIB and PATH for users. (Must pass the test suite.)
+current/web             The default snapshot for the web interface.
+                        
+SUB-DIRECTORIES         
+===============         
+snapshots/custom        Snapshots which have been custom built, e.g. hotfixes or one-offs.
+snapshots/old           Snapshots which have been superseded and have no running builds.
+snapshots/stable        Snapshots which have passed test suite, builds tests, and build diffs.
+snapshots/tested        Snapshots which have passed test suite.
+snapshots/unstable      Snapshots which have failed test suite.
 
-SUB-DIRECTORIES:
-snapshots/custom    Snapshots which have been custom built, e.g. hotfixes.
-snapshots/old       Snapshots which have been superceded and which have no running builds.
-snapshots/stable    Snapshots which have passed tests and builds.
-snapshots/tested    Snapshots which have passed tests but not builds.
-snapshots/unstable  Snapshots which have failed tests.
+SNAPSHOT "ANATOMY"
+==================
+source_dirs.txt         Contains the locations of each git repo from which the snapshot was made.
+revisions.txt           Contains the commit hash for the HEAD of each git repo from which the snapshot was made.
+previous_version.txt    Contains the 'genome-N' tag of the version from which the snapshot was promoted.
+git-changelog           Contains the 'git log' of the previous version to the current; generated with bin/changelog.
+CHANGE_SUMMARY          Contains the email body for announcement messages.
 
-Naming convention:
-    genome-$hudsonbuild
-or
-    genome-$hudsonbuild-fixM
+All other files come from the git repos.
 
-Each Hudson build contains a file called revisions.txt which contains the revision numbers for all repos at that build.
-In addition, the genome.git repository gets a tag for Hudson build N like "genome-N".
+CONFIGURATION
+=============
+lib/Defaults.pm         Contains several variables to customize and configure your Genome Hudson configuration.
 
+COMMANDS
+========
+bin/apipe_tests         Runs the builds, executed by run_builds.
+bin/changelog           Generates the git changelog.
+bin/diff_builds         Runs the build diff tests.
+bin/email_failures      Parses the JUnit XML and determines who should be contacted (via git) as to who should be contacted.
+bin/hotfix              Automatic creation of fix snapshosts given some git repos and commits.
+bin/init                Initialize Genome Hudson.
+bin/promote             Promote snapshot by symlinking into current.
+bin/run_builds          Runs the build tests.
+bin/run_tests           Runs the test suite.

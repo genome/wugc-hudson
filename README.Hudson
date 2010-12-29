@@ -1,40 +1,31 @@
-*** May be outdated ***
+Setup
+=====
 
+1. 'bin/init' to create git repos
+2. Create a Hudson project
+3. If the project is going to utilize 'bin/email_failures' then configure it to "Publish JUnit test result report" with "test_result/**/*.xml" as the value
 
-First, run make install to put create a ~/.UR directory to use in your builds.
+Hudson Projects
+===============
 
-Then, create a Hudson project that gets the SVN repo, then your Hudson "command"
-should point to the hudson.sh scripts in this directory.
+* Diff Test Build Output
 
-Finally, check "Publish JUnit test result report" and put something like:
-test_result/**/*.xml in the box.
+    #!/gsc/bin/bash
+    export SQLITE_PATH=/usr/bin/sqlite3
+    /gsc/scripts/opt/genome/bin/diff_builds
 
-From there, it's up to you. You can have it email you or whatever.
+* Genome
 
-TODO:
-Use Devel::Cover to see test coverage.
+    #!/gsc/bin/bash
+    export CODE_STORAGE_BASE=${HOME}/.hudson_repos
+    export HUDSON_PROJECT_PATH=${HOME}/.hudson/jobs
+    # has /gsc/scripts/opt/genome/current/user/lib/perl removed from system default
+    export PERL5LIB=/gapp/noarch/lib/perl5:/gsc/scripts/lib/perl:/gsc/scripts/gsc/gsc/lib:/gsc/scripts/gsc/info/lib
+    /gsc/scripts/opt/genome/bin/run_tests
 
+* Nightly Snapshot and Build Tests
 
-* URL is http://hudson:8090/
-
-* Hudson job "Genome" does unit tests 
-export CODE_STORAGE_BASE=/gscuser/mjohnson/.hudson_repos
-export HUDSON_PROJECT_PATH=/gscuser/mjohnson/.hudson/jobs
-/gscuser/mjohnson/GSC-Hudson/hudson/hudson.sh
-
-* Hudson job "nightly snapshot and build tests" looks for recent "Genome" build, makes a snapshot,
-starts up the model/build tests
-export SQLITE_PATH=/usr/bin/sqlite3
-export PERL5LIB=/gscuser/mjohnson/GSC-Hudson/deploy:/gsc/scripts/lib/perl
-export APIPE_TEST_SCRIPT_PATH=/gscuser/mjohnson/GSC-Hudson/tests/apipe_tests
-/gscuser/mjohnson/GSC-Hudson/deploy/snapshot --recent --testing --modeltests
-
-* Use deploy_snapshot to deploy a snapshot from a hudson build to /gsc/scripts/lib
-deploy_snapshot.pl
-deploy_snapshot.tar.gz
-test_deploy_snapshot.pl
-
-* email_failures.pl is a script that parses junit result files, git blames, and emails
-
-
-
+    #!/gsc/bin/bash
+    # has /gsc/scripts/opt/genome/current/user/lib/perl removed from system default
+    export PERL5LIB=/gapp/noarch/lib/perl5:/gsc/scripts/lib/perl:/gsc/scripts/gsc/gsc/lib:/gsc/scripts/gsc/info/lib
+    /gsc/scripts/opt/genome/bin/run_builds
