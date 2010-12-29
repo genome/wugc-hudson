@@ -88,7 +88,7 @@ sub promote {
 	    else {
 	        $subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 	    }
-		send_announcement_email(to => 'apipe@genome.wustl.edu', subject => $subject, msg => $changes_summary);
+		send_announcement_email(to => $Defaults::ANNOUNCE_EMAIL_TO, subject => $subject, msg => $changes_summary);
 	}
 	
 	if ( $symlink_name =~ /web/ ) {
