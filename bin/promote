@@ -161,11 +161,11 @@ sub create_changes_summary {
 	
 	# create git-changelog
     if (not $announce_only) {
-        if ( -s "$snapshot_path/previous_version" ) {
-            chomp($old_version = qx[cat $snapshot_path/previous_version]);
+        if ( -s "$snapshot_path/previous_version.txt" ) {
+            chomp($old_version = qx[cat $snapshot_path/previous_version.txt]);
         }
         else {
-            system("echo $old_version > $snapshot_path/previous_version")
+            system("echo $old_version > $snapshot_path/previous_version.txt")
         }
     }
     system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
