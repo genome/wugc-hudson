@@ -1,18 +1,25 @@
 #!/usr/bin/env perl
 
+BEGIN {
+	require File::Basename;
+	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+}
+
 use strict;
 use warnings;
 
 use Data::Dumper;
+
+require Defaults;
 
 #genome-250, genome-388
 my ($rev1, $rev2) = @ARGV;
 die "Whoops! Try: $0 [REV1] [REV2]" if !$rev1 || !$rev2;
 die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2;
 
-my $git_repo = '/gscuser/jlolofie/dev/git/genome/lib/perl';
+my $git_repo = $Defaults::GIT_REPOS_BASE . '/genome/lib/perl';
 my $rev = join('..',$rev1, $rev2);
-my $c = qx[cd $git_repo && git fetch && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
+my $c = qx[cd $git_repo && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
 
 my $now = localtime();
 
