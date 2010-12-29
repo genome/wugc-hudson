@@ -235,12 +235,12 @@ sub find_snapshot {
 		$snapshot_path = "$Defaults::TESTED_PATH/$build_name";
 	} elsif ( -d "$Defaults::CUSTOM_PATH/$build_name" ) {
 		$snapshot_path = "$Defaults::CUSTOM_PATH/$build_name";
-	} 	elsif ( -d "$Defaults::UNSTABLE_PATH/$build_name") {
+	} elsif ( -d "$Defaults::UNSTABLE_PATH/$build_name") {
 		$snapshot_path = "$Defaults::UNSTABLE_PATH/$build_name";
-	}	elsif ( -d "$Defaults::OLD_PATH/$build_name") {
+	} elsif ( -d "$Defaults::OLD_PATH/$build_name") {
 		$snapshot_path = "$Defaults::OLD_PATH/$build_name";
 	} else {
-		die "Unable to find $build_name in $Defaults::BASE_DIR/snapshots/{stable,tested,custom}\n";
+		die "Unable to find $build_name in $Defaults::BASE_DIR/snapshots/{stable,tested,custom,unstable,old}\n";
 	}
 	$Defaults::BASE_DIR = $Defaults::BASE_DIR; # to prevent warning
 	
