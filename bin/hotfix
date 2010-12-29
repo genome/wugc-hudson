@@ -117,19 +117,20 @@ for my $argv (@ARGV) {
     my @git_patch = grep { $_ !~ /^diff\ --git/ } @git_data;
     @git_patch = grep { $_ !~ /index\ [a-z0-9]+\.\.[a-z0-9]+/ } @git_patch;
 
-    my $patch_fh = IO::File->new(">$new_path/$git_hash.patch");
+	my $patch_file = "$new_path/$git_hash.patch";
+    my $patch_fh = IO::File->new(">$patch_file");
     print $patch_fh join('', @git_patch);
 
     my $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
     my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
     print $hotfixes_fh "fix$fix_version: $git_repo_name $hotfix_msg\n";
 
-    unless(system("patch -p 1 -d $new_path -i $new_path/$git_hash.patch") == 0) {
 	# fix patch path since we move UR and Workflow's lib -> lib/perl
 	if ( $git_repo_name !~ /genome/ ) {
 		system("sed -r -e 's/(---|\+\+\+)\ (a|b)\/lib\//\1\ \2\/lib\/perl\//' -i $patch_file");
 	}
 
+    unless(system("patch -p 1 -d $new_path -i $patch_file") == 0) {
         print "ERROR: Failed to patch $new_path!\n";
         print "You may want to remove $new_path.\n";
         exit;
