@@ -87,8 +87,8 @@ sub create_snapshot_dir {
 		die "Error: failed to create directory: '$snapshot_dir'.\n";
 	}
 	
-	unless ( File::Slurp::write_file("$snapshot_dir/source_dirs.txt", join("\n", @source_dirs)) ) {
-		die "Error: failed to write /gsc/var/cache/testsuite/source_dirs.txt.\n";
+	unless ( File::Slurp::write_file("$snapshot_dir/source_dirs.txt", join("\n", @source_dirs) . "\n") ) {
+		die "Error: failed to write $snapshot_dir/source_dirs.txt.\n";
 	}
 	
 	my @revisions;
@@ -101,11 +101,8 @@ sub create_snapshot_dir {
 	}
 	my (%revisions) = map { split(" ", $_) } @revisions;
 	$self->{revisions} = \%revisions;
-	unless ( File::Slurp::write_file("/gsc/var/cache/testsuite/revisions.txt", join("\n", @revisions)) ) {
-		die "Error: failed to write /gsc/var/cache/testsuite/revisions.txt.\n";
-	}
-	unless ( system("mv /gsc/var/cache/testsuite/revisions.txt $snapshot_dir/revisions.txt") == 0) {
-		die "Error: failed to move $snapshot_dir/revisions.txt.\n";
+	unless ( File::Slurp::write_file("$snapshot_dir/revisions.txt", join("\n", @revisions) . "\n") ) {
+		die "Error: failed to write $snapshot_dir/revisions.txt.\n";
 	}
 	
 	for my $source_dir (@source_dirs) {
@@ -184,15 +181,15 @@ sub move_to {
         die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
     }
 	
-	execute_on_deploy("rsync -rltoD $snapshot_dir/ $dest_dir/");
+	execute_or_die("rsync -rltoD $snapshot_dir/ $dest_dir/");
 	for my $symlink ($Defaults::CURRENT_USER, $Defaults::CURRENT_WEB, $Defaults::CURRENT_PIPELINE) {
 		if ( readlink($symlink) =~ /^$snapshot_dir\/?$/ ) {
 			print "Updating symlink ($symlink) since we are moving the snapshot.\n";
-			execute_on_deploy("ln -sf $dest_dir $symlink-new");
-			execute_on_deploy("mv -Tf $symlink-new $symlink");
+			execute_or_die("ln -sf $dest_dir $symlink-new");
+			execute_or_die("mv -Tf $symlink-new $symlink");
 		}
 	}
-	execute_on_deploy("rm -rf $snapshot_dir/");
+	execute_or_die("rm -rf $snapshot_dir/");
 
     return 1;
 }
@@ -209,14 +206,14 @@ sub wait_for_path {
 	return ( -e $path );
 }
 
-sub execute_on_deploy {
+sub execute_or_die {
 	my $cmd = shift;
 	
 	unless ( $cmd ) {
-		die "No command specified to execute_on_deploy\n";
+		die "No command specified to execute_or_die\n";
 	}
 	
-	my $exit = system("ssh deploy.gsc.wustl.edu '$cmd'");
+	my $exit = system($cmd);
 	die "Error: exit code $? for '$cmd'" if $?;
 	
 	# print "Command exited $exit: $cmd\n";
