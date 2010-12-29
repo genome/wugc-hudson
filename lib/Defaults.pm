@@ -12,7 +12,7 @@ our $TESTED_PATH 		= $BASE_DIR . '/snapshots/tested';
 our $STABLE_PATH 		= $BASE_DIR . '/snapshots/stable';
 our $CUSTOM_PATH 		= $BASE_DIR . '/snapshots/custom';
 our $CURRENT_PIPELINE	= $BASE_DIR . '/current/pipeline';
-our $CURRENT_WEB			= $BASE_DIR . '/current/web';
+our $CURRENT_WEB		= $BASE_DIR . '/current/web';
 our $CURRENT_USER		= $BASE_DIR . '/current/user';
 
 our $UR_REPOSITORY = 'git://github.com/sakoht/UR.git';
