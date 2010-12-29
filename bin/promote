@@ -152,6 +152,9 @@ sub create_changes_summary {
     my $announce_only = delete $params{announce_only};
 	my $snapshot_path = Snapshot::find_snapshot($build_name);
 	
+	(my $old_git_version = $old_version) =~ s/.*(genome-\d+).*/$1/;
+	(my $new_git_version = $new_version) =~ s/.*(genome-\d+).*/$1/;
+	
 	if (my @params_keys = keys %params) {
 		die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
 	}
@@ -165,7 +168,7 @@ sub create_changes_summary {
             system("echo $old_version > $snapshot_path/previous_version")
         }
     }
-    system("$BIN_DIR/changelog $old_version $new_version > $snapshot_path/git-changelog");
+    system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
 
 	# create CHANGE_SUMMARY
 	unlink("$snapshot_path/CHANGE_SUMMARY");
@@ -185,8 +188,6 @@ sub create_changes_summary {
         push @change_summary, "No changes highlighted.\n\n";
     }
 
-	(my $old_git_version = $old_version) =~ s/.*(genome-\d+).*/$1/;
-	(my $new_git_version = $new_version) =~ s/.*(genome-\d+).*/$1/;
 	push @change_summary, "== Disclaimer ==\n\n", "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For a more exhaustive list try 'git log $old_git_version..$new_git_version'.\n";
 	File::Slurp::write_file("$snapshot_path/CHANGE_SUMMARY", @change_summary);
 	return "$snapshot_path/CHANGE_SUMMARY";
