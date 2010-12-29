@@ -75,7 +75,7 @@ sub get_ur_hash { return get_something_hash(shift, "UR"); }
 sub get_something_hash {
     my $build_number = shift;
     my $something_name = shift;
-    my $revision_txt_path = $Defaults::BUILD_PATH . '/' . $build_number . '/revision.txt';
+    my $revision_txt_path = $Defaults::UNSTABLE_PATH . '/' . $build_number . '/revision.txt';
     open (revision_fh, $revision_txt_path);
 
     while (<revision_fh>) {
