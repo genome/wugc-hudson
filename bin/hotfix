@@ -23,9 +23,9 @@ if ( @ARGV < 3 || $help) {
 
 my $version = shift @ARGV;
 my $old_path;
-if ( $version =~ /stable/ ) {
+if ( $version =~ /pipeline/ ) {
     $old_path = readlink($Defaults::CURRENT_PIPELINE);
-} elsif ( $version =~ /tested/ ) {
+} elsif ( $version =~ /user/ ) {
 	$old_path = readlink($Defaults::CURRENT_USER);
 } elsif ( $version =~ /web/ ) {
 	$old_path = readlink($Defaults::CURRENT_WEB);
