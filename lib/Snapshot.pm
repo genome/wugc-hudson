@@ -106,7 +106,7 @@ sub create_snapshot_dir {
 	}
 	
 	for my $source_dir (@source_dirs) {
-		unless ( system("rsync -e ssh -rltoD --exclude .git $source_dir/ deploy:$snapshot_dir/") == 0 ) {
+		unless ( system("rsync -rltoD --exclude .git $source_dir/ $snapshot_dir/") == 0 ) {
 			die "Error: failed to rsync $source_dir.\n";
 		}
 	}
