@@ -163,11 +163,11 @@ sub get_test_details {
 
     my $test_pathname = $test->{'className'};
 
-    if ($test_pathname !~ /^\w+\_t$/) {
+    if ($test_pathname !~ /^[\w-]+\_t$/) {
         $test_pathname = $test->{'testName'};
     }
     
-    if ($test_pathname !~ /^\w+\_t$/) {
+    if ($test_pathname !~ /^[\w-]+\_t$/) {
         print Dumper $test;
         die 'neither className nor testName looked right (see dump above)';
     }
