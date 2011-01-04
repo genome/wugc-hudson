@@ -14,39 +14,54 @@ require Library;
 require Defaults;
 require Snapshot;
 
-# Get hudson build number and construct URL
-# FIXME Hudson is supposed to store the URL in an environment variable, but I couldn't get it to work
+# Prevents warnings...
+$Defaults::CURRENT_USER = $Defaults::CURRENT_USER;
+$Defaults::CURRENT_PIPELINE = $Defaults::CURRENT_PIPELINE;
+$Defaults::HUDSON_DB = $Defaults::HUDSON_DB;
+
+# If run by Hudson, this environment variable should be set
 my $hudson_build_number = $ENV{BUILD_NUMBER};
 unless (defined $hudson_build_number) {
     print "BUILD_NUMBER environment variable (corresponds to hudson build ID) not set, using dummy value!\n";
     $hudson_build_number = -42;
 }
-my $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20Output', $hudson_build_number);
-
-# Get the most recent snapshot in the testing directory 
-my $tested_snapshot_dir = $Defaults::TESTED_PATH;
-my @snapshots = glob("$tested_snapshot_dir/*");
-print "Found " . scalar @snapshots . " snapshots in $tested_snapshot_dir\n";
-my $latest_hudson_id = 0;
-my $latest_snapshot;
-for my $snapshot (@snapshots) {
-    my ($id) = $snapshot =~ /.*genome-(\d+).*/;
-    next unless defined $id;
-    if ($id > $latest_hudson_id) {
-        $latest_hudson_id = $id;
-        $latest_snapshot = $snapshot . '/lib/perl';
-    }
+# Hudson is also supposed to set an environment variable with the URL to the build page... couldn't get it to work
+my $hudson_build_url = $ENV{BUILD_URL};
+unless (defined $hudson_build_url) {
+    print "BUILD_URL environment variable (URL to Hudson build page) not set, using default value!\n";
+    $hudson_build_url = join('/', 'http://hudson:8090/job/Diff%20Test%20Build%20Output', $hudson_build_number);
 }
 
-# Figure out what the current genome-stable snapshot is
-my $current_pipeline_snapshot = readlink($Defaults::CURRENT_PIPELINE) . '/lib/perl/'; 
-my $current_user_snapshot = readlink($Defaults::CURRENT_USER) . '/lib/perl';
+# Get latest snapshot to have passed build tests from the hudson database
+# TODO It's possible to query Hudson directly, which means we wouldn't have to keep a separate database
+my $hudson_db = $Defaults::HUDSON_DB;
+my $dbh = DBI->connect("dbi:SQLite:dbname=$hudson_db","","") || die "Can't open hudson sqlite db at $hudson_db";
+my $statement = $dbh->prepare( 
+    "SELECT m.unit_test_build_number FROM model_test m " . 
+    "WHERE m.status = 'done' " .
+    "ORDER BY m.unit_test_build_number desc " . 
+    "LIMIT 1"
+);
+$statement->execute;
+my $result_hash = $statement->fetchrow_hashref();
+$dbh->disconnect;
+my $latest_snapshot_name = 'genome-' . $result_hash->{unit_test_build_number};
+my $latest_snapshot = Snapshot::find_snapshot($latest_snapshot_name);
+print "Latest snapshot to have passed build tests is $latest_snapshot\n";
+
+# Figure out what the current/pipeline snapshot is
+my $current_pipeline_snapshot = readlink($Defaults::CURRENT_PIPELINE) . '/lib/perl';
 die "No current/pipeline snapshot found at $current_pipeline_snapshot" unless -d $current_pipeline_snapshot;
+print "Stable snapshot is $current_pipeline_snapshot\n";
 
-print "Latest snapshot seems to be $latest_snapshot, diffing against current/pipeline $current_pipeline_snapshot\n";
+# Use the version of the build diff module in the current user snapshot (not the current pipeline snapshot) so changes
+# to the differ itself don't take days to come into use
+my $current_user_snapshot = readlink($Defaults::CURRENT_USER);
+die "No current/user snapshot found at $current_user_snapshot" unless -d $current_user_snapshot;
 
-my $diff_cmd = "perl -I $current_user_snapshot $current_user_snapshot/bin/genome model diff --first-revision " .
+my $diff_cmd = "perl -I $current_user_snapshot/lib/perl $current_user_snapshot/bin/genome model diff --first-revision " .
     "$latest_snapshot --second-revision $current_pipeline_snapshot apipe-test%";
+print "Build diff command: $diff_cmd\n";
 
 # Run command and check return values. Send out failure email if necessary.
 my $diff_out = eval { `$diff_cmd 2>&1` };
