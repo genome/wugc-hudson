@@ -12,7 +12,7 @@ use Data::Dumper;
 
 require Defaults;
 
-#genome-250, genome-388
+#genome-250 genome-388
 my ($rev1, $rev2) = @ARGV;
 die "Whoops! Try: $0 [REV1] [REV2]" if !$rev1 || !$rev2;
 die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2;
@@ -20,6 +20,9 @@ die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2;
 my $git_repo = $Defaults::GIT_REPOS_BASE . '/genome/lib/perl';
 my $rev = join('..',$rev1, $rev2);
 my $c = qx[cd $git_repo && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
+if ($?) {
+	die "Failed to get log from git.\n";
+}
 
 my $now = localtime();
 
