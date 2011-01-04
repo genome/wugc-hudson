@@ -24,7 +24,7 @@ our $UR_REPOSITORY = 'git://github.com/sakoht/UR.git';
 our $WORKFLOW_REPOSITORY = 'ssh://git.gsc.wustl.edu/srv/git/workflow.git';
 our $GENOME_REPOSITORY = 'ssh://git.gsc.wustl.edu/srv/git/genome.git';
 
-our $GIT_REPOS_BASE = $ENV{HOME} . '/.hudson_repos';
+our $GIT_REPOS_BASE = '/gscuser/jlolofie/.hudson_repos';
 our %REPOSITORIES = (
 	UR => 'git://github.com/sakoht/UR.git',
 	genome => 'ssh://git.gsc.wustl.edu/srv/git/genome.git',
