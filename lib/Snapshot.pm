@@ -191,6 +191,8 @@ sub move_to {
 	}
 	execute_or_die("rm -rf $snapshot_dir/");
 
+    $self->{snapshot_dir} = $dest_dir;
+
     return 1;
 }
 
