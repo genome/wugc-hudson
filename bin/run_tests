@@ -24,9 +24,6 @@ print "Build Name: $build_name\n";
 unless ( -d $workspace ) {
 	die "Error: $workspace is not a directory.\n";
 }
-unless ( $workspace =~ /^$hudson_project_path/ ) {
-	die "Error: $workspace does not appear to be a sub-directory of $hudson_project_path, aborting.\n";
-}
 print "Cleaing workspace ($workspace)\n";
 system("rm -rf $workspace/*") && die;
 
