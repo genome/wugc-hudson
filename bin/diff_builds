@@ -60,7 +60,7 @@ my $current_user_snapshot = readlink($Defaults::CURRENT_USER);
 die "No current/user snapshot found at $current_user_snapshot" unless -d $current_user_snapshot;
 
 my $diff_cmd = "perl -I $current_user_snapshot/lib/perl $current_user_snapshot/bin/genome model diff --first-revision " .
-    "$latest_snapshot --second-revision $current_pipeline_snapshot apipe-test%";
+    "$latest_snapshot --second-revision $current_pipeline_snapshot group_names=apipe-test-07-modelgroup";
 print "Build diff command: $diff_cmd\n";
 
 # Run command and check return values. Send out failure email if necessary.
