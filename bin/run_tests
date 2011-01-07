@@ -33,8 +33,8 @@ print "Updating Git repos\n";
 for my $source_dir (@source_dirs) {
 	system("cd $source_dir && git reset --hard && git pull") && die;
 }
-print "Tagging Genome with $build_name\n";
-system("cd $code_storage_base/genome && " . Defaults::GIT_BIN() . " tag $build_name && " . Defaults::GIT_BIN() . " push origin master --tags") && die;
+#print "Tagging Genome with $build_name\n";
+#system("cd $code_storage_base/genome && " . Defaults::GIT_BIN . " tag $build_name && " . Defaults::GIT_BIN . " push origin master --tags") && die;
 print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
 	snapshot_dir => "$workspace/$build_name",
