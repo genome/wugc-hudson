@@ -1,15 +1,15 @@
 package Defaults;
 
 sub BSUB_EMAIL_TO { return 'nnutter@genome.wustl.edu'};
-sub ANNOUNCE_EMAIL_TO { return 'apipe@genome.wustl.edu'};
+sub ANNOUNCE_EMAIL_TO { return 'nnutter@genome.wustl.edu'};
 
 sub GIT_BIN { return '/gsc/bin/git'};
 
-sub RSS_FEED_URL { return 'http://hudson.gsc.wustl.edu/job/Genome/rssAll'};
+sub RSS_FEED_URL { return 'http://apipe-ci.gsc.wustl.edu/job/Genome/rssAll'};
 
-sub HUDSON_DB { return '/gsc/var/cache/testsuite/hudson.db'};
+sub HUDSON_DB { return '/gsc/var/cache/testsuite/hudson_testing.db'};
 
-my $BASE_DIR = '/gsc/scripts/opt/genome';
+my $BASE_DIR = '/gsc/scripts/opt/genome/testing';
 sub BASE_DIR { return $BASE_DIR };
 sub BIN_DIR { return $BASE_DIR . '/bin'};
 sub UNSTABLE_PATH { return $BASE_DIR . '/snapshots/unstable'};
@@ -33,5 +33,7 @@ sub REPOSITORIES {
     	workflow => 'ssh://git.gsc.wustl.edu/srv/git/workflow.git',
     );
 };
+
+sub HUDSON_CUSTOM_WORKSPACE { return '/gscuser/apipe-tester/.hudson-workspaces' };
 
 1;
