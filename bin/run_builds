@@ -11,18 +11,9 @@ use warnings;
 require Defaults;
 require Snapshot;
 
-my $hudson_builds_number = $ENV{'BUILD_NUMBER'};
-
-# get most recent passed tests
-my $hudson_tests_number = Library::check_for_new_build();
-unless ( $hudson_tests_number ) {
-	print "Could not find successful build from today\n";
-	exit 1;
-}
-print "Most recent successful build from today is $hudson_tests_number\n";
-
-my $snapshot = Snapshot->open(Defaults::TESTED_PATH() . "/genome-$hudson_tests_number");
-my $snapshot_dir = $snapshot->{snapshot_dir};
+my $snapshot_version = $ENV{SNAPSHOT_VERSION} || die;
+my $snapshot_dir = Snapshot::find_snapshot($snapshot_version);
+my $snapshot = Snapshot->open($snapshot_dir);
 print "Opened snapshot at $snapshot_dir\n";
 
 print "Recording test in Hudson DB\n";
