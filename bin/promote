@@ -155,7 +155,14 @@ sub create_changes_summary {
 	my $new_version = delete $params{new_version} || die;
     my $announce_only = delete $params{announce_only};
 	my $snapshot_path = Snapshot::find_snapshot($build_name);
-	
+    my $previous_version_file = "$snapshot_path/previous_version.txt";
+
+    if (not $announce_only and not -s $previous_version_file) {
+        system("echo $old_version > $snapshot_path/previous_version.txt")
+    }
+    if (-s $previous_version_file and $new_version =~ /genome-\d+-fix\d+/) {
+        chomp($old_version = qx[cat $snapshot_path/previous_version.txt]);
+    }
 	(my $old_git_version = $old_version) =~ s/.*(genome-\d+).*/$1/;
 	(my $new_git_version = $new_version) =~ s/.*(genome-\d+).*/$1/;
 	
@@ -164,14 +171,6 @@ sub create_changes_summary {
 	}
 	
 	# create git-changelog
-    if (not $announce_only) {
-        if ( -s "$snapshot_path/previous_version.txt" ) {
-            chomp($old_version = qx[cat $snapshot_path/previous_version.txt]);
-        }
-        else {
-            system("echo $old_version > $snapshot_path/previous_version.txt")
-        }
-    }
     system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
 
 	# create CHANGE_SUMMARY
