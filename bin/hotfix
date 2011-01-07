@@ -133,7 +133,7 @@ for my $argv (@ARGV) {
 
 	# fix patch path since we move UR and Workflow's lib -> lib/perl
 	if ( $git_repo_name !~ /genome/ ) {
-		system("sed -r -e 's/(---|\+\+\+)\ (a|b)\/lib\//\1\ \2\/lib\/perl\//' -i $patch_file");
+        system("sed -r -e 's/(---|\\+\\+\\+)\\ (a|b)\\/lib\\//\\1\\ \\2\\/lib\\/perl\\//' -i $patch_file");
 	}
 
     unless(system("patch -p 1 -d $new_path -i $patch_file") == 0) {
