@@ -242,7 +242,7 @@ sub find_snapshot {
 	} elsif ( -d Defaults::OLD_PATH() . "/$build_name") {
 		$snapshot_path = Defaults::OLD_PATH() . "/$build_name";
 	} else {
-		die "Unable to find $build_name in Defaults::BASE_DIR()/snapshots/{stable,tested,custom,unstable,old}\n";
+		die "Unable to find $build_name in " . Defaults::BASE_DIR() . "/snapshots/{stable,tested,custom,unstable,old}\n";
 	}
 	
 	return $snapshot_path;
