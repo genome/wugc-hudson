@@ -30,7 +30,7 @@ for my $xml_file (@xml_files) {
 exit;
 
 sub get_revision_info {
-    my $workspace_base = $Defaults::HUDSON_CUSTOM_WORKSPACE;
+    my $workspace_base = Defaults::HUDSON_CUSTOM_WORKSPACE();
     my $cwd = Cwd::cwd();
 
     my @namespaces;

@@ -11,7 +11,7 @@ require Snapshot;
 
 my $build_number = shift @ARGV;
 
-my $workspace_base = $Defaults::HUDSON_CUSTOM_WORKSPACE;
+my $workspace_base = Defaults::HUDSON_CUSTOM_WORKSPACE();
 
 my @source_dirs = (
     "$workspace_base/ur",
@@ -20,11 +20,11 @@ my @source_dirs = (
 );
 
 print "Tagging Genome with genome-$build_number\n";
-#system("cd $workflow_base/genome && $Defaults::GIT_BIN tag genome-$build_number && $Defaults::GIT_BIN push origin refs/tags/genome-*") && die;
+#system("cd $workflow_base/genome && " . Defaults::GIT_BIN() . " tag genome-$build_number && " . Defaults::GIT_BIN() . " push origin refs/tags/genome-*") && die;
 
 print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
-    snapshot_dir => $Defaults::TESTED_PATH . "/genome-$build_number",
+    snapshot_dir => Defaults::TESTED_PATH() . "/genome-$build_number",
     source_dirs => \@source_dirs,
 );
 
