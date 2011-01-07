@@ -92,6 +92,7 @@ sub promote {
 	        $subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 	    }
 		send_announcement_email(to => $Defaults::ANNOUNCE_EMAIL_TO, subject => $subject, msg => $changes_summary);
+        unlink($changes_summary_file);
 	}
 	
 	if ( $symlink_name =~ /web/ ) {
