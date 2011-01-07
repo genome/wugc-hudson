@@ -24,11 +24,11 @@ if ( @ARGV < 3 || $help) {
 my $version = shift @ARGV;
 my $old_path;
 if ( $version =~ /pipeline/ ) {
-    $old_path = readlink($Defaults::CURRENT_PIPELINE);
+    $old_path = readlink(Defaults::CURRENT_PIPELINE());
 } elsif ( $version =~ /user/ ) {
-	$old_path = readlink($Defaults::CURRENT_USER);
+	$old_path = readlink(Defaults::CURRENT_USER());
 } elsif ( $version =~ /web/ ) {
-	$old_path = readlink($Defaults::CURRENT_WEB);
+	$old_path = readlink(Defaults::CURRENT_WEB());
 } else {
     $old_path = Snapshot::find_snapshot($version);
 }
@@ -48,7 +48,7 @@ unless (@ARGV) {
 }
 
 
-my $custom_path = $Defaults::CUSTOM_PATH;
+my $custom_path = Defaults::CUSTOM_PATH();
 my $new_path = "$custom_path/$old_name";
 if ( $old_name =~ /genome-\d+$/ ) {
     $new_path .= '-fix1';

@@ -27,7 +27,7 @@ sub test_execute_or_die {
 
 sub test_find_snapshot {
 	{
-		my $current_pipeline_snapshot = readlink($Defaults::CURRENT_PIPELINE);
+		my $current_pipeline_snapshot = readlink(Defaults::CURRENT_PIPELINE());
 		my ($current_pipeline_name) = $current_pipeline_snapshot =~ /(genome-\d+(-fix\d+)?)/;
 		ok($current_pipeline_name, 'got current pipeline snapshot name');
 		my $found_snapshot = Snapshot::find_snapshot($current_pipeline_name);

@@ -21,18 +21,18 @@ unless ( $hudson_tests_number ) {
 }
 print "Most recent successful build from today is $hudson_tests_number\n";
 
-my $snapshot = Snapshot->open("$Defaults::TESTED_PATH/genome-$hudson_tests_number");
+my $snapshot = Snapshot->open(Defaults::TESTED_PATH() . "/genome-$hudson_tests_number");
 my $snapshot_dir = $snapshot->{snapshot_dir};
 print "Opened snapshot at $snapshot_dir\n";
 
 print "Recording test in Hudson DB\n";
-my $hudson_db = $Defaults::HUDSON_DB;
+my $hudson_db = Defaults::HUDSON_DB();
 my $dbh = DBI->connect("dbi:SQLite:dbname=$hudson_db","","") || die 'cant open sqlite db';
 my $s = $dbh->prepare("INSERT INTO model_test ('date','status','build_number','unit_test_build_number') values (?,?,?,?)") || die 'couldnt prepare query';
 $s->execute(now(), 'started', $hudson_builds_number, $hudson_tests_number);
 $dbh->disconnect();
 
-my $builds_passed = !system("cd $snapshot_dir/lib/perl && $Defaults::BIN_DIR/apipe_tests");
+my $builds_passed = !system("cd $snapshot_dir/lib/perl && " . Defaults::BIN_DIR() . "/apipe_tests");
 
 print "Recording test completion in Hudson DB\n";
 $dbh = DBI->connect("dbi:SQLite:dbname=$hudson_db","","") || die 'cant open sqlite db';

@@ -63,7 +63,7 @@ exit;
 
 sub get_revision_info {
     my $r = {};
-    my $path = join ('/', $Defaults::UNSTABLE_PATH, "genome-$hudson_build_id", 'revisions.txt');
+    my $path = join ('/', Defaults::UNSTABLE_PATH(), "genome-$hudson_build_id", 'revisions.txt');
 
     open(my $fh, '<', $path) || die;
 	while(<$fh>) {

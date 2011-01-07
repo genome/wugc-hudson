@@ -93,9 +93,9 @@ sub create_snapshot_dir {
 	
 	my @revisions;
 	for my $source_dir (@source_dirs) {
-		my $origin_name = qx[cd $source_dir && $Defaults::GIT_BIN remote -v | grep origin | head -n 1 | awk '{print \$2}' | sed -e 's|.*/||' -e 's|\.git.*||'];
+		my $origin_name = qx[cd $source_dir && " . Defaults::GIT_BIN() . " remote -v | grep origin | head -n 1 | awk '{print \$2}' | sed -e 's|.*/||' -e 's|\.git.*||'];
 		chomp $origin_name;
-		my $origin_hash = qx[cd $source_dir && $Defaults::GIT_BIN log | head -n 1 | awk '{print \$2}'];
+		my $origin_hash = qx[cd $source_dir && " . Defaults::GIT_BIN() . " log | head -n 1 | awk '{print \$2}'];
 		chomp $origin_hash;
 		push @revisions, "$origin_name $origin_hash";
 	}
@@ -172,17 +172,17 @@ sub move_to {
 	
 	my $dest_dir;
 	if ( $move_to =~ /unstable/ ) {
-		$dest_dir = "$Defaults::UNSTABLE_PATH/$snapshot_name";
+		$dest_dir = Defaults::UNSTABLE_PATH() . "/$snapshot_name";
 	} elsif ( $move_to =~ /tested/ ) {
-		$dest_dir = "$Defaults::TESTED_PATH/$snapshot_name";
+		$dest_dir = Defaults::TESTED_PATH() . "/$snapshot_name";
 	} elsif ( $move_to =~ /stable/ ) {
-		$dest_dir = "$Defaults::STABLE_PATH/$snapshot_name/";
+		$dest_dir = Defaults::STABLE_PATH() . "/$snapshot_name/";
 	} else {
         die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
     }
 	
 	execute_or_die("rsync -rltoD $snapshot_dir/ $dest_dir/");
-	for my $symlink ($Defaults::CURRENT_USER, $Defaults::CURRENT_WEB, $Defaults::CURRENT_PIPELINE) {
+	for my $symlink (Defaults::CURRENT_USER(), Defaults::CURRENT_WEB(), Defaults::CURRENT_PIPELINE()) {
 		if ( readlink($symlink) =~ /^$snapshot_dir\/?$/ ) {
 			print "Updating symlink ($symlink) since we are moving the snapshot.\n";
 			execute_or_die("ln -sf $dest_dir $symlink-new");
@@ -231,20 +231,19 @@ sub find_snapshot {
 	$build_name =~ s/genome-genome/genome/;
 	my $snapshot_path;
 	
-	if ( -d "$Defaults::STABLE_PATH/$build_name" ) {
-		$snapshot_path = "$Defaults::STABLE_PATH/$build_name";
-	} elsif ( -d "$Defaults::TESTED_PATH/$build_name" ) {
-		$snapshot_path = "$Defaults::TESTED_PATH/$build_name";
-	} elsif ( -d "$Defaults::CUSTOM_PATH/$build_name" ) {
-		$snapshot_path = "$Defaults::CUSTOM_PATH/$build_name";
-	} elsif ( -d "$Defaults::UNSTABLE_PATH/$build_name") {
-		$snapshot_path = "$Defaults::UNSTABLE_PATH/$build_name";
-	} elsif ( -d "$Defaults::OLD_PATH/$build_name") {
-		$snapshot_path = "$Defaults::OLD_PATH/$build_name";
+	if ( -d Defaults::STABLE_PATH() . "/$build_name" ) {
+		$snapshot_path = Defaults::STABLE_PATH() . "/$build_name";
+	} elsif ( -d Defaults::TESTED_PATH() . "/$build_name" ) {
+		$snapshot_path = Defaults::TESTED_PATH() . "/$build_name";
+	} elsif ( -d Defaults::CUSTOM_PATH() . "/$build_name" ) {
+		$snapshot_path = Defaults::CUSTOM_PATH() . "/$build_name";
+	} elsif ( -d Defaults::UNSTABLE_PATH() . "/$build_name") {
+		$snapshot_path = Defaults::UNSTABLE_PATH() . "/$build_name";
+	} elsif ( -d Defaults::OLD_PATH() . "/$build_name") {
+		$snapshot_path = Defaults::OLD_PATH() . "/$build_name";
 	} else {
-		die "Unable to find $build_name in $Defaults::BASE_DIR/snapshots/{stable,tested,custom,unstable,old}\n";
+		die "Unable to find $build_name in Defaults::BASE_DIR()/snapshots/{stable,tested,custom,unstable,old}\n";
 	}
-	$Defaults::BASE_DIR = $Defaults::BASE_DIR; # to prevent warning
 	
 	return $snapshot_path;
 }

@@ -34,7 +34,7 @@ for my $source_dir (@source_dirs) {
 	system("cd $source_dir && git reset --hard && git pull") && die;
 }
 print "Tagging Genome with $build_name\n";
-system("cd $code_storage_base/genome && $Defaults::GIT_BIN tag $build_name && $Defaults::GIT_BIN push origin master --tags") && die;
+system("cd $code_storage_base/genome && " . Defaults::GIT_BIN() . " tag $build_name && " . Defaults::GIT_BIN() . " push origin master --tags") && die;
 print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
 	snapshot_dir => "$workspace/$build_name",
@@ -43,7 +43,7 @@ my $snapshot = Snapshot->create(
 
 ## record stuff in sqlitedb
 print "Recording test in Hudson DB\n";
-my $sqlite_db = $Defaults::HUDSON_DB;
+my $sqlite_db = Defaults::HUDSON_DB();
 my $genome_hash = $snapshot->{revisions}{genome};
 my $ur_hash = $snapshot->{revisions}{UR};
 my $workflow_hash = $snapshot->{revisions}{workflow};
@@ -100,6 +100,6 @@ if ( $tests_passed ) {
 } else {
 	print "Emailing failures\n";
 	$snapshot->move_to('unstable');
-	system("bsub -u $Defaults::BSUB_EMAIL_TO -q short $Defaults::BIN_DIR/email_failures $build_number") && die;
+	system("bsub -u " . Defaults::BSUB_EMAIL_TO() . " -q short " . Defaults::BIN_DIR() . "/email_failures $build_number") && die;
 	exit 1;
 }

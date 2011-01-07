@@ -51,13 +51,13 @@ sub promote {
 	
 	my $symlink;
 	if ( $symlink_name =~ /pipeline/ ) {
-		$symlink = $Defaults::CURRENT_PIPELINE;
+		$symlink = Defaults::CURRENT_PIPELINE();
 	}
 	if ( $symlink_name =~ /user/ ) {
-		$symlink = $Defaults::CURRENT_USER;
+		$symlink = Defaults::CURRENT_USER();
 	}
 	if ( $symlink_name =~ /web/ ) {
-		$symlink = $Defaults::CURRENT_WEB;
+		$symlink = Defaults::CURRENT_WEB();
 	}
 	
 	my $OLD_BUILD_NAME = readlink($symlink);
@@ -88,7 +88,7 @@ sub promote {
 	    else {
 	        $subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 	    }
-		send_announcement_email(to => $Defaults::ANNOUNCE_EMAIL_TO, subject => $subject, msg => $changes_summary);
+		send_announcement_email(to => Defaults::ANNOUNCE_EMAIL_TO(), subject => $subject, msg => $changes_summary);
         unlink($changes_summary_file);
 	}
 	
@@ -97,9 +97,9 @@ sub promote {
 	}
 
 	print "Symlinks point to:\n";
-	print "current/pipeline: " . readlink($Defaults::CURRENT_PIPELINE) . "\n";
-	print "current/web: " . readlink($Defaults::CURRENT_WEB) . "\n";
-	print "current/user: " . readlink($Defaults::CURRENT_USER) . "\n";
+	print "current/pipeline: " . readlink(Defaults::CURRENT_PIPELINE()) . "\n";
+	print "current/web: " . readlink(Defaults::CURRENT_WEB()) . "\n";
+	print "current/user: " . readlink(Defaults::CURRENT_USER()) . "\n";
 }
 
 sub help_message {
@@ -126,21 +126,21 @@ sub update_symlinks {
 	
 	if ( $symlink_name =~ /pipeline/ ) {
 		print "Changing pipeline symlink ($build_name)\n";
-		system("ln -sf $snapshot_path $Defaults::CURRENT_PIPELINE-new");
-		system("mv -Tf $Defaults::CURRENT_PIPELINE-new $Defaults::CURRENT_PIPELINE");
+		system("ln -sf $snapshot_path " . Defaults::CURRENT_PIPELINE() . "-new");
+		system("mv -Tf " . Defaults::CURRENT_PIPELINE() . "-new " . Defaults::CURRENT_PIPELINE());
 	}
 	
 	if ( $symlink_name =~ /web/ ) {
 		print "Changing web symlink ($build_name, needs a restart)\n";
-		system("ln -sf $snapshot_path $Defaults::CURRENT_WEB-new");
-		system("mv -Tf $Defaults::CURRENT_WEB-new $Defaults::CURRENT_WEB");
+		system("ln -sf $snapshot_path " . Defaults::CURRENT_WEB() . "-new");
+		system("mv -Tf " . Defaults::CURRENT_WEB() . "-new " . Defaults::CURRENT_WEB());
 	}
 	
-	if ( $symlink_name =~ /user/ ) {
-		print "Changing user symlink ($build_name)\n";
-		system("ln -sf $snapshot_path $Defaults::CURRENT_USER-new");
-		system("mv -Tf $Defaults::CURRENT_USER-new $Defaults::CURRENT_USER");
-	}
+    if ( $symlink_name =~ /user/ ) {
+      print "Changing user symlink ($build_name)\n";
+      system("ln -sf $snapshot_path " . Defaults::CURRENT_USER() . "-new");
+      system("mv -Tf " . Defaults::CURRENT_USER() . "-new " . Defaults::CURRENT_USER());
+    }
 
 	return 1;
 }

@@ -2,12 +2,12 @@ package Library;
 
 BEGIN {
 	require File::Basename;
-	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+	push @INC, File::Basename::dirname(__FILE__);
 }
 
 use UR;
 use LWP::Simple;
-use Defaults;
+require Defaults;
 
 ####
 # Parse Hudson's build status RSS feed and return the most recent successful build from today.
@@ -19,7 +19,7 @@ sub check_for_new_build { # returns new build number or 0 if none.
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
     $mon = ($mon+1); # mon is 0 indexed by default.
 
-    my $rss_feed = get($Defaults::RSS_FEED_URL);
+    my $rss_feed = get(Defaults::RSS_FEED_URL());
 
     my @entries = ($rss_feed =~ /<entry>(.+?)<\/entry>/g);
 
