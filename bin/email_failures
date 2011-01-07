@@ -16,9 +16,6 @@ BEGIN {
 use Users;
 require Defaults;
 
-# To prevent useless warnings
-$Defaults::UNSTABLE_PATH = $Defaults::UNSTABLE_PATH;
-
 #
 # it only makes sense to run this on the last hudson build to finish since it looks
 # at junit files in the workspace which is overwritten each time

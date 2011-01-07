@@ -12,11 +12,6 @@ require Defaults;
 require Snapshot;
 require XML::Simple;
 
-# To prevent warnings
-$Defaults::BIN_DIR = $Defaults::BIN_DIR;
-$Defaults::HUDSON_DB = $Defaults::HUDSON_DB;
-$Defaults::BSUB_EMAIL_TO = $Defaults::BSUB_EMAIL_TO;
-
 my $workspace = $ENV{WORKSPACE} || die;
 my $build_number = $ENV{BUILD_NUMBER} || die;
 my $code_storage_base = $ENV{CODE_STORAGE_BASE} || die;
