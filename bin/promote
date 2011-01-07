@@ -6,9 +6,6 @@ require File::Slurp;
 require Mail::Sender;
 require Getopt::Long;
 
-# To prevent crap warnings...
-$Defaults::ANNOUNCE_EMAIL_TO = $Defaults::ANNOUNCE_EMAIL_TO;
-
 BEGIN {
 	require File::Basename;
 	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';

@@ -1,8 +1,5 @@
 #!/usr/bin/env perl
 
-# To prevent useless warnings
-$Defaults::GIT_REPOS_BASE = $Defaults::GIT_REPOS_BASE;
-
 BEGIN {
 	require File::Basename;
 	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
