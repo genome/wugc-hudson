@@ -11,6 +11,11 @@ use warnings;
 require Defaults;
 require Snapshot;
 
+# Prevents warnings
+$Defaults::BIN_DIR = $Defaults::BIN_DIR;
+$Defaults::HUDSON_DB = $Defaults::HUDSON_DB;
+$Defaults::TESTED_PATH = $Defaults::TESTED_PATH;
+
 my $hudson_builds_number = $ENV{'BUILD_NUMBER'};
 
 # get most recent passed tests

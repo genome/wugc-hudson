@@ -6,6 +6,10 @@ BEGIN {
 }
 require Defaults;
 
+# Prevent useless warnings
+$Defaults::GIT_BIN = $Defaults::GIT_BIN;
+$Defaults::GIT_REPOS_BASE = $Defaults::GIT_REPOS_BASE;
+
 my $git_bin = $Defaults::GIT_BIN;
 my $git_base = $Defaults::GIT_REPOS_BASE;
 for my $repo (keys %Defaults::REPOSITORIES) {

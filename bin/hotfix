@@ -10,6 +10,12 @@ BEGIN {
 require Defaults;
 require Snapshot;
 
+# To prevent useless warnings
+$Defaults::CURRENT_USER = $Defaults::CURRENT_USER;
+$Defaults::CURRENT_WEB = $Defaults::CURRENT_WEB;
+$Defaults::CURRENT_PIPELINE = $Defaults::CURRENT_PIPELINE;
+$Defaults::CUSTOM_PATH = $Defaults::CUSTOM_PATH;
+
 my $help = '';
 unless(Getopt::Long::GetOptions('help' => \$help)) {
     exit;
