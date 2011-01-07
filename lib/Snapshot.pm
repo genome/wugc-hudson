@@ -145,8 +145,12 @@ sub post_create_cleanup {
 		}
 	}
 	
-	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'debian', 'doc', 'inc', 't') {
-		system("rm -rf $snapshot_dir/$unwanted_file");
+	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'lib/perl/*-POD') {
+		system("rm -f $snapshot_dir/$unwanted_file");
+	}
+
+	for my $unwanted_dir ('debian', 'doc', 'inc', 't', 'test_results') {
+		system("rm -rf $snapshot_dir/$unwanted_dir");
 	}
 	
 	return 1;
