@@ -9,7 +9,8 @@ sub RSS_FEED_URL { return 'http://hudson.gsc.wustl.edu/job/Genome/rssAll'};
 
 sub HUDSON_DB { return '/gsc/var/cache/testsuite/hudson.db'};
 
-sub BASE_DIR { return '/gsc/scripts/opt/genome'};
+my $BASE_DIR = '/gsc/scripts/opt/genome';
+sub BASE_DIR { return $BASE_DIR };
 sub BIN_DIR { return $BASE_DIR . '/bin'};
 sub UNSTABLE_PATH { return $BASE_DIR . '/snapshots/unstable'};
 sub OLD_PATH { return $BASE_DIR . '/snapshots/old'};
