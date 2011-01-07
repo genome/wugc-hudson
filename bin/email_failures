@@ -7,7 +7,6 @@ use XML::Simple;
 use Data::Dumper;
 
 use Mail::Sendmail;
-use File::chdir '$CWD';
 
 BEGIN {
 	require File::Basename;
@@ -15,178 +14,145 @@ BEGIN {
 }
 use Users;
 require Defaults;
+require Cwd;
+require Mail::Sender;
 
-#
-# it only makes sense to run this on the last hudson build to finish since it looks
-# at junit files in the workspace which is overwritten each time
-#
-
-our $code_storage_base = $ENV{CODE_STORAGE_BASE} || die;
-our $hudson_project_path = $ENV{HUDSON_PROJECT_PATH} || die;
-our $hudson_build_id = $ARGV[0] || die 'first argument should be a hudson build id';
-chomp($hudson_build_id);
-
-my $test_result_base_path = "$hudson_project_path/Genome/workspace/test_result";
-my $build_base_path = "$hudson_project_path/Genome/builds/$hudson_build_id";
-
-my $url = join('/', 'http://hudson:8090/job/Genome', $hudson_build_id);
-
-my $junit_pathname = join( '/',
-    $build_base_path,
-    'junitResult.xml' 
-);
-
-my $alerts_sent = {};
-
-my $xml = XMLin($junit_pathname) || die "failed to parse junit results file: $junit_pathname";
-
-    for my $s ($xml->{'suites'}->{'suite'}) {
-
-        for my $test_filename (keys %{$s}) {
-
-            for my $case ($s->{$test_filename}->{'cases'}->{'case'}) {
-                next if !$case;
-
-                if (ref($case) eq 'ARRAY') {
-                    for my $test (@$case) {
-                        check_test($test); 
-                    }
-                } else {   # HASH
-                    check_test($case);
-                }
-            }
-        }
-    }
-
+my @xml_files = qx[find test_results -name '*.junit.xml'];
+map { chomp $_ } @xml_files;
+for my $xml_file (@xml_files) {
+    my $xml = XMLin($xml_file) || die "failed to parse junit results xml file: $xml_file";
+    my $testsuite = $xml->{'testsuite'};
+    next unless ($testsuite->{failures} || $testsuite->{errors});
+    print $testsuite->{name} . "\n";
+    send_alert($testsuite);
+}
 
 exit;
 
 sub get_revision_info {
-    my $r = {};
-    my $path = join ('/', Defaults::UNSTABLE_PATH(), "genome-$hudson_build_id", 'revisions.txt');
+    my $workspace_base = $Defaults::HUDSON_CUSTOM_WORKSPACE;
+    my $cwd = Cwd::cwd();
 
-    open(my $fh, '<', $path) || die;
-	while(<$fh>) {
-	    my ($ns, $revision) = split(/\s+/);
-	    $r->{$ns} = $revision;
-	}
-    close($fh);
+    my @namespaces;
+    if ($cwd =~ /genome/) {
+        push @namespaces, ('ur', 'workflow', 'genome');
+    } elsif ($cwd =~ /workflow/) {
+        push @namespaces, ('ur', 'workflow');
+    } elsif ($cwd =~ /ur/) {
+        push @namespaces, 'ur';
+    } else {
+        die "Unexpected CWD ($cwd) does not match genome/workflow/ur.\n";
+    }
 
-    return $r;
+    my @revisions;
+    for my $namespace (@namespaces) {
+        my $git_out = qx[cd $workspace_base/$namespace && git log --oneline | head -n 1];
+        push @revisions, "$namespace: " . (split(' ', $git_out))[0];
+    }
+
+    return @revisions;
 }
 
-sub check_test {
+sub message_body {
+    my $testsuite = shift;
+    my $name = $testsuite->{name};
+    my $failure_count = $testsuite->{failures};
+    my $error_count = $testsuite->{errors};
+    my $system_err = $testsuite->{'system-err'}; chomp $system_err;
+    my $system_out = $testsuite->{'system-out'}; chomp $system_out;
+    my $error = $testsuite->{error}{message}; chomp $error;
 
-    my ($test) = @_;
-
-    if (! defined ($test->{'errorStackTrace'})) {
-        # this test was not a failure
-        return;
+    my $testcases = $testsuite->{testcase};
+    if (exists $testcases->{time}) {
+        my $test_name = delete $testcases->{name};
+        $testcases = {$test_name => $testcases};
+    }
+    my @failed_tests;
+    for my $test (keys %{$testcases}) {
+        push @failed_tests, $test if ($testcases->{$test}{failure});
     }
 
-    my ( $test_pathname, $details ) = get_test_details($test);
+    my $message_body;
 
-    # only send 1 email per test file, not 1 per test line
-    if ( ! defined($alerts_sent->{$test_pathname}) ) {
-        $alerts_sent->{$test_pathname} = 1; 
-        send_alert($test);
+    if ($failure_count) {
+        $message_body .= "\nFailures ($failure_count):\n";
+        map { $message_body .= $testcases->{$_}{message} . "\n"; } @failed_tests;
     }
 
-    return 1;
+    if ($error_count) {
+        $message_body .= "\nErrors ($error_count):\n";
+        $message_body .= "$error\n";
+    }
+
+    my @revisions = get_revision_info();
+    my $hudson_url = $ENV{BUILD_URL} || 'unknown';
+    $message_body .= "\nInfo:\n";
+    $message_body .= join("\n", @revisions) . "\n";
+    $message_body .= "hudson url: $hudson_url\n";
+
+    if (not ref $system_err) {
+        $message_body .= "\n++++system err++++\n";
+        $message_body .= truncate_over_4k($system_err) . "\n";
+        $message_body .= "----system err----\n";
+    }
+
+    if (not ref $system_out) {
+        $message_body .= "\n++++system out++++\n";
+        $message_body .= truncate_over_4k($system_out) . "\n";
+        $message_body .= "----system out----\n";
+    }
+
+    return $message_body;
+}
+
+sub truncate_over_4k {
+    my $text = shift;
+    my $max_bytes = 4096;
+    my $length  = length($text);
+    if ($length > $max_bytes) {
+        $text  = substr($text, $length - $max_bytes); # truncate output
+        $text .= "Output was truncated because it was too large. Visit the hudson URL above for the full output.";
+    }
+    return $text;
 }
 
 sub send_alert {
-
-    my ($test) = @_;
-
-    my ( $test_pathname, $details ) = get_test_details($test);
-    my $failures = $details->{'failures'};
-    my $tests    = $details->{'tests'};
-    my $out      = $details->{'system-out'};
-
-    my $max = 2**12; # 4k
-    my $truncated = '';
-    if (length($out) > $max) {
-        $out = substr($out, 0, $max); # truncate output
-        $truncated = "Output was truncated because it was too large. Visit the hudson URL above for the whole everything.";
-    }
-
-    my $revision = get_revision_info();
-    my $ur       = $revision->{'UR'} || 'unknown';
-    my $genome   = $revision->{'genome'} || 'unknown';
-    my $workflow = $revision->{'workflow'} || 'unknown';
-
-    my ($to_aryref, $cc_aryref, $names_aryref) = git_blame($test_pathname);    # sorted by most ownership of test and module
-    my $to = join(',', @$to_aryref);
-    my $cc = join(',', @$cc_aryref);
-    my $names = join(',', @$names_aryref);
-
-    my $subject = '[fail] ' . $test_pathname;
-    $subject .= " - $names";
-
-    my $body = <<"_BODY_";
-
- failed test: $test_pathname 
-      not ok: $failures / $tests
-
-hudson build: $url    
-      genome: $genome
-    workflow: $workflow
-          UR: $ur
-
-Output for this test follows. $truncated
-
-----start of output------
-$out
-----end of output------
-
-To: $to
-Cc: $cc
-_BODY_
-
-    my $mail = {
-        To      => $to,
-        Cc      => $cc,
-        From    => 'ssmith@genome.wustl.edu',
-        Subject => $subject,
-        Message => $body,
-    };
-
-    sendmail(%$mail) || die "couldnt send the mail to $to about $subject";
-
-    return 1;
-}
-
-sub get_test_details {
-
-    my ($test) = @_;
-
-    my $test_pathname = $test->{'className'};
-
-    if ($test_pathname !~ /^[\w-]+\_t$/) {
-        $test_pathname = $test->{'testName'};
-    }
+    my $testsuite = shift;
     
-    if ($test_pathname !~ /^[\w-]+\_t$/) {
-        print Dumper $test;
-        die 'neither className nor testName looked right (see dump above)';
+    my $path = $testsuite->{name};
+    $path =~ s/_/\//g;
+    $path =~ s/\/t$/.t/;
+    
+    my ($to, $cc, $names) = git_blame($path);
+    my $mail_to = join(',', @$to);
+    my $mail_cc = join(',', @$cc);
+    my $mail_subject = "[fail] $path - " . join(', ', @$names);
+    my $mail_msg = message_body($testsuite);
+
+    my $user_name = getpwuid($<);
+    my $mail_from = $user_name . '@genome.wustl.edu';
+
+    my $sender = Mail::Sender->new({
+        smtp => 'gscsmtp.wustl.edu',
+        from => $mail_from,
+    });
+    if (my $debug_email = $ENV{DEBUG_EMAIL_FAILURES}) {
+        $mail_msg = "To: $mail_to\nCC: $mail_cc\n" . $mail_msg;
+        $sender->MailMsg({
+            to => $debug_email,
+            subject => $mail_subject,
+            msg     => $mail_msg,
+        });
+    } else {
+        $sender->MailMsg({
+            to => $mail_to,
+            cc => $mail_cc,
+            subject => $mail_subject,
+            msg     => $mail_msg,
+        });
     }
-
-    $test_pathname =~ s/(.*)_t/$1.t/;
-    $test_pathname =~ s/_/\//g;
-
-    my $junit_xml_pathname = join('/', $test_result_base_path, $test_pathname);
-    $junit_xml_pathname .= '.junit.xml';
-
-    # this stuff uses the hudson "workspace" which is not saved, so this junit result file
-    # refers to the latest hudson build!
-
-    my $xml = XMLin($junit_xml_pathname) || die "failed to parse the junit detail file: $junit_xml_pathname";
-    my $ts = $xml->{'testsuite'} || return;
-
-    return ($test_pathname, $ts);
-}
-
+    return 1;
+};
 
 sub git_blame {
 
@@ -199,23 +165,23 @@ sub git_blame {
     my @us = map { $_ . '@genome.wustl.edu' } Users::apipe();
 
     my @ignore = Users::apipe_ignore();
-    $test_pathname = "$code_storage_base/genome/lib/perl/Genome/$test_pathname";
+    $test_pathname = "lib/perl/Genome/$test_pathname";
 
     my $module_pathname = $test_pathname;
-    $module_pathname =~ s/^(.*)\.t$/$1.pm/;
+    $module_pathname =~ s/\.t$/.pm/;
 
     # returns the editor with last commit, most commits, and random apiper
     
     # 1. last commit
-    my ($base_path) = $module_pathname =~ /^(.*)\/.*$/;
-    local $CWD = $base_path; # git requires --git-dir or pwd being git checkout
 	my $log_cmd;
 	if ( -e $module_pathname ) {
 		$log_cmd = "git log -- $module_pathname";
 	} elsif ( -e $test_pathname ) {
 		$log_cmd = "git log -- $test_pathname";
-	}
-    my @log_out = `$log_cmd`;
+	} else {
+        print STDERR "Could not find module or test:\n$module_pathname\n$test_pathname\n";
+    }
+    my @log_out = `$log_cmd` if ($log_cmd);
 
     for my $log_line (@log_out) {
         if ($log_line =~ /Author:/) {
@@ -239,9 +205,6 @@ sub git_blame {
         next if ! -f $file;
 
         my $user = {};
-
-        my ($base_path) = $file =~ /^(.*)\/.*$/;
-        local $CWD = $base_path; # git requires --git-dir or pwd being git checkout
 
         my $blame_cmd = "/gsc/scripts/sbin/gsc-cron /gsc/bin/git blame $file";
         my @out = `$blame_cmd`;
@@ -272,8 +235,9 @@ sub git_blame {
     my $winners_regex = '(' . join('|', @winners_without_decoration) . ')';
     @rest = grep(!/$winners_regex/,@us);
     my $random_apiper = $us[int(rand(@rest + 1))];    
+    (my $random_apiper_without_decoration = $random_apiper) =~ s/\@.*//;
     push @winners, $random_apiper;
-    push @winners_without_decoration, $random_apiper;
+    push @winners_without_decoration, $random_apiper_without_decoration;
 
 
     if (@winners > 1) {
