@@ -93,9 +93,11 @@ sub create_snapshot_dir {
 	
 	my @revisions;
 	for my $source_dir (@source_dirs) {
-		my $origin_name = qx[cd $source_dir && " . Defaults::GIT_BIN() . " remote -v | grep origin | head -n 1 | awk '{print \$2}' | sed -e 's|.*/||' -e 's|\.git.*||'];
+        my $name_cmd = "cd $source_dir && " . Defaults::GIT_BIN() . " remote -v | grep origin | head -n 1 | awk '{print \$2}' | sed -e 's|.*/||' -e 's|\.git.*||'";
+		my $origin_name = qx[$name_cmd];
 		chomp $origin_name;
-		my $origin_hash = qx[cd $source_dir && " . Defaults::GIT_BIN() . " log | head -n 1 | awk '{print \$2}'];
+        my $hash_cmd = "cd $source_dir && " . Defaults::GIT_BIN() . " log | head -n 1 | awk '{print \$2}'";
+		my $origin_hash = qx[$hash_cmd];
 		chomp $origin_hash;
 		push @revisions, "$origin_name $origin_hash";
 	}
