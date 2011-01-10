@@ -30,7 +30,7 @@ print "Latest snapshot to have passed build tests is $latest_snapshot\n";
 
 my $model_names;
 if (@ARGV > 1) {
-    die "Multiple ARGV not yet supported."
+    die "Multiple ARGV not yet supported.";
 } elsif (@ARGV == 1) {
     $model_names = $ARGV[0];
 } else {
