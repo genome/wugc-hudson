@@ -46,23 +46,6 @@ my $snapshot = Snapshot->create(
 	source_dirs => \@source_dirs,
 );
 
-## record stuff in sqlitedb
-print "Recording test in Hudson DB\n";
-my $sqlite_db = Defaults::HUDSON_DB();
-my $genome_hash = $snapshot->{revisions}{genome};
-my $ur_hash = $snapshot->{revisions}{UR};
-my $workflow_hash = $snapshot->{revisions}{workflow};
-my $now = `date +"%Y-%m-%d %H:%M:%S"`;
-my $insert_sql  = "INSERT INTO unit_test (date, status, build_number, genome_hash, ur_hash, workflow_hash )";
-   $insert_sql .= " values (\"$now\", \"started\", \"$build_number\", \"$genome_hash\", \"$ur_hash\", \"$workflow_hash\");";
-{
-	my $dbh = DBI->connect("dbi:SQLite:dbname=$sqlite_db","","") || die "cant open sqlite db: $sqlite_db\n";
-	my $sql_query = $dbh->prepare($insert_sql) || die 'couldnt prepare query';
-	$sql_query->execute() || die;
-	$dbh->disconnect() || die;
-}
-
-
 ## run tests
 print "Running tests\n";
 my $cmd  = "cd " . $snapshot->{snapshot_dir} . "/lib/perl/Genome &&";
@@ -76,15 +59,6 @@ if (@ARGV) {
    $cmd .= " --lsf-params=\"-q short -R 'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>4000] rusage[tmp=1000, mem=4000]'\"";
 }
 system($cmd);
-
-## update sqlitedb
-print "Recording test completion in Hudson DB\n";
-{
-	my $dbh = DBI->connect("dbi:SQLite:dbname=$sqlite_db","","") || die "cant open sqlite db: $sqlite_db\n";
-	my $sql_query = $dbh->prepare("UPDATE model_test SET status = 'done' WHERE build_number = ?") || die 'couldnt prepare query';
-	$sql_query->execute($build_number) || die;
-	$dbh->disconnect() || die;
-}
 
 my $tests_passed = 1;
 my @xml_files = qx[find $workspace/test_result -name '*.junit.xml'];
