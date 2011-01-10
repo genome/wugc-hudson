@@ -1,13 +1,19 @@
 package Library;
 
-BEGIN {
-	require File::Basename;
-	push @INC, File::Basename::dirname(__FILE__);
-}
-
 use UR;
 use LWP::Simple;
+
+BEGIN {
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__));
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
+
 require Defaults;
+
 
 ####
 # Parse Hudson's build status RSS feed and return the most recent successful build from today.

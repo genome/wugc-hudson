@@ -4,7 +4,9 @@ BEGIN {
 	require File::Basename;
 	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
 }
+
 require Defaults;
+
 
 my $git_bin = Defaults::GIT_BIN();
 my $git_base = Defaults::GIT_REPOS_BASE();

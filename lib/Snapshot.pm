@@ -2,11 +2,20 @@ package Snapshot;
 
 use strict;
 use warnings;
+require File::Path;
+require File::Slurp;
+
+BEGIN {
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
 
 require Library;
 require Defaults;
-require File::Path;
-require File::Slurp;
 
 sub new {
     my $class = shift;

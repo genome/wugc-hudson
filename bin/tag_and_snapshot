@@ -1,8 +1,12 @@
 #!/usr/bin/env perl
 
 BEGIN {
-    require File::Basename;
-    push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
 }
 
 require Defaults;

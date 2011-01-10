@@ -1,5 +1,8 @@
 #!/usr/bin/env perl
 
+use strict;
+use warnings;
+
 require File::Basename;
 require IO::File;
 require File::Slurp;
@@ -7,14 +10,16 @@ require Mail::Sender;
 require Getopt::Long;
 
 BEGIN {
+    require Cwd;
 	require File::Basename;
-	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
 }
+
 require Defaults;
 require Snapshot;
-
-use strict;
-use warnings;
 
 our $BIN_DIR = File::Basename::dirname(__FILE__);
 

@@ -2,20 +2,24 @@
 
 use strict;
 use warnings;
-
 use XML::Simple;
 use Data::Dumper;
-
 use Mail::Sendmail;
 
 BEGIN {
+    require Cwd;
 	require File::Basename;
-	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
 }
+
 use Users;
 require Defaults;
 require Cwd;
 require Mail::Sender;
+
 
 my @xml_files = qx[find test_results -name '*.junit.xml'];
 map { chomp $_ } @xml_files;

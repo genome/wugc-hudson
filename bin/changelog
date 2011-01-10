@@ -1,16 +1,20 @@
 #!/usr/bin/env perl
 
-BEGIN {
-	require File::Basename;
-	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
-}
-
 use strict;
 use warnings;
-
 use Data::Dumper;
 
+BEGIN {
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
+
 require Defaults;
+
 
 #genome-250 genome-388
 my ($rev1, $rev2) = @ARGV;

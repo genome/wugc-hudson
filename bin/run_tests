@@ -1,16 +1,21 @@
 #!/usr/bin/env perl
 
-BEGIN {
-	require File::Basename;
-	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
-}
-
 use strict;
 use warnings;
+require XML::Simple;
+
+BEGIN {
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
 
 require Defaults;
 require Snapshot;
-require XML::Simple;
+
 
 my $workspace = $ENV{WORKSPACE} || die;
 my $build_number = $ENV{BUILD_NUMBER} || die;

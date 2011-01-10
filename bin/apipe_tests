@@ -7,12 +7,17 @@ use above 'Genome';
 use above 'UR';
 
 BEGIN {
+    require Cwd;
 	require File::Basename;
-	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
 }
 
 use Users;
 use Library;
+
 
 my $LOOP_SLEEP_MINS = 1;
 my $TIMEOUT_HOURS = 30;
