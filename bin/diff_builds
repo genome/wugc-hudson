@@ -28,6 +28,15 @@ my $latest_snapshot = Snapshot->open($latest_snapshot_dir);
 print "Opened snapshot at $latest_snapshot_dir\n";
 print "Latest snapshot to have passed build tests is $latest_snapshot\n";
 
+my $model_names;
+if (@ARGV > 1) {
+    die "Multiple ARGV not yet supported."
+} elsif (@ARGV == 1) {
+    $model_names = $ARGV[0];
+} else {
+    $model_names = 'group_names=apipe-test-07-modelgroup';
+}
+
 # Figure out what the current/pipeline snapshot is
 my $current_pipeline_snapshot = readlink(Defaults::CURRENT_PIPELINE()) . '/lib/perl';
 die "No current/pipeline snapshot found at $current_pipeline_snapshot" unless -d $current_pipeline_snapshot;
@@ -39,7 +48,7 @@ my $current_user_snapshot = readlink(Defaults::CURRENT_USER());
 die "No current/user snapshot found at $current_user_snapshot" unless -d $current_user_snapshot;
 
 my $diff_cmd = "perl -I $current_user_snapshot/lib/perl $current_user_snapshot/bin/genome model diff --first-revision " .
-    "$latest_snapshot --second-revision $current_pipeline_snapshot group_names=apipe-test-07-modelgroup";
+    "$latest_snapshot --second-revision $current_pipeline_snapshot --models=$model_names";
 print "Build diff command: $diff_cmd\n";
 
 # Run command and check return values. Send out failure email if necessary.
