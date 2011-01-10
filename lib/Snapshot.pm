@@ -113,6 +113,7 @@ sub create_snapshot_dir {
 	
 	wait_for_path($snapshot_dir); # $snapshot_dir doesn't instantly show up on other NFS shares...
 	my @dump_files = qx[find $snapshot_dir -iname '*sqlite3-dump'];
+	push @dump_files, qx[find $snapshot_dir -iname '*sqlite3n-dump'];
 	for my $sqlite_dump (@dump_files) {
 	    chomp $sqlite_dump;
 	    (my $sqlite_db = $sqlite_dump) =~ s/-dump//;
