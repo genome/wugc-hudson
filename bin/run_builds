@@ -21,7 +21,7 @@ my $snapshot_dir = Snapshot::find_snapshot($snapshot_version);
 my $snapshot = Snapshot->open($snapshot_dir);
 print "Opened snapshot at $snapshot_dir\n";
 
-my $builds_passed = !system("cd $snapshot_dir/lib/perl && " . Defaults::BIN_DIR() . "/apipe_tests");
+my $builds_passed = !system("cd $snapshot_dir/lib/perl && " . Defaults::BIN_DIR() . "/apipe_tests " . join(' ', @ARGV));
 
 if ( $builds_passed ) {
 	print "Passed builds\n";

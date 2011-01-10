@@ -23,10 +23,16 @@ my $LOOP_SLEEP_MINS = 1;
 my $TIMEOUT_HOURS = 30;
 
 # Get models, start builds, and commit
-my @models = Genome::Model->get(
-    'name like' => 'apipe-test%',
-);
-die "Found no models with name like apipe-test!" unless @models;
+my @models;
+if (@ARGV > 1) {
+    die "Multiple ARGV not yet supported."
+} elsif (@ARGV == 1) {
+    @models = Genome::Model->get(name => $ARGV[0]);
+    die "Found no models with name = " . $ARGV[0] . "!" unless @models
+} else {
+    @models = Genome::Model->get('name like' => 'apipe-test%');
+    die "Found no models with name like apipe-test!" unless @models;
+}
 
 print "Found " . scalar @models . " test models:\n" . join("\n", map { $_->id . ' ' . $_->class } @models) . "\n\n";
 
