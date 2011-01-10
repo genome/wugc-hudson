@@ -15,32 +15,6 @@ BEGIN {
 require Defaults;
 
 
-####
-# Parse Hudson's build status RSS feed and return the most recent successful build from today.
-#
-# Yes I am using Regexs to parse Xml. See:
-# http://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags/1732454#1732454
-####
-sub check_for_new_build { # returns new build number or 0 if none.
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
-    $mon = ($mon+1); # mon is 0 indexed by default.
-
-    my $rss_feed = get(Defaults::RSS_FEED_URL());
-
-    my @entries = ($rss_feed =~ /<entry>(.+?)<\/entry>/g);
-
-    foreach (@entries) {
-        $_ =~ /<published>\d{4}-(\d+)-(\d+)T.+<\/published>/; # $1 is month, $2 is day
-        if ($1 == ($mon) && $2 == $mday) { # this build is from today.
-            $_ =~ /<title>Genome #(\d+)\s\((\w+)\)<\/title>/;
-            if ($2 eq "SUCCESS") {
-                return $1;
-            }
-        }
-    }
-    return 0;
-}
-
 # Shamelessly stolen from Genome/Utility/Text.pm
 sub model_class_name_to_string {
     my $type = shift;
