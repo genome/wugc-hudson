@@ -1,12 +1,15 @@
 #!/usr/bin/env perl
 
+use strict;
+use warnings;
+
 BEGIN {
-    require Cwd;
+	require Cwd;
 	require File::Basename;
-    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
-    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
-        push @INC, $lib_dir;
-    }
+	my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+	unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+		push @INC, $lib_dir;
+	}
 }
 
 require Defaults;
@@ -15,7 +18,7 @@ require Snapshot;
 
 my $build_number = shift @ARGV;
 
-my $workspace_base = Defaults::HUDSON_CUSTOM_WORKSPACE();
+my $workspace_base = Defaults::HUDSON_CUSTOM_WORKSPACE() || die;
 
 my @source_dirs = (
     "$workspace_base/ur",
@@ -24,7 +27,7 @@ my @source_dirs = (
 );
 
 print "Tagging Genome with genome-$build_number\n";
-#system("cd $workflow_base/genome && " . Defaults::GIT_BIN() . " tag genome-$build_number && " . Defaults::GIT_BIN() . " push origin refs/tags/genome-*") && die;
+system("cd $workspace_base/genome && " . Defaults::GIT_BIN() . " tag genome-$build_number && " . Defaults::GIT_BIN() . " push origin refs/tags/genome-*") && die;
 
 print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
