@@ -10,7 +10,6 @@ sub GIT_BIN { return '/gsc/bin/git'};
 my $BASE_DIR = '/gsc/scripts/opt/genome';
 sub BASE_DIR { return $BASE_DIR };
 sub BIN_DIR { return $BASE_DIR . '/bin'};
-sub UNSTABLE_PATH { return $BASE_DIR . '/snapshots/unstable'};
 sub OLD_PATH { return $BASE_DIR . '/snapshots/old'};
 sub TESTED_PATH { return $BASE_DIR . '/snapshots/tested'};
 sub STABLE_PATH { return $BASE_DIR . '/snapshots/stable'};

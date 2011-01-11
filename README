@@ -10,7 +10,6 @@ snapshots/custom        Snapshots which have been custom built, e.g. hotfixes or
 snapshots/old           Snapshots which have been superseded and have no running builds.
 snapshots/stable        Snapshots which have passed test suite, builds tests, and build diffs.
 snapshots/tested        Snapshots which have passed test suite.
-snapshots/unstable      Snapshots which have failed test suite.
 
 SNAPSHOT "ANATOMY"
 ==================
@@ -37,3 +36,4 @@ bin/init                Initialize Genome Hudson.
 bin/promote             Promote snapshot by symlinking into current.
 bin/run_builds          Runs the build tests.
 bin/run_tests           Runs the test suite.
+

@@ -187,9 +187,7 @@ sub move_to {
 	(my $snapshot_name = $snapshot_dir) =~ s/.*\///;
 	
 	my $dest_dir;
-	if ( $move_to =~ /unstable/ ) {
-		$dest_dir = Defaults::UNSTABLE_PATH() . "/$snapshot_name";
-	} elsif ( $move_to =~ /tested/ ) {
+	if ( $move_to =~ /tested/ ) {
 		$dest_dir = Defaults::TESTED_PATH() . "/$snapshot_name";
 	} elsif ( $move_to =~ /stable/ ) {
 		$dest_dir = Defaults::STABLE_PATH() . "/$snapshot_name/";
@@ -253,8 +251,6 @@ sub find_snapshot {
 		$snapshot_path = Defaults::TESTED_PATH() . "/$build_name";
 	} elsif ( -d Defaults::CUSTOM_PATH() . "/$build_name" ) {
 		$snapshot_path = Defaults::CUSTOM_PATH() . "/$build_name";
-	} elsif ( -d Defaults::UNSTABLE_PATH() . "/$build_name") {
-		$snapshot_path = Defaults::UNSTABLE_PATH() . "/$build_name";
 	} elsif ( -d Defaults::OLD_PATH() . "/$build_name") {
 		$snapshot_path = Defaults::OLD_PATH() . "/$build_name";
 	} else {
