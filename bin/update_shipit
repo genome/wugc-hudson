@@ -1,10 +1,11 @@
 #!/usr/bin/env perl
 
 print "WARNING: this is in development and not ready to run yet.\n*** It will mess with your repo so Ctry-C now. ***\n";
-die;
 
-# Hudson will have already checked out shipit and merged from master
 my @c = (
+    'rsync --delete -av /gscuser/apipe-tester/.hudson-workspaces/genome/ ./',
+    'git checkout shipit',
+    'git merge master',
     ['git status -s | grep ^DD', 'git rm'],
     ['git status -s | grep ^\ U', 'git add'],
     ['git status -s | grep ^AA', 'git rm'],
@@ -22,9 +23,10 @@ my @c = (
         qr|lib/perl/Genome.pm|,                     'genome/lib/Genome.pm',
     ],
     ['echo "COMMIT UNPLACED?" 1>&2; find lib -type f', 'git add'],
-    ['echo "CLEANUP DIRS?" 1>&2; find lib -type d', 'rmdir'],
+    ['echo "CLEANUP DIRS?" 1>&2; find lib -type d | sort -r', 'rmdir'],
+    'git commit -m "merge master via update_shipit script"',
+    'git push',
 );
-# Hudson should push the merge
 
 for my $c (@c) {
     print "\n\n";
@@ -93,8 +95,14 @@ sub rename_files {
                     }
                 } 
                 else { 
+                    my $mv;
+                    if (system("git ls-files --error-unmatch -- $o")) {
+                        $mv = 'mv';
+                    } else {
+                        $mv = 'git mv'
+                    }
                     $moved{$o} = $n;
-                    run(qq|git mv "$o" "$n"\n|); 
+                    run(qq|$mv "$o" "$n"\n|); 
                 }
             }
         }
@@ -110,24 +118,11 @@ sub rename_files {
 
 sub run {
     my $c = shift;
-    print "RUN: $c [Y(es)|s(kip)|a(bort)]\n";
-    my $a = <>;
-    chomp $a;
-    $a = 'y'; # skip interaction in Hudson
-    if ($a eq 's') {
-        print "(skipped)\n";
-    }
-    elsif ($a eq 'y' or $a eq '') {
-        print "(running...)\n";
-        my $r = system $c;
-        print "exit code $r\n";
-        unless ($r == 0) {
-            die "Command '$c' did not succeed.";
-        }
-    }
-    else {
-        print "aborting\n";
-        exit 1;
+    print "(running...)\n";
+    my $r = system $c;
+    print "exit code $r\n";
+    unless ($r == 0) {
+        die "Command '$c' did not succeed.";
     }
 }
 
