@@ -27,7 +27,7 @@ my @source_dirs = (
 );
 
 print "Tagging Genome with genome-$build_number\n";
-system("cd $workspace_base/genome && " . Defaults::GIT_BIN() . " tag genome-$build_number && " . Defaults::GIT_BIN() . " push origin refs/tags/genome-*") && die;
+system("cd $workspace_base/genome && " . Defaults::GIT_BIN() . " tag genome-$build_number && " . Defaults::GIT_BIN() . " push origin refs/tags/genome-$build_number") && die;
 
 print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
