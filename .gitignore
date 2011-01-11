@@ -4,3 +4,5 @@ backups/
 snapshots/
 current/
 testing/
+developers
+old/*
