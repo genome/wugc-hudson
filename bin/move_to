@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+
+BEGIN {
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
+
+require Defaults;
+require Snapshot;
+
+
+my $to = shift @ARGV;
+
+my $snapshot_version = $ENV{SNAPSHOT_VERSION} || die;
+my $snapshot_dir = Snapshot::find_snapshot($snapshot_version);
+my $snapshot = Snapshot->open($snapshot_dir);
+print "Opened snapshot at $snapshot_dir\n";
+
+$snapshot->move_to($to);
