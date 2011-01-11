@@ -21,7 +21,7 @@ unless(Getopt::Long::GetOptions('help' => \$help)) {
 }
 
 if ( @ARGV < 3 || $help) {
-	print "Usage: ./hotfix <version> <git_path_A> <git_hash_A1> <git_path_B> <git_hash_B1> <git_hash_B2>\n";
+	print "Usage: $0 pipeline ~/git/genome sdf123a 9843aac ~/git/ur 5s2gg2a\n";
 	exit;
 }
 
