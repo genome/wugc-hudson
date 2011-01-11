@@ -3,7 +3,7 @@
 print "WARNING: this is in development and not ready to run yet.\n*** It will mess with your repo so Ctry-C now. ***\n";
 
 my @c = (
-    'rsync --delete -av /gscuser/apipe-tester/.hudson-workspaces/genome/ ./',
+    'rsync --exclude test_results --delete -av /gscuser/apipe-tester/.hudson-workspaces/genome/ ./',
     'git checkout shipit',
     'git merge master',
     ['git status -s | grep ^DD', 'git rm'],
@@ -24,7 +24,7 @@ my @c = (
     ],
     ['echo "COMMIT UNPLACED?" 1>&2; find lib -type f', 'git add'],
     ['echo "CLEANUP DIRS?" 1>&2; find lib -type d | sort -r', 'rmdir'],
-    'git commit -m "merge master via update_shipit script"',
+    'git diff --staged --quiet || git commit -m "merge master via update_shipit script"', # commit if there are staged changes
     'git push',
 );
 
