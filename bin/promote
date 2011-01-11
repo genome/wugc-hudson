@@ -8,6 +8,7 @@ require IO::File;
 require File::Slurp;
 require Mail::Sender;
 require Getopt::Long;
+require Cwd;
 
 BEGIN {
     require Cwd;
@@ -23,13 +24,16 @@ require Snapshot;
 
 our $BIN_DIR = File::Basename::dirname(__FILE__);
 
-my ($help, $announce_only, $pipeline, $user, $web) = ('', '', '', '', '');
+my ($help, $announce_only, $pipeline, $user, $web, $cancel, $schedule, $all) = ('', '', '', '', '', '', '', '');
 my $getoptions_rv = Getopt::Long::GetOptions(
 	'help' => \$help,
 	'announce-only' => \$announce_only,
 	'pipeline' => \$pipeline,
 	'user' => \$user,
 	'web' => \$web,
+	'cancel' => \$cancel,
+	'schedule' => \$schedule,
+	'all' => \$all,
 );
 unless($getoptions_rv) {
     exit;
@@ -39,13 +43,13 @@ if ( @ARGV != 1 || $help ) {;
 	exit;
 };
 
-if ( $pipeline ) {
+if ( $pipeline || $all) {
 	promote('pipeline');
 }
-if ( $user ) {
+if ( $user || $all ) {
 	promote('user');
 }
-if ( $web ) {
+if ( $web || $all) {
 	promote('web');
 }
 
@@ -54,16 +58,8 @@ sub promote {
 	
 	my $NEW_BUILD_IDENTIFIER = $ARGV[0];
 	
-	my $symlink;
-	if ( $symlink_name =~ /pipeline/ ) {
-		$symlink = Defaults::CURRENT_PIPELINE();
-	}
-	if ( $symlink_name =~ /user/ ) {
-		$symlink = Defaults::CURRENT_USER();
-	}
-	if ( $symlink_name =~ /web/ ) {
-		$symlink = Defaults::CURRENT_WEB();
-	}
+	my $symlink_method = 'Defaults::CURRENT_' . uc($symlink_name);
+	my $symlink = &$symlink_method;
 	
 	my $OLD_BUILD_NAME = readlink($symlink);
 	$OLD_BUILD_NAME =~ s/\/+$//;
@@ -72,8 +68,23 @@ sub promote {
 
 	(my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
 	(my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
-
-	unless ( $announce_only ) {
+	
+	my $q = substr($symlink_name, 0, 1);
+	my @jobs = qx(atq -q $q | cut -f 1);
+	map { chomp($_); } @jobs;
+    
+    
+	if ( $cancel ) {
+	    map { system("atrm $_"); } @jobs;
+	    exit;
+	}
+	elsif ( $schedule ) {
+	    my $cmd = Cwd::abs_path($0);
+	    my @args = grep { $_ !~ /--schedule/ } @ARGV;
+	    map { system("atrm $_"); } @jobs;
+        system("echo bash -l -c \'$cmd " . join(' ', @args) . "\' | at -q $q now + 1 hour")
+    }
+    elsif ( not $announce_only ) {
 	    update_symlinks(build_name => $NEW_BUILD_NAME, symlink_name => $symlink_name) || die;
 	}
 
@@ -93,24 +104,27 @@ sub promote {
 	    else {
 	        $subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 	    }
-		send_announcement_email(to => Defaults::ANNOUNCE_EMAIL_TO(), subject => $subject, msg => $changes_summary);
+	    my $announce_email_to_method = 'Defaults::ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
+		send_announcement_email(to => &$announce_email_to_method, subject => $subject, msg => $changes_summary);
         unlink($changes_summary_file);
 	}
 	
 	if ( $symlink_name =~ /web/ ) {
 		print "*** Warning: you must restart the web server to use the new symlink! ***\n";
+		print "Get the PID:\n";
+        print "ssh apipe ps -u www-data -o pid,command | grep perl-fcgi-pm | cut -d ' ' -f 1\n";
+        print "Send the PID SIGHUP:\n";
+        print "ssh apipe sudo -u www-data kill -s HUP \$PID\n";
+        print "\n";
 	}
 
-	print "Symlinks point to:\n";
-	print "current/pipeline: " . readlink(Defaults::CURRENT_PIPELINE()) . "\n";
-	print "current/web: " . readlink(Defaults::CURRENT_WEB()) . "\n";
-	print "current/user: " . readlink(Defaults::CURRENT_USER()) . "\n";
+	print "current/$symlink_name: " . readlink($symlink) . "\n";
 }
 
 sub help_message {
 	my $help_message;
 	$help_message .= "Usage:\n";
-    $help_message .= "\t$0 <version> --pipeline --web \t-- promotes version and announces it to apipe\n";
+    $help_message .= "\t$0 genome-9000 --pipeline --web \t-- promotes version and announces it to apipe\n";
 	$help_message .= "Options:\n";
     $help_message .= "\t--announce-only               \t\t-- only announces that promotion will occur in one hour\n";
 	$help_message .= "\t--pipeline                    \t\t-- promote the current/pipeline symlink\n";
