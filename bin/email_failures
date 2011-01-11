@@ -23,6 +23,19 @@ require Mail::Sender;
 
 my @xml_files = qx[find test_results -name '*.junit.xml'];
 map { chomp $_ } @xml_files;
+
+my $failure_count;
+for my $xml_file (@xml_files) {
+    my $xml = XMLin($xml_file) || die "failed to parse junit results xml file: $xml_file";
+    my $testsuite = $xml->{'testsuite'};
+    next unless ($testsuite->{failures} || $testsuite->{errors});
+    $failure_count++;
+}
+if ($failure_count > 100) {
+    send_catastrophic_failure_alert();
+    exit;
+}
+
 for my $xml_file (@xml_files) {
     my $xml = XMLin($xml_file) || die "failed to parse junit results xml file: $xml_file";
     my $testsuite = $xml->{'testsuite'};
@@ -32,6 +45,22 @@ for my $xml_file (@xml_files) {
 }
 
 exit;
+
+sub send_catastrophic_failure_alert {
+    my @us = map { $_ . '@genome.wustl.edu' } Users::apipe();
+    my $us = join(',', @us);
+    
+    my $sender = Mail::Sender->new({
+        smtp => 'gscsmtp.wustl.edu',
+        from => 'apipe-tester@genome.wustl.edu',
+    });
+    
+    $sender->MailMsg({
+        to      => $us,
+        subject => 'Over 100 Tests Failed - Suppressing Normal Failure Messages',
+        msg     => 'Please visit Hudson (http://apipe-ci.gsc.wustl.edu) and verify that this is not a catastrophic failure!',
+    });
+}
 
 sub get_revision_info {
     my $workspace_base = Defaults::HUDSON_CUSTOM_WORKSPACE();
