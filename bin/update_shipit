@@ -16,7 +16,7 @@ my @c = (
         qr|lib/perl/Genome/Model/Tools/Annotate|,   'genome-music/lib/Genome/Model/Tools/Annotate',
         qr|lib/perl/Genome/Model/Tools/|,           'gmt-unsorted/lib/Genome/Model/Tools/',
         qr|lib/perl/Genome/Model/|,                 'genome-model-unsorted/lib/Genome/Model/',
-        qr|lib/perl/Genome/ModelGroup/|,            'genome-model-unsorted/lib/Genome/ModelGroup/',
+        qr|lib/perl/Genome/ModelGroup/|,            'genome-model/lib/Genome/ModelGroup/',
         qr|lib/perl/Genome/Config/|,                'genome-site-wugc-perl/',
         qr|lib/perl/Genome/DataSource/|,            'genome-subject/lib/Genome/DataSource/', 
         qr|lib/perl/Genome/xsl/|,                   'genome-subject/xsl/',
