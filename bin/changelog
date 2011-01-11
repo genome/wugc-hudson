@@ -19,7 +19,7 @@ die "Error: rev1 and rev2 are both $rev1" if $rev1 eq $rev2;
 
 my $git_repo = Defaults::GIT_REPOS_BASE() . '/genome/lib/perl';
 my $rev = join('..',$rev1, $rev2);
-my $c = qx[cd $git_repo && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
+my $c = qx[cd $git_repo && git reset --hard HEAD && git pull && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
 if ($?) {
 	die "Failed to get log from git.\n";
 }
