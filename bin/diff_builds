@@ -24,9 +24,9 @@ my $hudson_build_url = $ENV{BUILD_URL} || "'no URL - manual build'";
 
 my $latest_snapshot_name = $ENV{SNAPSHOT_VERSION} || die;
 my $latest_snapshot_dir = Snapshot::find_snapshot($latest_snapshot_name);
+die "No current/user snapshot found at $latest_snapshot_dir" unless -d $latest_snapshot_dir;
 my $latest_snapshot = Snapshot->open($latest_snapshot_dir);
 print "Opened snapshot at $latest_snapshot_dir\n";
-print "Latest snapshot to have passed build tests is $latest_snapshot\n";
 
 my $model_names;
 if (@ARGV > 1) {
@@ -42,12 +42,8 @@ my $current_pipeline_snapshot = readlink(Defaults::CURRENT_PIPELINE()) . '/lib/p
 die "No current/pipeline snapshot found at $current_pipeline_snapshot" unless -d $current_pipeline_snapshot;
 print "Stable snapshot is $current_pipeline_snapshot\n";
 
-my $current_snapshot_version = $ENV{SNAPSHOT_VERSION} || die;
-my $current_snapshot_dir = Snapshot::find_snapshot($current_snapshot_version);
-die "No current/user snapshot found at $current_snapshot_dir" unless -d $current_snapshot_dir;
-
-my $diff_cmd = "perl -I $current_snapshot_dir/lib/perl $current_snapshot_dir/bin/genome model diff --first-revision " .
-    "$latest_snapshot --second-revision $current_pipeline_snapshot --models=$model_names";
+my $diff_cmd = "perl -I $latest_snapshot_dir/lib/perl $latest_snapshot_dir/bin/genome model diff --first-revision " .
+    "$latest_snapshot_dir --second-revision $current_pipeline_snapshot --models=$model_names";
 print "Build diff command: $diff_cmd\n";
 
 # Run command and check return values. Send out failure email if necessary.
@@ -114,10 +110,7 @@ if ($problems) {
     exit 1;
 }
 else {
-    print "Test build differ completed successfully and no differences found, moving to snapshots/stable!\n";
-    my $snapshot = Snapshot->open($latest_snapshot) or die "Could not get snapshot object for $latest_snapshot";
-    $snapshot->move_to('stable');
-    print "Snapshot $latest_snapshot has been moved to snapshots/stable directory, test successful!\n";
+    print "Test build differ completed successfully and no differences found!\n";
     exit 0;
 }
 
