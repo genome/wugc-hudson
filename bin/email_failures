@@ -114,8 +114,9 @@ sub truncate_over_4k {
     my $max_bytes = 4096;
     my $length  = length($text);
     if ($length > $max_bytes) {
+        $text .= "*** Output was truncated because it was too large. Visit the hudson URL above for the full output. ***\n\n";
         $text  = substr($text, $length - $max_bytes); # truncate output
-        $text .= "Output was truncated because it was too large. Visit the hudson URL above for the full output.";
+        $text .= "\n\n*** Output was truncated because it was too large. Visit the hudson URL above for the full output. ***";
     }
     return $text;
 }
