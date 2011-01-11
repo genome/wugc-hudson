@@ -3,7 +3,7 @@
 print "WARNING: this is in development and not ready to run yet.\n*** It will mess with your repo so Ctry-C now. ***\n";
 
 my @c = (
-    'rsync --exclude test_results --delete -av /gscuser/apipe-tester/.hudson-workspaces/genome/ ./',
+    'rsync --exclude Meta.sqlite3 --exclude test_results --delete -av /gscuser/apipe-tester/.hudson-workspaces/genome/ ./',
     'git checkout shipit',
     'git merge master',
     ['git status -s | grep ^DD', 'git rm'],
@@ -16,6 +16,7 @@ my @c = (
         qr|lib/perl/Genome/Model/Tools/Annotate|,   'genome-music/lib/Genome/Model/Tools/Annotate',
         qr|lib/perl/Genome/Model/Tools/|,           'gmt-unsorted/lib/Genome/Model/Tools/',
         qr|lib/perl/Genome/Model/|,                 'genome-model-unsorted/lib/Genome/Model/',
+        qr|lib/perl/Genome/ModelGroup/|,            'genome-model-unsorted/lib/Genome/ModelGroup/',
         qr|lib/perl/Genome/Config/|,                'genome-site-wugc-perl/',
         qr|lib/perl/Genome/DataSource/|,            'genome-subject/lib/Genome/DataSource/', 
         qr|lib/perl/Genome/xsl/|,                   'genome-subject/xsl/',
