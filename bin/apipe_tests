@@ -22,6 +22,8 @@ use Library;
 my $LOOP_SLEEP_MINS = 1;
 my $TIMEOUT_HOURS = 30;
 
+$ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+
 # Get models, start builds, and commit
 my @models;
 if (@ARGV > 1) {
