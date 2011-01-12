@@ -5,6 +5,8 @@ use warnings;
 require ShipIt;
 require File::Basename;
 
+my $snapshot_version = $ENV{SNAPSHOT_VERSION} || die;
+
 my %package_lib_map = ShipIt::package_lib_map();
 
 my @map_params = ('find lib');
@@ -21,9 +23,7 @@ push @map_params, qr|lib/perl/Genome/Model/Tools/|, 'gmt-unsorted/lib/Genome/Mod
 push @map_params, qr|lib/perl/Genome/Model/|,       'genome-model-unsorted/lib/Genome/Model/';
 
 my @c = (
-    'rsync --exclude Meta.sqlite3 --exclude test_results --delete -av /gscuser/apipe-tester/.hudson-workspaces/genome/ ./',
-    'git checkout shipit',
-    'git merge master',
+    "git merge master $snapshot_version",
     ['git status -s | grep ^DD', 'git rm'],
     ['git status -s | grep ^\ U', 'git add'],
     ['git status -s | grep ^AA', 'git rm'],
