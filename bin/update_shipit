@@ -1,5 +1,9 @@
 #!/usr/bin/env perl
 
+use strict;
+use warnings;
+require File::Basename;
+
 print "WARNING: this is in development and not ready to run yet.\n*** It will mess with your repo so Ctry-C now. ***\n";
 
 my @c = (
@@ -37,7 +41,7 @@ for my $c (@c) {
     }
     elsif (ref($c) and @$c > 2) {
         # a command to run get files, a regex to rename
-        rename_files(@$c);
+        find_and_rename_files(@$c);
     }
     else {
         # a plain command to run
@@ -63,11 +67,11 @@ sub run_on_files {
     run($cmd);
 }
 
-sub rename_files {
+sub find_and_rename_files {
     my $cmd_to_get_files = shift;
     my $find = shift;
     my $replace = shift;
-
+    
     print "FILES: $cmd_to_get_files\n";
     my @f = `$cmd_to_get_files`;
     print @f;
@@ -76,45 +80,89 @@ sub rename_files {
         print "(none)\n";
         return;
     }
+    
     my @patterns;
-    my %moved;
     while ($find and $replace) {
         print "  RENAME: $find TO: $replace\n";
         push @patterns, $find;
-        for my $o (@f) {
-            next if $moved{$o};
-            my $n = $o;
-            $n =~ s|$find|$replace|;
-            if ($n ne $o) { 
-                if (-d $o) {
-                    if (-d $n) {
-                        print "  # directory exists: $n\n";
-                    }
-                    else {
-                        print "  # creating directory $n\n";
-                        mkdir $n;
-                    }
-                } 
-                else { 
-                    my $mv;
-                    if (system("git ls-files --error-unmatch -- $o")) {
-                        $mv = 'mv';
-                    } else {
-                        $mv = 'git mv'
-                    }
-                    $moved{$o} = $n;
-                    run(qq|$mv "$o" "$n"\n|); 
-                }
-            }
-        }
+    
+        rename_files($find, $replace, @f);
+        
         # get the next set of expressions
         $find = shift @_;
         $replace = shift @_;
     }
+    
     my @f2 = `$cmd_to_get_files`;
     if (@f2) {
         print "UNMOVED FILES: @f2\n";
+        print "Trying auto_move_module...\n";
+        for my $f2 (@f2) {
+            auto_move_module($f2);
+        }
     }
+}
+
+sub rename_files {
+    my $find = shift;
+    my $replace = shift;
+    my @files = @_;
+    
+    my %moved;
+    for my $o (@files) {
+        next if $moved{$o};
+        my $n = $o;
+        $n =~ s|$find|$replace|;
+        if ($n ne $o) { 
+            if (-d $o) {
+                if (-d $n) {
+                    print "  # directory exists: $n\n";
+                }
+                else {
+                    print "  # creating directory $n\n";
+                    mkdir $n;
+                }
+            } 
+            else { 
+                my $mv;
+                if (system("git ls-files --error-unmatch -- $o")) {
+                    $mv = 'mv';
+                } else {
+                    $mv = 'git mv'
+                }
+                $moved{$o} = $n;
+                run(qq|$mv "$o" "$n"\n|); 
+            }
+        }
+    }
+}
+
+sub auto_move_module {
+    my $path = shift || die;
+    
+    (my $module_parent = File::Basename::dirname($path)) =~ s/lib\/perl\///;
+    
+    my @find_results = find_matching_packages($module_parent);
+
+    if (@find_results == 1) {
+        my $find = 'lib/perl/' . $module_parent;
+        my $replace = $find_results[0];
+        rename_files($find, $replace, $path);
+    } elsif (@find_results) {
+        print "Cannot auto_mode_module; multiple matches for $module_parent: " . join(', ', @find_results) . ".\n";
+    } else {
+        print "Cannot auto_mode_module; no matches for $module_parent.\n";
+    }
+}
+
+sub find_matching_packages {
+    my $path = shift || die;
+
+    my $find_cmd = "find . -path './lib' -prune -o -type d -wholename '*$path' -print";
+    my @find_results = qx($find_cmd);
+    chomp(@find_results);
+    
+    return @find_results;
 }
 
 sub run {
