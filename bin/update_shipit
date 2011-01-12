@@ -2,9 +2,23 @@
 
 use strict;
 use warnings;
+require ShipIt;
 require File::Basename;
 
-print "WARNING: this is in development and not ready to run yet.\n*** It will mess with your repo so Ctry-C now. ***\n";
+my %package_lib_map = ShipIt::package_lib_map();
+
+my @map_params = ('find lib');
+
+for my $package (keys %package_lib_map) {
+    for my $path (@{$package_lib_map{$package}}) {
+        push @map_params, qr|lib/perl/$path|;
+        push @map_params, "$package/lib/$path";
+    }
+}
+
+push @map_params, qr|lib/perl/Genome/xsl/|,         'genome-subject/xsl/';
+push @map_params, qr|lib/perl/Genome/Model/Tools/|, 'gmt-unsorted/lib/Genome/Model/Tools/';
+push @map_params, qr|lib/perl/Genome/Model/|,       'genome-model-unsorted/lib/Genome/Model/';
 
 my @c = (
     'rsync --exclude Meta.sqlite3 --exclude test_results --delete -av /gscuser/apipe-tester/.hudson-workspaces/genome/ ./',
@@ -13,20 +27,7 @@ my @c = (
     ['git status -s | grep ^DD', 'git rm'],
     ['git status -s | grep ^\ U', 'git add'],
     ['git status -s | grep ^AA', 'git rm'],
-    [
-        'find lib',  
-        qr|lib/perl/Genome/Model/Tools/Music|,      'genome-music/lib/Genome/Model/Tools/Music',
-        qr|lib/perl/Genome/Model/Tools/Sv|,         'genome-music/lib/Genome/Model/Tools/Sv',
-        qr|lib/perl/Genome/Model/Tools/Annotate|,   'genome-music/lib/Genome/Model/Tools/Annotate',
-        qr|lib/perl/Genome/Model/Tools/|,           'gmt-unsorted/lib/Genome/Model/Tools/',
-        qr|lib/perl/Genome/Model/|,                 'genome-model-unsorted/lib/Genome/Model/',
-        qr|lib/perl/Genome/ModelGroup/|,            'genome-model/lib/Genome/ModelGroup/',
-        qr|lib/perl/Genome/Config/|,                'genome-site-wugc-perl/',
-        qr|lib/perl/Genome/DataSource/|,            'genome-subject/lib/Genome/DataSource/', 
-        qr|lib/perl/Genome/xsl/|,                   'genome-subject/xsl/',
-        qr|lib/perl/Genome/Env/|,                   'genome/lib/Genome/Env/',
-        qr|lib/perl/Genome.pm|,                     'genome/lib/Genome.pm',
-    ],
+    \@map_params,
     ['echo "COMMIT UNPLACED?" 1>&2; find lib -type f', 'git add'],
     ['echo "CLEANUP DIRS?" 1>&2; find lib -type d | sort -r', 'rmdir'],
     'git diff --staged --quiet || git commit -m "merge master via update_shipit script"', # commit if there are staged changes
