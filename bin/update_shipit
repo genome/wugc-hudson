@@ -108,9 +108,8 @@ sub rename_files {
     my $replace = shift;
     my @files = @_;
     
-    my %moved;
     for my $o (@files) {
-        next if $moved{$o};
+        next unless (-e $o);
         my $n = $o;
         $n =~ s|$find|$replace|;
         if ($n ne $o) { 
@@ -130,7 +129,6 @@ sub rename_files {
                 } else {
                     $mv = 'git mv'
                 }
-                $moved{$o} = $n;
                 run(qq|$mv "$o" "$n"\n|); 
             }
         }
