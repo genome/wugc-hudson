@@ -23,7 +23,7 @@ push @map_params, qr|lib/perl/Genome/Model/Tools/|, 'gmt-unsorted/lib/Genome/Mod
 push @map_params, qr|lib/perl/Genome/Model/|,       'genome-model-unsorted/lib/Genome/Model/';
 
 my @c = (
-    "git merge master $snapshot_version",
+    "git merge $snapshot_version",
     ['git status -s | grep ^DD', 'git rm'],
     ['git status -s | grep ^\ U', 'git add'],
     ['git status -s | grep ^AA', 'git rm'],
