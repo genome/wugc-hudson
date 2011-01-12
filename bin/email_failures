@@ -57,7 +57,7 @@ sub send_catastrophic_failure_alert {
     
     $sender->MailMsg({
         to      => $us,
-        subject => 'Over 100 Tests Failed - Suppressing Normal Failure Messages',
+        subject => '[fail] Over 100 Tests Failed - Suppressing Normal Failure Messages',
         msg     => 'Please visit Hudson (http://apipe-ci.gsc.wustl.edu) and verify that this is not a catastrophic failure!',
     });
 }
