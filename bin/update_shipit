@@ -5,7 +5,7 @@ use warnings;
 require ShipIt;
 require File::Basename;
 
-my $snapshot_version = $ENV{SNAPSHOT_VERSION} || die;
+my $snapshot_version = shift @ARGV || die;
 
 my %package_lib_map = ShipIt::package_lib_map();
 
