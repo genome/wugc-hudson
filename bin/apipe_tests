@@ -24,28 +24,54 @@ my $TIMEOUT_HOURS = 30;
 
 $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
-# Get models, start builds, and commit
-my @models;
-if (@ARGV > 1) {
-    die "Multiple ARGV not yet supported."
-} elsif (@ARGV == 1) {
-    @models = Genome::Model->get(name => $ARGV[0]);
-    die "Found no models with name = " . $ARGV[0] . "!" unless @models
-} else {
-    @models = Genome::Model->get('name like' => 'apipe-test%');
-    die "Found no models with name like apipe-test!" unless @models;
+my ($model_name, $software_revision);
+if (@ARGV) {
+    $model_name = $ARGV[0] || die;
+    $software_revision = $ARGV[1];
 }
 
-print "Found " . scalar @models . " test models:\n" . join("\n", map { $_->id . ' ' . $_->class } @models) . "\n\n";
+my $build_start_command;
+if ($software_revision) {
+    my @builds = Genome::Model::Build->get(
+        model_name => $model_name,
+        run_by => 'apipe-tester',
+        'software_revision like' => "%$software_revision%",
+    );
+    if (@builds == 1) {
+        my $build = $builds[0];
+        my $status = $build->status;
+        if ($status && $status eq 'Succeeded') {
+            print "Successful build already exists for $software_revision.\n";
+            exit;
+        }
+        print STDERR "One build found for software_revision = $software_revision, restarting.\n";
+        $build_start_command = Genome::Model::Build::Command::Restart->create(
+            builds => \@builds,
+        );
+    } elsif (@builds) {
+        print STDERR "Many builds found for software_revision = $software_revision, starting new build.\n";
+    } else {
+        print STDERR "No builds found for software_revision = $software_revision, starting new build.\n";
+    }
+}
+unless ($build_start_command) {
+    my %model_params;
+    if ($model_name) {
+        $model_params{name} = $model_name;
+    } else {
+        $model_params{'name like'} = 'apipe-tests%';
+    }
+    my @models = Genome::Model->get(%model_params);
+    $build_start_command = Genome::Model::Build::Command::Start->create(
+        models => \@models,
+        force => 1,
+    );
+}
 
-my $build_start_command= Genome::Model::Build::Command::Start->create(
-    models => \@models,
-    force => 1,
-);
-die "Could not create build start command object!" unless $build_start_command;
+die "Could not create build_start_command object!" unless $build_start_command;
 
 my $build_start_rv = $build_start_command->execute;
-die "Could not start test builds!" unless defined $build_start_rv and $build_start_rv == 1;
+die "Could not execute build_start_command!" unless defined $build_start_rv and $build_start_rv == 1;
 
 my $commit_rv = UR::Context->commit;
 die "Could not commit changes!" unless defined $commit_rv and $commit_rv == 1;
