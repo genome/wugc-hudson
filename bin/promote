@@ -58,8 +58,9 @@ sub promote {
 	
 	my $NEW_BUILD_IDENTIFIER = $ARGV[0];
 	
-	my $symlink_method = 'Defaults::CURRENT_' . uc($symlink_name);
-	my $symlink = &$symlink_method;
+    no strict 'subs';
+	my $symlink_method = 'CURRENT_' . uc($symlink_name);
+	my $symlink = Defaults->$symlink_method;
 	
 	my $OLD_BUILD_NAME = readlink($symlink);
 	$OLD_BUILD_NAME =~ s/\/+$//;
@@ -104,8 +105,9 @@ sub promote {
 	    else {
 	        $subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 	    }
-	    my $announce_email_to_method = 'Defaults::ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
-		send_announcement_email(to => &$announce_email_to_method, subject => $subject, msg => $changes_summary);
+        no strict 'subs';
+	    my $announce_email_to_method = 'ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
+		send_announcement_email(to => Defaults->$announce_email_to_method, subject => $subject, msg => $changes_summary);
         unlink($changes_summary_file);
 	}
 	
