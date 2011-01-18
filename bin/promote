@@ -24,7 +24,7 @@ require Snapshot;
 
 our $BIN_DIR = File::Basename::dirname(__FILE__);
 
-my ($help, $announce_only, $pipeline, $user, $web, $cancel, $schedule, $all) = ('', '', '', '', '', '', '', '');
+my ($help, $announce_only, $pipeline, $user, $web, $cancel, $schedule, $all, $force) = ('', '', '', '', '', '', '', '', '');
 my $getoptions_rv = Getopt::Long::GetOptions(
 	'help' => \$help,
 	'announce-only' => \$announce_only,
@@ -34,6 +34,7 @@ my $getoptions_rv = Getopt::Long::GetOptions(
 	'cancel' => \$cancel,
 	'schedule' => \$schedule,
 	'all' => \$all,
+    'force' => \$force,
 );
 unless($getoptions_rv) {
     exit;
@@ -42,6 +43,11 @@ if ( @ARGV != 1 || $help ) {;
 	print help_message();
 	exit;
 };
+
+unless( $ENV{HUDSON_URL} || $force) {
+    print STDERR "Please run the hudson job instead of running this manually.\n";
+    exit;
+}
 
 if ( $pipeline || $all) {
 	promote('pipeline');
