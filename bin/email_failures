@@ -180,6 +180,7 @@ sub send_alert {
     } else {
         $sender->MailMsg({
             to => $mail_to,
+            replyto => "$mail_from,$mail_to",
             cc => $mail_cc,
             subject => $mail_subject,
             msg     => $mail_msg,
