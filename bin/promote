@@ -105,7 +105,7 @@ sub promote {
 	if ( -s $changes_summary_file ) {
 	    my $changes_summary = File::Slurp::read_file($changes_summary_file);
 	    my $subject;
-	    if ( $announce_only ) {
+	    if ( $announce_only || $schedule ) {
 	        $subject = "Promoting $NEW_BUILD_NAME to current/$symlink_name in one hour";
 	        $changes_summary = "Please let us know if there are any concerns with promoting this version to current/$symlink_name.\n\n" . $changes_summary;
 	    }
