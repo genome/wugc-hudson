@@ -119,7 +119,7 @@ sub promote {
 
 	print "current/$symlink_name: " . readlink($symlink) . "\n";
 	
-	if ( $symlink_name =~ /web/ ) {
+	if ( $symlink_name =~ /web/ && !($schedule || $announce_only)) {
 		print "*** Warning: you must restart the web server to use the new symlink! ***\n";
 		my $cmd;
 		$cmd = "ssh apipe ps -u www-data -o pid,command | grep perl-fcgi\$";
