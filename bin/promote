@@ -127,7 +127,7 @@ sub promote {
 		print "Old processes are ($cmd):\n";
 		print "Restarting web server in 3 seconds (^C to abort)...\n";
 		sleep(3);
-		$cmd = "WEB_SERVER_PID=`ssh apipe ps -u www-data -o pid,command | grep perl-fcgi-pm | awk '{print \$1}'` && ssh apipe sudo -u www-data kill -s HUP \$WEB_SERVER_PID";
+		$cmd = "WEB_SERVER_PID=`ssh apipe ps -u www-data -o pid,command | grep perl-fcgi-pm | awk '{print \$1}'` && ssh -t apipe sudo -u www-data kill -s HUP \$WEB_SERVER_PID";
 		print "RUNNING ($cmd)...\n";
 		system($cmd);
 	}
