@@ -116,17 +116,21 @@ sub promote {
 		send_announcement_email(to => Defaults->$announce_email_to_method, subject => $subject, msg => $changes_summary);
         unlink($changes_summary_file);
 	}
+
+	print "current/$symlink_name: " . readlink($symlink) . "\n";
 	
 	if ( $symlink_name =~ /web/ ) {
 		print "*** Warning: you must restart the web server to use the new symlink! ***\n";
-		print "Get the PID:\n";
-        print "ssh apipe ps -u www-data -o pid,command | grep perl-fcgi-pm | awk '{print \$1}'\n";
-        print "Send the PID SIGHUP:\n";
-        print "ssh apipe sudo -u www-data kill -s HUP \$PID\n";
-        print "\n";
+		my $cmd;
+		$cmd = "ssh apipe ps -u www-data -o pid,command | grep perl-fcgi\$";
+		print "Old processes are ($cmd):\n";
+		print "Restarting web server in 3 seconds (^C to abort)...\n";
+		sleep(3);
+		$cmd = "WEB_SERVER_PID=`ssh apipe ps -u www-data -o pid,command | grep perl-fcgi-pm | awk '{print \$1}'` && ssh apipe sudo -u www-data kill -s HUP \$WEB_SERVER_PID";
+		print "RUNNING ($cmd)...\n";
+		system($cmd);
 	}
 
-	print "current/$symlink_name: " . readlink($symlink) . "\n";
 }
 
 sub help_message {
