@@ -24,7 +24,7 @@ require Snapshot;
 
 our $BIN_DIR = File::Basename::dirname(__FILE__);
 
-my ($help, $announce_only, $pipeline, $user, $web, $cancel, $schedule, $all, $force) = ('', '', '', '', '', '', '', '', '');
+my ($help, $announce_only, $pipeline, $user, $web, $cancel, $schedule, $all, $force, $now) = ('', '', '', '', '', '', '', '', '', '');
 my $getoptions_rv = Getopt::Long::GetOptions(
 	'help' => \$help,
 	'announce-only' => \$announce_only,
@@ -35,6 +35,7 @@ my $getoptions_rv = Getopt::Long::GetOptions(
 	'schedule' => \$schedule,
 	'all' => \$all,
     'force' => \$force,
+    'now' => \$now,
 );
 unless($getoptions_rv) {
     exit;
@@ -89,9 +90,9 @@ sub promote {
 	    my $cmd = Cwd::abs_path($0);
 	    my @args = grep { $_ !~ /--schedule/ } @ARGV;
 	    map { system("atrm $_"); } @jobs;
-        system("echo bash -l -c \'$cmd " . join(' ', @args) . "\' | at -q $q now + 1 hour")
+        system("echo bash -l -c \'$cmd --now " . join(' ', @args) . "\' | at -q $q now + 1 hour")
     }
-    elsif ( not $announce_only ) {
+    elsif ( $now ) {
 	    update_symlinks(build_name => $NEW_BUILD_NAME, symlink_name => $symlink_name) || die;
 	}
 
@@ -119,7 +120,7 @@ sub promote {
 
 	print "current/$symlink_name: " . readlink($symlink) . "\n";
 	
-	if ( $symlink_name =~ /web/ && !($schedule || $announce_only)) {
+	if ( $symlink_name =~ /web/ && $now) {
 		print "*** Warning: you must restart the web server to use the new symlink! ***\n";
 		my $cmd;
 		$cmd = "ssh apipe ps -u www-data -o pid,command | grep perl-fcgi\$";
