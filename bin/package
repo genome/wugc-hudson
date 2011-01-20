@@ -1,0 +1,61 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use File::Path;
+
+chomp(my @build_pl = qx(find . -name Build.PL));
+my @package_dirs = map { $_ =~ /^(.*)\/Build.PL$/; $1 } @build_pl;
+my @packages = map { $_ =~ /\/([^\/]*)\/Build.PL$/; $1 } @build_pl;
+
+my $packages_built;
+for (my $i = 0; $i < @packages; $i++) {
+    my $build_pl = $build_pl[$i];
+    my $package = $packages[$i];
+    my $package_dir = $package_dirs[$i];
+    
+    print "\n\n*** Building $package ***\n";
+
+    unless(run("cd $package_dir && perl Build.PL && ./Build dist")) {
+        print STDERR "Warning: Skipping to next package.\n";
+        next;
+    }
+
+    mkpath("/gsc/scripts/opt/genome/dist/$package") unless (-d "/gsc/scripts/opt/genome/dist/$package");
+
+    unless(run("cp -f $package_dir/*.tar.gz /gsc/scripts/opt/genome/dist/$package/")) {
+        print STDERR "Warning: Skipping to next package.\n";
+        next;
+    }
+    
+    my $cd = "cd /gsc/scripts/opt/genome/dist/$package/";
+    chomp(my @dists = qx($cd && ls *.tar.gz | sort -V | tail -n 2));
+    unless(run("cd /gsc/scripts/opt/genome/dist/$package/ && ln -sf $dists[0] current")) {
+        print STDERR "Warning: Skipping to next package.\n";
+        next;
+    }
+    unless(run("cd /gsc/scripts/opt/genome/dist/$package/ && ln -sf $dists[1] devel")) {
+        print STDERR "Warning: Skipping to next package.\n";
+        next;
+    }
+
+    $packages_built++;
+}
+
+if (@packages == $packages_built) {
+    exit;
+} else {
+    exit 255;
+}
+
+sub run {
+    my $cmd = shift;
+    print STDERR "Running ($cmd)...";
+    my $exit = system($cmd);
+    if ($exit == 0) {
+        return 1;
+    } else {
+        print STDERR "ERROR: Failed to execute ($cmd)!\n";
+        return;
+    }
+}
