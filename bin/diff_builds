@@ -24,9 +24,8 @@ my $hudson_build_url = $ENV{BUILD_URL} || "'no URL - manual build'";
 
 my $latest_snapshot_name = $ENV{SNAPSHOT_VERSION} || die;
 my $latest_snapshot_dir = Snapshot::find_snapshot($latest_snapshot_name);
-die "No current/user snapshot found at $latest_snapshot_dir" unless -d $latest_snapshot_dir;
-my $latest_snapshot = Snapshot->open($latest_snapshot_dir);
-print "Opened snapshot at $latest_snapshot_dir\n";
+die "No current/pipeline snapshot found at $latest_snapshot_dir" unless -d $latest_snapshot_dir;
+print "Stable snapshot is $latest_snapshot_dir\n";
 
 my $model_names;
 if (@ARGV > 1) {
@@ -38,12 +37,13 @@ if (@ARGV > 1) {
 }
 
 # Figure out what the current/pipeline snapshot is
-my $current_pipeline_snapshot = readlink(Defaults::CURRENT_PIPELINE()) . '/lib/perl';
-die "No current/pipeline snapshot found at $current_pipeline_snapshot" unless -d $current_pipeline_snapshot;
-print "Stable snapshot is $current_pipeline_snapshot\n";
+my $pipeline_snapshot_name = $ENV{PIPELINE_VERSION} || die;
+my $pipeline_snapshot_dir = Snapshot::find_snapshot($pipeline_snapshot_name);
+die "No current/pipeline snapshot found at $pipeline_snapshot_dir" unless -d $pipeline_snapshot_dir;
+print "Stable snapshot is $pipeline_snapshot_dir\n";
 
 my $diff_cmd = "perl -I $latest_snapshot_dir/lib/perl $latest_snapshot_dir/bin/genome model diff --first-revision " .
-    "$latest_snapshot_dir --second-revision $current_pipeline_snapshot --models=$model_names";
+    "$latest_snapshot_dir --second-revision $pipeline_snapshot_dir --models=$model_names";
 print "Build diff command: $diff_cmd\n";
 
 # Run command and check return values. Send out failure email if necessary.
@@ -86,12 +86,12 @@ while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
     my ($failure_msg, $failure_subject);
     if ($error_type =~ /DIFFERENCES FOUND/) {
         $failure_msg = "Output differences detected when comparing builds of type $build_type from model $model_id " .
-            "run on latest snapshot $latest_snapshot_name and current/pipeline snapshot $current_pipeline_snapshot.\n\nTo see raw output, go to $hudson_build_url.";
+            "run on latest snapshot $latest_snapshot_name and current/pipeline snapshot $pipeline_snapshot_dir.\n\nTo see raw output, go to $hudson_build_url.";
         $failure_subject = "[fail] differences found, model $model_id, $build_type - " . join(",", @to);
     }
     else {
         $failure_msg = "Problem occurred when attempting to compare builds of type $build_type from model $model_id " .
-            "run on latest snapshot $latest_snapshot_name and current/pipeline snapshot $current_pipeline_snapshot.\n\n" .
+            "run on latest snapshot $latest_snapshot_name and current/pipeline snapshot $pipeline_snapshot_dir.\n\n" .
             "Please take a look at $hudson_build_url.";
         $failure_subject = "[fail] problem executing build differ, model $model_id, $build_type - " . join(",", @to);
     }
