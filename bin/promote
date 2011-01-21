@@ -49,15 +49,21 @@ unless( $ENV{HUDSON_URL} || $force) {
     exit;
 }
 
+my $success = 1;
 if ( !$now != !$sleep_one_hour ) { # $a xor $b
     if ( $pipeline || $all) {
-        promote('pipeline');
+        $success = (promote('pipeline') && $success);
     }
     if ( $user || $all ) {
-        promote('user');
+        $success = (promote('user') && $success);
     }
     if ( $web || $all) {
-        promote('web');
+        $success = (promote('web') && $success);
+    }
+    if ($success) {
+        exit;
+    } else {
+        exit 255;
     }
 } else {
     print STDERR "Please specify either --now xor --sleep-one-hour.\n";
@@ -119,16 +125,40 @@ sub promote {
 	if ( $symlink_name =~ /web/ && !$announce_only) {
 		print "*** Warning: you must restart the web server to use the new symlink! ***\n";
 		my $cmd;
-		$cmd = "ssh apipe ps -u www-data -o pid,command | grep perl-fcgi\$";
+
+		$cmd = "ssh apipe ps -acfl -u www-data";
 		print "Old processes are ($cmd):\n";
-		system($cmd) || print "failed to execute\n";
+		system("$cmd && echo || echo 'failed to execute'");
+
+        chomp(my $previous_pid = qx(ssh apipe cat /var/run/kom_fastcgi/genome_view.pid));
+        if ($previous_pid !~ /^\d+$/) {
+            print STDERR "Invalid previous PID ($previous_pid)!\n";
+            return;
+        }
+
 		print "Restarting web server in 3 seconds (^C to abort)...\n";
 		sleep(3);
-		$cmd = "WEB_SERVER_PID=`ssh apipe ps -u www-data -o pid,command | grep perl-fcgi-pm | awk '{print \$1}'` && ssh -t apipe sudo -u www-data kill -s HUP \$WEB_SERVER_PID";
-		print "RUNNING ($cmd)...\n";
-		system("$cmd && echo SIGHUP SENT || echo Failed to send SIGHUP") || print "failed to execute\n";
-	}
 
+		$cmd = "ssh -t apipe sudo /etc/init.d/genome_view reload";
+		print "RUNNING ($cmd)...\n";
+		system("$cmd && echo SIGHUP SENT && echo || echo Failed to send SIGHUP");
+
+        my $current_pid;
+        for (my $i = 0; $i < 60; $i++) {
+            chomp($current_pid = qx(ssh apipe cat /var/run/kom_fastcgi/genome_view.pid));
+            if ($current_pid !~ /^\d+$/) {
+                print STDERR "Invalid current PID ($current_pid)!\n";
+                return;
+            }
+            last if ($current_pid != $previous_pid);
+            sleep(5);
+        }
+
+        if ($current_pid == $previous_pid) {
+            return;
+        }
+	}
+    return 1;
 }
 
 sub help_message {
