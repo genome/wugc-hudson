@@ -30,13 +30,27 @@ for (my $i = 0; $i < @packages; $i++) {
     
     my $cd = "cd /gsc/scripts/opt/genome/dist/$package/";
     chomp(my @dists = qx($cd && ls *.tar.gz | sort -V | tail -n 2));
-    unless(run("cd /gsc/scripts/opt/genome/dist/$package/ && ln -sf $dists[0] current")) {
-        print STDERR "Warning: Skipping to next package.\n";
-        next;
+
+    my $current_version = $dists[0];
+    my $devel_version;
+    if (@dists == 2) {
+        $devel_version = $dists[1];
+    } else {
+        $devel_version = $dists[0];
     }
-    unless(run("cd /gsc/scripts/opt/genome/dist/$package/ && ln -sf $dists[1] devel")) {
-        print STDERR "Warning: Skipping to next package.\n";
-        next;
+
+    if ($devel_version) {
+        unless(run("cd /gsc/scripts/opt/genome/dist/$package/ && ln -sf $devel_version devel")) {
+            print STDERR "Warning: Skipping to next package.\n";
+            next;
+        }
+    }
+
+    if ($current_version) {
+        unless(run("cd /gsc/scripts/opt/genome/dist/$package/ && ln -sf $current_version current")) {
+            print STDERR "Warning: Skipping to next package.\n";
+            next;
+        }
     }
 
     $packages_built++;
