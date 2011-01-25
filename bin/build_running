@@ -1,0 +1,35 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+my $running_builds = 0;
+for my $job (@ARGV) {
+    print "Checking " . $job . "... ";
+    my $job_is_running = is_build_running($job);
+    if ($job_is_running) {
+        print "running.\n";
+        $running_builds++;
+    } else {
+        print "not running.\n";
+    }
+}
+exit $running_builds;
+
+sub is_build_running {
+    my $job = shift || die;
+    my $build_xml;
+    
+    $build_xml = qx(wget -q -O - http://apipe-ci.gsc.wustl.edu/job/$job/api/xml/?xpath=/*/nextBuildNumber);
+    $build_xml =~ />(\d+)</;
+    my $build_number = ($1 - 1) || die;
+
+    $build_xml = qx(wget -q -O - http://apipe-ci.gsc.wustl.edu/job/$job/$build_number/api/xml/?xpath=/*/building);
+    $build_xml =~ />(\w+)</;
+    my $is_build_running = $1 || die;
+
+    if ($is_build_running eq 'true') {
+        return 1;
+    } else {
+        return;
+    }
+}
