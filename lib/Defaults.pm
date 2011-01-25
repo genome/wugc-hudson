@@ -1,9 +1,9 @@
 package Defaults;
 
-sub BSUB_EMAIL_TO { return 'nnutter@genome.wustl.edu'};
-sub ANNOUNCE_PIPELINE_EMAIL_TO { return 'apipe@genome.wustl.edu'};
-sub ANNOUNCE_USER_EMAIL_TO { return 'apipe@genome.wustl.edu'};
-sub ANNOUNCE_WEB_EMAIL_TO { return 'apipe@genome.wustl.edu'};
+sub BSUB_EMAIL_TO { return 'apipe-tester@genome.wustl.edu'};
+sub ANNOUNCE_PIPELINE_EMAIL_TO { return 'apipe@genome.wustl.edu,software-announce@genome.wustl.edu'};
+sub ANNOUNCE_USER_EMAIL_TO { return 'apipe@genome.wustl.edu,software-announce@genome.wustl.edu'};
+sub ANNOUNCE_WEB_EMAIL_TO { return 'apipe@genome.wustl.edu,software-announce@genome.wustl.edu'};
 
 sub GIT_BIN { return '/gsc/bin/git'};
 
