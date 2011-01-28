@@ -24,7 +24,7 @@ require Mail::Sender;
 my @xml_files = qx[find test_results -name '*.junit.xml'];
 map { chomp $_ } @xml_files;
 
-my $failure_count;
+my $failure_count = 0;
 for my $xml_file (@xml_files) {
     my $xml = XMLin($xml_file) || die "failed to parse junit results xml file: $xml_file";
     my $testsuite = $xml->{'testsuite'};
@@ -178,6 +178,7 @@ sub send_alert {
             msg     => $mail_msg,
         });
     } else {
+        print "To: $mail_to\tSubject: $mail_subject\n";
         $sender->MailMsg({
             to => $mail_to,
             replyto => "$mail_from,$mail_to",
@@ -269,7 +270,7 @@ sub git_blame {
     # 3. random apiper
     my $winners_regex = '(' . join('|', @winners_without_decoration) . ')';
     @rest = grep(!/$winners_regex/,@us);
-    my $random_apiper = $us[int(rand(@rest + 1))];    
+    my $random_apiper = $rest[int(rand(@rest))];    
     (my $random_apiper_without_decoration = $random_apiper) =~ s/\@.*//;
     push @winners, $random_apiper;
     push @winners_without_decoration, $random_apiper_without_decoration;
