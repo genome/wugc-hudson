@@ -85,15 +85,14 @@ sub build_deb_package {
     my $build_pl = "$package_dir/Build.PL";
     my $package = $package_name;
 
-    ok(run("cd $package_dir && perl Build.PL"), "built ./Build");
-    ok(run("cd $package_dir && ./Build"), "ran ./Build");
-    ok(run("cd $package_dir && ./Build docs"), "ran ./Build docs");
-    ok(run("cd $package_dir && dpkg-buildpackage -d"), "built deb");
+    ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$package-build.log"), "built deb");
 
     File::Path::mkpath("$DIST_DIR/$package") unless (-d "$DIST_DIR/$package");
     ok(-d "$DIST_DIR/$package", "$DIST_DIR/$package directory exists");
 
-    ok(run("cp -f $package_dir/*.deb $DIST_DIR/$package/"), "copied dist to $DIST_DIR/$package/");
+    ok(run("mv -f /var/cache/pbuilder/result/${package}_* $DIST_DIR/$package/"), "copied dist to $DIST_DIR/$package/");
+
+    unlink glob("../${package}_*");
 
     my $cd = "cd $DIST_DIR/$package/";
     chomp(my @dists = qx($cd && ls *.deb | sort -V | tail -n 2));
