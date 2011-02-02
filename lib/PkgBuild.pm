@@ -82,7 +82,16 @@ sub build_deb_package {
     my (%build_params) = %{(shift)};
 
     chomp(my $package_dir = qx(find . -maxdepth 1 -type d -name $package_name));
-    my $package = $package_name;
+
+    my $package;
+    open(FH,"<$package_dir/debian/control") or die "Cannot open $package_dir/debian/control";
+    while(<FH>) {
+      if (/^Package:/) {
+        $package = pop @{ [ split /\s+/, $_ ] };
+        last;
+      }
+    }
+    close(FH);
 
     # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
     ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$package-build.log"), "built deb");
