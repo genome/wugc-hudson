@@ -88,7 +88,7 @@ sub build_deb_package {
     ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$package-build.log"), "built deb");
 
     # .debs get signed and added to the apt repo via the codesigner role
-    my $upload_spool = "/gscuser/codesigner/incoming/lucid-genome/";
+    my $upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
     ok(-w "$upload_spool", "$upload_spool directory is writable");
     ok(run("cp -f /var/cache/pbuilder/result/${package}_* $upload_spool"), "copied dist to $upload_spool");
 
