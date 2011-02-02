@@ -82,36 +82,19 @@ sub build_deb_package {
     my (%build_params) = %{(shift)};
 
     chomp(my $package_dir = qx(find . -type d -name $package_name));
-    my $build_pl = "$package_dir/Build.PL";
     my $package = $package_name;
 
+    # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
     ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$package-build.log"), "built deb");
 
-    File::Path::mkpath("$DIST_DIR/$package") unless (-d "$DIST_DIR/$package");
-    ok(-d "$DIST_DIR/$package", "$DIST_DIR/$package directory exists");
+    # .debs get signed and added to the apt repo via the codesigner role
+    my $upload_spool = "/gscuser/codesigner/incoming/lucid-genome/";
+    ok(-w "$upload_spool", "$upload_spool directory is writable");
+    ok(run("cp -f /var/cache/pbuilder/result/${package}_* $upload_spool"), "copied dist to $upload_spool");
 
-    ok(run("mv -f /var/cache/pbuilder/result/${package}_* $DIST_DIR/$package/"), "copied dist to $DIST_DIR/$package/");
-
+    unlink "/var/cache/pbuilder/result/$package-build.log";
     unlink glob("../${package}_*");
-
-    my $cd = "cd $DIST_DIR/$package/";
-    chomp(my @dists = qx($cd && ls *.deb | sort -V | tail -n 2));
-
-    my $current_version = $dists[0];
-    my $devel_version;
-    if (@dists == 2) {
-        $devel_version = $dists[1];
-    } else {
-        $devel_version = $dists[0];
-    }
-
-    if ($devel_version) {
-        ok(run("cd $DIST_DIR/$package/ && ln -sf $devel_version devel.deb"), "symlinked $devel_version to devel");
-    }
-
-    if ($current_version) {
-        ok(run("cd $DIST_DIR/$package/ && ln -sf $current_version current.deb"), "symlink $current_version to current");
-    }
+    unlink glob("/var/cache/pbuilder/result/${package}_*");
 
     return 1;
 }
