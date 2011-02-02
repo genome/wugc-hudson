@@ -81,7 +81,7 @@ sub build_deb_package {
     my $package_name = shift;
     my (%build_params) = %{(shift)};
 
-    chomp(my $package_dir = qx(find . -type d -name $package_name));
+    chomp(my $package_dir = qx(find . -maxdepth 1 -type d -name $package_name));
     my $package = $package_name;
 
     # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
