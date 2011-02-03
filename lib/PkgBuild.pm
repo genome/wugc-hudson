@@ -83,27 +83,40 @@ sub build_deb_package {
 
     chomp(my $package_dir = qx(find . -maxdepth 1 -type d -name $package_name));
 
-    my $package;
+    my @packages;
+    my $source;
     open(FH,"<$package_dir/debian/control") or die "Cannot open $package_dir/debian/control";
     while(<FH>) {
+      if (/^Source:/) {
+        $source = pop @{ [ split /\s+/, $_ ] };
+      }
       if (/^Package:/) {
-        $package = pop @{ [ split /\s+/, $_ ] };
-        last;
+        push @packages, pop @{ [ split /\s+/, $_ ] };
       }
     }
     close(FH);
 
-    # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
-    ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$package-build.log"), "built deb");
-
     # .debs get signed and added to the apt repo via the codesigner role
+    # Check that we can write there before we build.
     my $upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
     ok(-w "$upload_spool", "$upload_spool directory is writable");
-    ok(run("cp -f /var/cache/pbuilder/result/${package}_* $upload_spool"), "copied dist to $upload_spool");
 
-    unlink "/var/cache/pbuilder/result/$package-build.log";
-    unlink glob("../${package}_*");
-    unlink glob("/var/cache/pbuilder/result/${package}_*");
+    # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
+    ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$source-build.log"), "built deb");
+
+    # Put all files, source, binary, and meta into spool.
+    ok(run("cp -f /var/cache/pbuilder/result/${source}_* $upload_spool"), "copied source files to $upload_spool");
+    foreach my $package (@packages) {
+      ok(run("cp -f /var/cache/pbuilder/result/${package}_*.deb $upload_spool"), "copied binary debs to $upload_spool");
+    }
+    # Clean up
+    unlink "/var/cache/pbuilder/result/$source-build.log";
+    unlink glob("/var/cache/pbuilder/result/${source}_*");
+    unlink glob("../${source}_*");
+    foreach my $package (@packages) {
+      unlink glob("/var/cache/pbuilder/result/${package}_*.deb");
+      unlink glob("../${package}_*.deb");
+    }
 
     return 1;
 }
