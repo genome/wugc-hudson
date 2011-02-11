@@ -16,6 +16,7 @@ BEGIN {
 require Defaults;
 
 my $DIST_DIR = Defaults::DIST_DIR();
+my $deb_upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
 
 sub execute {
     my $package_name = shift;
@@ -79,6 +80,33 @@ sub build_cpan_package {
     return 1;
 }
 
+sub build_cpack_package {
+    my ($package_dir, $generator, $build_log) = @_;
+
+    $build_log = "$package_dir/last_build.log" unless($build_log);
+
+    my $pkg_extension = lc($generator);
+    $generator = uc($generator); # cpack is picky
+
+    my @pkgs_start = glob("$package_dir/*.$pkg_extension");
+    my $cmd = qq{
+        (
+            cd $package_dir &&
+            cmake . -DCMAKE_BUILD_TYPE=package &&
+            make &&
+            ctest &&
+            fakeroot cpack -G $generator
+        ) 2>&1 | tee $build_log
+    };
+    run($cmd);
+    my @pkgs_now = glob("$package_dir/*.$pkg_extension");
+    my @pkgs;
+    for my $pkg (@pkgs_now) {
+        push(@pkgs, $pkg) if !grep { $_ eq $pkg } @pkgs_start; 
+    }
+    return @pkgs;
+}
+
 sub build_deb_package {
     my $package_name = shift;
     my (%build_params) = %{(shift)};
@@ -100,16 +128,18 @@ sub build_deb_package {
 
     # .debs get signed and added to the apt repo via the codesigner role
     # Check that we can write there before we build.
-    my $upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
-    ok(-w "$upload_spool", "$upload_spool directory is writable");
+    my $deb_upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
+    ok(-w "$deb_upload_spool", "$deb_upload_spool directory is writable");
 
     # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
     ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$source-build.log"), "built deb");
 
     # Put all files, source, binary, and meta into spool.
-    ok(run("cp -f /var/cache/pbuilder/result/${source}_* $upload_spool"), "copied source files to $upload_spool");
+    my @pkgfiles = glob("/var/cache/pbuilder/result/${source}_*");
+    deploy($deb_upload_spool, @pkgfiles, remove_on_success => 1);
+    ok(run("cp -f /var/cache/pbuilder/result/${source}_* $deb_upload_spool"), "copied source files to $deb_upload_spool");
     foreach my $package (@packages) {
-      ok(run("cp -f /var/cache/pbuilder/result/${package}_*.deb $upload_spool"), "copied binary debs to $upload_spool");
+      ok(run("cp -f /var/cache/pbuilder/result/${package}_*.deb $deb_upload_spool"), "copied binary debs to $deb_upload_spool");
     }
     # Clean up
     unlink "/var/cache/pbuilder/result/$source-build.log";
@@ -132,6 +162,18 @@ sub run {
     } else {
         die "ERROR: Failed to execute ($cmd)!\n";
     }
+}
+
+sub deploy {
+    my ($dest, $packages, %opts) = @_;
+    die "$dest directory is writable" unless -w "$dest";
+    for my $p (@$packages) {
+        run("cp $p $dest") and print "deployed $p to $dest\n";
+        if ($opts{remove_on_success}) {
+            unlink($p) or die "failed to remove $p after deploying";
+        }
+    } 
+    return 1;
 }
 
 1;
