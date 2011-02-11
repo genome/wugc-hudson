@@ -67,10 +67,12 @@ sub build_cpan_package {
     }
 
     if ($devel_version) {
+        ok(run("cd $DIST_DIR/$package/ && unlink devel.tar.gz"), "unlinked devel");
         ok(run("cd $DIST_DIR/$package/ && ln -sf $devel_version devel.tar.gz"), "symlinked $devel_version to devel");
     }
 
     if ($current_version) {
+        ok(run("cd $DIST_DIR/$package/ && unlink current.tar.gz"), "unlinked current");
         ok(run("cd $DIST_DIR/$package/ && ln -sf $current_version current.tar.gz"), "symlink $current_version to current");
     }
 
