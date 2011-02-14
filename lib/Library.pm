@@ -1,8 +1,5 @@
 package Library;
 
-use UR;
-use LWP::Simple;
-
 BEGIN {
     require Cwd;
 	require File::Basename;
