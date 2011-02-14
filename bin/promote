@@ -124,40 +124,9 @@ sub promote {
 	
 	if ( $symlink_name =~ /web/ && !$announce_only) {
 		print "*** Warning: you must restart the web server to use the new symlink! ***\n";
-		my $cmd;
-
-		$cmd = "ssh apipe ps -acfl -u www-data";
-		print "Old processes are ($cmd):\n";
-		system("$cmd && echo || echo 'failed to execute'");
-
-        chomp(my $previous_pid = qx(ssh apipe cat /var/run/kom_fastcgi/genome_view.pid));
-        if ($previous_pid !~ /^\d+$/) {
-            print STDERR "Invalid previous PID ($previous_pid)!\n";
-            return;
-        }
-
-		print "Restarting web server in 3 seconds (^C to abort)...\n";
-		sleep(3);
-
-		$cmd = "ssh -t apipe sudo /etc/init.d/genome_view reload";
-		print "RUNNING ($cmd)...\n";
-		system("$cmd && echo SIGHUP SENT && echo || echo Failed to send SIGHUP");
-
-        my $current_pid;
-        for (my $i = 0; $i < 60; $i++) {
-            chomp($current_pid = qx(ssh apipe cat /var/run/kom_fastcgi/genome_view.pid));
-            if ($current_pid !~ /^\d+$/) {
-                print STDERR "Invalid current PID ($current_pid)!\n";
-                return;
-            }
-            last if ($current_pid != $previous_pid);
-            sleep(5);
-        }
-
-        if ($current_pid == $previous_pid) {
-            return;
-        }
+        return restart_web_server();
 	}
+
     return 1;
 }
 
@@ -277,3 +246,57 @@ sub send_announcement_email {
 	print "Sent annnouncement mail to $mail_to...\n";
     return 1;
 };
+
+sub restart_web_server {
+    my $process_list_cmd = "ssh apipe ps -fu www-data | grep perl-fcgi";
+    my $get_pid_cmd = "ssh apipe cat /var/run/kom_fastcgi/genome_view.pid";
+    my $restart_genome_view_cmd = "ssh -t apipe sudo /etc/init.d/genome_view reload";
+
+    chomp(my $previous_pid = qx($get_pid_cmd));
+    if ($previous_pid =~ /^\d+$/) {
+        print "Previous PID = $previous_pid\n";
+        my @processes = qx($process_list_cmd);
+        my $processes_count = scalar @processes;
+        print "Previous ($processes_count) processes were ($process_list_cmd):\n" . join("\n", @processes) . "\n";
+    }
+    else {
+        print STDERR "Invalid previous PID ($previous_pid)!\n";
+        return;
+    }
+
+    print "Restarting web server in 3 seconds (^C to abort)...\n";
+    sleep(3);
+
+    print "RUNNING ($restart_genome_view_cmd)...\n";
+    system("$restart_genome_view_cmd && echo COMMAND SUCCEEDED || echo COMMAND FAILED");
+    print "\n";
+
+    my $current_pid;
+    for (my $i = 0; $i < 60; $i++) {
+        chomp($current_pid = qx(ssh apipe cat /var/run/kom_fastcgi/genome_view.pid));
+        if ($current_pid !~ /^\d+$/) {
+            print STDERR "Invalid current PID ($current_pid)!\n";
+            return;
+        }
+        last if ($current_pid != $previous_pid);
+        sleep(5);
+    }
+
+    if ($current_pid == $previous_pid) {
+        print "ERROR: New PID is same as old PID ($current_pid).\n";
+        return;
+    }
+
+    sleep(60);
+
+    print "Current PID = $current_pid\n";
+    my @current_processes = qx($process_list_cmd);
+    my $current_processes_count = scalar @current_processes;
+    print "Previous ($current_processes_count) processes were ($process_list_cmd):\n" . join("\n", @current_processes) . "\n";
+    unless ($current_processes_count && $current_processes_count > 0) {
+        print "ERROR: Failed to find processes running under new PID.\n";
+        return;
+    }
+
+    return 1;
+}
