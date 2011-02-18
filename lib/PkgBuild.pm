@@ -136,7 +136,7 @@ sub build_deb_package {
 
     # Put all files, source, binary, and meta into spool.
     my @pkgfiles = glob("/var/cache/pbuilder/result/${source}_*");
-    deploy($deb_upload_spool, @pkgfiles, remove_on_success => 1);
+    deploy($deb_upload_spool, \@pkgfiles, remove_on_success => 1);
     ok(run("cp -f /var/cache/pbuilder/result/${source}_* $deb_upload_spool"), "copied source files to $deb_upload_spool");
     foreach my $package (@packages) {
       ok(run("cp -f /var/cache/pbuilder/result/${package}_*.deb $deb_upload_spool"), "copied binary debs to $deb_upload_spool");
