@@ -135,20 +135,21 @@ sub build_deb_package {
     ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$source-build.log"), "built deb");
 
     # Put all files, source, binary, and meta into spool.
-    my @pkgfiles = glob("/var/cache/pbuilder/result/${source}_*");
-    deploy($deb_upload_spool, \@pkgfiles, remove_on_success => 1);
-    ok(run("cp -f /var/cache/pbuilder/result/${source}_* $deb_upload_spool"), "copied source files to $deb_upload_spool");
+    my %pkgs;
+    my @bfiles;
+    my @sfiles = glob("/var/cache/pbuilder/result/${source}_*");
     foreach my $package (@packages) {
-      ok(run("cp -f /var/cache/pbuilder/result/${package}_*.deb $deb_upload_spool"), "copied binary debs to $deb_upload_spool");
+      # Note that members of bfiles may also be in sfiles
+      push @bfiles, glob("/var/cache/pbuilder/result/${package}_*");
     }
+    # uniqify
+    map { $pkgs{$_} = 1 } @sfiles;
+    map { $pkgs{$_} = 1 } @bfiles;
+    my @pkgfiles = keys %pkgs;
+
+    deploy($deb_upload_spool, \@pkgfiles, remove_on_success => 1);
     # Clean up
     unlink "/var/cache/pbuilder/result/$source-build.log";
-    unlink glob("/var/cache/pbuilder/result/${source}_*");
-    unlink glob("../${source}_*");
-    foreach my $package (@packages) {
-      unlink glob("/var/cache/pbuilder/result/${package}_*.deb");
-      unlink glob("../${package}_*.deb");
-    }
 
     return 1;
 }
