@@ -28,14 +28,12 @@ sub apipe {
         ebelter
         fdu
         gsanders
-        jeldred
         jlolofie
         jmcmicha
         jweible
         kkyung
         nnutter
         rlong
-        ssmith
         tabbott
         tmooney
     );
