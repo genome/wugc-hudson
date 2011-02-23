@@ -19,6 +19,7 @@ use Users;
 require Defaults;
 require Cwd;
 require Mail::Sender;
+require LWP::Simple;
 
 
 my @xml_files = qx[find test_results -name '*.junit.xml'];
@@ -31,6 +32,9 @@ for my $xml_file (@xml_files) {
     next unless ($testsuite->{failures} || $testsuite->{errors});
     $failure_count++;
 }
+
+print "Found $failure_count failures in " . @xml_files . " test reports.\n";
+
 if ($failure_count > 100) {
     send_catastrophic_failure_alert();
     exit;
@@ -191,98 +195,72 @@ sub send_alert {
 };
 
 sub git_blame {
+    my $job = $ENV{JOB_NAME} || die;
+    my $last_stable_hash = _hash_for_build($job, 'lastStableBuild');
+    my $last_hash = _hash_for_build($job, 'lastBuild');
 
-    my ($test_pathname) = @_;
-    my @winners;
-    my @winners_without_decoration;
+    my @emails;
+    push @emails, 'apipe-tester@genome.wustl.edu';
+    push @emails, _emails_of_committers_between($last_stable_hash, $last_hash);
 
-    my @rest;
-
-    my @us = map { $_ . '@genome.wustl.edu' } Users::apipe();
-
-    my @ignore = Users::apipe_ignore();
-    $test_pathname = "lib/perl/Genome/$test_pathname";
-
-    my $module_pathname = $test_pathname;
-    $module_pathname =~ s/\.t$/.pm/;
-
-    # returns the editor with last commit, most commits, and random apiper
-    
-    # 1. last commit
-	my $log_cmd;
-	if ( -e $module_pathname ) {
-		$log_cmd = "git log -- $module_pathname";
-	} elsif ( -e $test_pathname ) {
-		$log_cmd = "git log -- $test_pathname";
-	} else {
-        print STDERR "Could not find module or test:\n$module_pathname\n$test_pathname\n";
-    }
-    my @log_out = `$log_cmd` if ($log_cmd);
-
-    for my $log_line (@log_out) {
-        if ($log_line =~ /Author:/) {
-
-            my ($last_commiter) = $log_line =~ /Author: .*\<(.*)\@.*\>/;
-            if (grep(/$last_commiter/, @ignore)) {
-                next;
-            } else {
-                push @winners, $last_commiter . '@genome.wustl.edu' if defined($last_commiter);
-                push @winners_without_decoration, $last_commiter;
-                last;
-            }
+    my $apiper_assigned = 0;
+    my %us = map { $_ . '@genome.wustl.edu' => 1} Users::apipe();
+    for my $email (@emails) {
+        if(exists $us{$email}) {
+            $apiper_assigned = 1;
+            delete $us{$email}
         }
     }
-
-
-
-    # 2. most commits
-    for my $file ($test_pathname, $module_pathname) {
-
-        next if ! -f $file;
-
-        my $user = {};
-
-        my $blame_cmd = "/gsc/scripts/sbin/gsc-cron /gsc/bin/git blame $file";
-        my @out = `$blame_cmd`;
-
-            for my $line (@out) {
-                my ($hash, $fn, $u) = split(/\s+/, $line);
-                $u =~ s/\(//g;
-
-                next if $u =~ /[A-Z]/;      # this might be a real name not username
-                next if grep(/$u/, @ignore);
-                $user->{$u}++;
-            }
-
-        my @sorted = sort { $user->{$b} <=> $user->{$a} } keys %$user;
-
-        # take the first user sorted by number of lines commited,
-        # unless it was also the last commiter (see above)
-        for my $s (@sorted) {
-            next if grep(/$s/, @winners_without_decoration);
-            push @winners, $s . '@genome.wustl.edu';
-            push @winners_without_decoration, $s;
-            last;
-        }
+    unless ($apiper_assigned) {
+        my @us = keys %us;
+        my $random_apiper = $us[int(rand(@us))];
+        delete $us{$random_apiper};
+        push @emails, $random_apiper;
     }
 
+    my @us = keys %us;
+    my @to_emails = @emails;
+    my @cc_emails = @us;
+    my @usernames = map { $_ =~ /(.*)\@/ } grep { $_ !~ /^apipe\-tester/ } @to_emails;
 
-    # 3. random apiper
-    my $winners_regex = '(' . join('|', @winners_without_decoration) . ')';
-    @rest = grep(!/$winners_regex/,@us);
-    my $random_apiper = $rest[int(rand(@rest))];    
-    (my $random_apiper_without_decoration = $random_apiper) =~ s/\@.*//;
-    push @winners, $random_apiper;
-    push @winners_without_decoration, $random_apiper_without_decoration;
+    return (\@to_emails, \@cc_emails, \@usernames);
+}
 
+sub _emails_of_committers_between {
+    my $start_hash = shift || die;
+    my $end_hash = shift || die;
 
-    if (@winners > 1) {
-        my $to_regex = '(' . join('|', @winners_without_decoration) . ')';
-        @rest = grep(!/$to_regex/,@us);
-    } else {
-        @winners = @us; # yay!
-    }
+    my $repo = Defaults::GIT_REPOS_BASE() . '/genome';
+    chomp(my @log = qx(cd $repo && git fetch && git log $start_hash..$end_hash));
+    my @authors = grep { $_ =~ /^Author:\ / } @log;
+    my @emails = map { $_ =~ /<([^>]+)>$/ } @authors;
 
-    return (\@winners, \@rest, \@winners_without_decoration);
+    @emails = _unique_elements(@emails);
+
+    return @emails;
+}
+
+sub _hash_for_build {
+    my $job = shift || die;
+    my $build = shift || die;
+
+    my $url = "http://apipe-ci.gsc.wustl.edu/job/$job/$build/consoleText";
+    my $content = LWP::Simple::get($url);
+    die "Unable to get URL ($url).\n" unless ($content);
+
+    my @content = grep { $_ =~ /Commencing\ build\ of\ Revision/ } split("\n", $content);
+    die "More than one line matched 'Commencing build of Revision' for $url.\n" unless (@content == 1);
+
+    my ($hash) = $content[0] =~ /Commencing\ build\ of\ Revision\ (\S+)/;
+    die "Failed to parse hash from content of $url.\n" unless ($hash);
+
+    return $hash;
+}
+
+sub _unique_elements {
+    my @list = @_;
+    my %seen = ();
+    my @unique = grep { ! $seen{$_} ++ } @list;
+    return @unique;
 }
 
