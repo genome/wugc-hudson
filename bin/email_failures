@@ -231,7 +231,7 @@ sub _emails_of_committers_between {
     my $end_hash = shift || die;
 
     my $repo = Defaults::GIT_REPOS_BASE() . '/genome';
-    chomp(my @log = qx(cd $repo && git fetch && git log $start_hash..$end_hash));
+    chomp(my @log = qx(git log $start_hash..$end_hash));
     my @authors = grep { $_ =~ /^Author:\ / } @log;
     my @emails = map { $_ =~ /<([^>]+)>$/ } @authors;
 
