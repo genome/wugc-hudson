@@ -1,0 +1,64 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+BEGIN {
+    require Cwd;
+        require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
+
+require Defaults;
+require Snapshot;
+
+use above 'Genome';
+
+
+my @versions = @ARGV || get_all_versions();;
+
+my $min_atime = 3600*24*7; # atime is in seconds
+print "VERSION\tELAPSED_ATIME\tACTIVE_BUILDS\tSTATUS\n";
+for my $version (@versions) {
+    my $elapsed_atime = elapsed_atime($version);
+    my $active_builds = active_builds($version);
+    
+    print "$version\t$elapsed_atime\t$active_builds\t";
+    if ($elapsed_atime > $min_atime && $active_builds == 0) {
+        print "stale\n";
+    }
+    else {
+        print "fresh\n";
+    }
+}
+
+sub get_all_versions {
+    my @versions;
+    my $stable_dir = Defaults::STABLE_PATH();
+    my $custom_dir = Defaults::CUSTOM_PATH();
+    for my $dir ($stable_dir, $custom_dir) {
+        chomp(my @dirs = qx(find $dir -maxdepth 1 -name 'genome-*'));
+        map { $_ =~ s/.*\/// } @dirs;
+        push @versions, @dirs;
+    }
+    return @versions;
+}
+
+sub elapsed_atime {
+    my $version = shift || die;
+    my $snapshot_dir = Snapshot::find_snapshot($version) || die;
+    my $genome_module = "$snapshot_dir/lib/perl/Genome.pm";   
+    my $atime = (stat($genome_module))[8];
+    my $elapsed_atime = time - $atime;
+    return $elapsed_atime;
+}
+
+sub active_builds {
+    my $version = shift || die;
+    my @active_builds = ();
+    push @active_builds, Genome::Model::Build->get(status => 'Running', 'software_revision like' => "\%$version\%");
+    return @active_builds;
+}
