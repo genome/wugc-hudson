@@ -3,7 +3,11 @@ package PkgBuild;
 use strict;
 use warnings;
 use File::Path;
+use File::Temp qw/ tempdir /;
+use File::Basename;
 use Test::More;
+use Cwd qw/ abs_path getcwd /;
+use File::pushd;
 
 BEGIN {
     require Cwd;
@@ -88,22 +92,30 @@ sub build_cpack_package {
     my $pkg_extension = lc($generator);
     $generator = uc($generator); # cpack is picky
 
-    my @pkgs_start = glob("$package_dir/*.$pkg_extension");
+    my $orig_dir = getcwd();
+    my $src_dir = abs_path($package_dir);
+    my $build_dir = tempdir(CLEANUP => 1);
+    pushd($build_dir);
+    my @pkgs_start = glob("$build_dir/*.$pkg_extension");
     my $cmd = qq{
         (
-            cd $package_dir &&
-            cmake . -DCMAKE_BUILD_TYPE=package &&
+            cd $build_dir &&
+            cmake $src_dir -DCMAKE_BUILD_TYPE=package &&
             make &&
             ctest &&
             fakeroot cpack -G $generator
-        ) 2>&1 | tee $build_log
+        ) 
     };
     run($cmd);
-    my @pkgs_now = glob("$package_dir/*.$pkg_extension");
+    my @pkgs_now = glob("$build_dir/*.$pkg_extension");
     my @pkgs;
     for my $pkg (@pkgs_now) {
-        push(@pkgs, $pkg) if !grep { $_ eq $pkg } @pkgs_start; 
+        if (!grep { $_ eq $pkg } @pkgs_start) {
+            run("cp $pkg $src_dir"); 
+            push(@pkgs, "$package_dir/". basename($pkg));
+        }
     }
+
     return @pkgs;
 }
 
