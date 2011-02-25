@@ -104,7 +104,7 @@ sub build_cpack_package {
             make &&
             ctest &&
             fakeroot cpack -G $generator
-        ) 
+        ) 2>&1 | tee $build_log
     };
     run($cmd);
     my @pkgs_now = glob("$build_dir/*.$pkg_extension");
