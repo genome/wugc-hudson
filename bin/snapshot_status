@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+require Getopt::Long;
 
 BEGIN {
     require Cwd;
@@ -17,11 +18,23 @@ require Snapshot;
 
 use above 'Genome';
 
+my ($all, $archive) = ('', '');
+my $getoptions_rv = Getopt::Long::GetOptions(
+    all => \$all,
+    'archive' => \$archive,
+);
+exit unless($getoptions_rv);
 
-my @versions = @ARGV || get_all_versions();;
+my @versions;
+if ($all) {
+    @versions = get_all_versions();
+}
+else {
+    @versions = @ARGV;
+}
 
 my $min_atime = 3600*24*7; # atime is in seconds
-print "VERSION\tELAPSED_ATIME\tACTIVE_BUILDS\tSTATUS\n";
+print "VERSION\tELAPSED_GENOME_ATIME\tACTIVE_BUILDS\tSTATUS\n";
 for my $version (@versions) {
     my $elapsed_atime = elapsed_atime($version);
     my $active_builds = active_builds($version);
@@ -29,6 +42,12 @@ for my $version (@versions) {
     print "$version\t$elapsed_atime\t$active_builds\t";
     if ($elapsed_atime > $min_atime && $active_builds == 0) {
         print "stale\n";
+        if ($archive) {
+            my $archive_dir = Defaults::OLD_PATH();
+            my $snapshot_dir = Snapshot::find_snapshot($version);
+            my $snapshot = Snapshot->open($snapshot_dir);
+            $snapshot->move_to('old');
+        }
     }
     else {
         print "fresh\n";
