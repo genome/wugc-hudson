@@ -198,15 +198,28 @@ sub move_to {
     }
 
 	
-	execute_or_die("rsync -rltoD $snapshot_dir/ $dest_dir/");
-	for my $symlink (Defaults::CURRENT_USER(), Defaults::CURRENT_WEB(), Defaults::CURRENT_PIPELINE()) {
-		if ( readlink($symlink) =~ /^$snapshot_dir\/?$/ ) {
-			print "Updating symlink ($symlink) since we are moving the snapshot.\n";
-			execute_or_die("ln -sf $dest_dir $symlink-new");
-			execute_or_die("mv -Tf $symlink-new $symlink");
-		}
-	}
-	execute_or_die("rm -rf $snapshot_dir/");
+    my $is_symlinked = 0;
+    for my $symlink (Defaults::CURRENT_USER(), Defaults::CURRENT_WEB(), Defaults::CURRENT_PIPELINE()) {
+        $is_symlinked = 1 if ( readlink($symlink) =~ /^$snapshot_dir\/?$/ );
+    }
+    if ($is_symlinked) {
+        execute_or_die("rsync -rltoD $snapshot_dir/ $dest_dir/");
+        for my $symlink (Defaults::CURRENT_USER(), Defaults::CURRENT_WEB(), Defaults::CURRENT_PIPELINE()) {
+            if ( readlink($symlink) =~ /^$snapshot_dir\/?$/ ) {
+                print "Updating symlink ($symlink) since we are moving the snapshot.\n";
+                execute_or_die("ln -sf $dest_dir $symlink-new");
+                execute_or_die("mv -Tf $symlink-new $symlink");
+            }
+        }
+        execute_or_die("rm -rf $snapshot_dir/");
+    }
+    else {
+        print "moving $snapshot_name to $dest_dir...\n";
+        execute_or_die("mv -n $snapshot_dir $dest_dir/");
+        if (-d $snapshot_dir) {
+            die "ERROR: old directory still exists: $snapshot_dir\n"
+        }
+    }
 
     $self->{snapshot_dir} = $dest_dir;
 
