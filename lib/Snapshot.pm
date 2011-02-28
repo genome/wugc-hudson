@@ -191,6 +191,8 @@ sub move_to {
 		$dest_dir = Defaults::TESTED_PATH() . "/$snapshot_name";
 	} elsif ( $move_to =~ /stable/ ) {
 		$dest_dir = Defaults::STABLE_PATH() . "/$snapshot_name";
+    } elsif ( $move_to =~ /old/ ) {
+        $dest_dir = Defaults::OLD_PATH() . "/$snapshot_name";
 	} else {
         die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
     }
