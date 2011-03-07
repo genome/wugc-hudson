@@ -2,6 +2,7 @@ package PkgBuild;
 
 use strict;
 use warnings;
+use English '-no_match_vars';
 use File::Path;
 use File::Temp qw/ tempdir /;
 use File::Basename;
@@ -181,6 +182,10 @@ sub deploy {
     my ($dest, $packages, %opts) = @_;
     die "$dest directory is writable" unless -w "$dest";
     for my $p (@$packages) {
+        my $gid = getgrnam("codesigner");
+        chmod 0664, $p;
+        chown $UID, $gid, $p;
+        run("cp $p $dest") and print "deployed $p to $dest\n";
         run("cp $p $dest") and print "deployed $p to $dest\n";
         if ($opts{remove_on_success}) {
             unlink($p) or die "failed to remove $p after deploying";
