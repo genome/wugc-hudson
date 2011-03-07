@@ -60,6 +60,10 @@ for my $version (@versions) {
                 my $snapshot_dir = Snapshot::find_snapshot($version);
                 my $snapshot = Snapshot->open($snapshot_dir);
                 $snapshot->move_to('old');
+                $snapshot_dir = $snapshot->{snapshot_dir};
+                unless(!system("chmod -R o-rwx $snapshot_dir")) {
+                    die "Failed to make '$snapshot_dir' only readable by APipe.\n";
+                }
             }
     }
     else {
