@@ -160,15 +160,6 @@ sub build_deb_package {
     map { $pkgs{$_} = 1 } @bfiles;
     my @pkgfiles = keys %pkgs;
 
-    # Fix permissions so codesigner can write to them
-    my $uid = $<;
-    my $gid = getgrnam('codesigner');
-    my @files = grep { -f $_ } @pkgfiles;
-    my @dirs  = grep { -d $_ } @pkgfiles;
-    chown $uid, $gid, @pkgfiles;
-    chmod 0664, @files;
-    chmod 0775, @dirs;
-
     deploy($deb_upload_spool, \@pkgfiles, remove_on_success => 1);
 
     # Clean up
