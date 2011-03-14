@@ -161,6 +161,7 @@ sub build_deb_package {
     my @pkgfiles = keys %pkgs;
 
     deploy($deb_upload_spool, \@pkgfiles, remove_on_success => 1);
+    system("ls -lh $deb_upload_spool");
 
     # Clean up
     unlink "/var/cache/pbuilder/result/$source-build.log";
@@ -186,6 +187,7 @@ sub deploy {
         my $gid = getgrnam("codesigner");
         chmod 0664, $p;
         chown $UID, $gid, $p;
+        system("ls -lh $p");
         run("cp $p $dest") and print "deployed $p to $dest\n";
         run("cp $p $dest") and print "deployed $p to $dest\n";
         if ($opts{remove_on_success}) {
