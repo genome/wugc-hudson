@@ -290,10 +290,10 @@ sub restart_web_server {
     sleep(60);
 
     print "Current PID = $current_pid\n";
-    my @current_processes = qx($process_list_cmd);
+    my @current_processes = qx($process_list_cmd | grep $current_pid);
     my $current_processes_count = scalar @current_processes;
-    print "Previous ($current_processes_count) processes were ($process_list_cmd):\n" . join("\n", @current_processes) . "\n";
-    unless ($current_processes_count && $current_processes_count > 0) {
+    print "Previous ($current_processes_count) processes were ($process_list_cmd | grep $current_pid):\n" . join("\n", @current_processes) . "\n";
+    unless ($current_processes_count && $current_processes_count > 1) {
         print "ERROR: Failed to find processes running under new PID.\n";
         return;
     }
