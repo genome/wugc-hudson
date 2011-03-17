@@ -260,8 +260,7 @@ sub restart_web_server {
         print "Previous ($processes_count) processes were ($process_list_cmd):\n" . join("\n", @processes) . "\n";
     }
     else {
-        print STDERR "Invalid previous PID ($previous_pid)!\n";
-        return;
+        $previous_pid = '';
     }
 
     print "Restarting web server in 3 seconds (^C to abort)...\n";
