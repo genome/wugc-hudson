@@ -67,27 +67,13 @@ sub send_catastrophic_failure_alert {
 }
 
 sub get_revision_info {
-    my $workspace_base = Defaults::HUDSON_CUSTOM_WORKSPACE();
-    my $cwd = Cwd::cwd();
+    my $revision = qx(git describe --tags);
+    chomp($revision;
 
-    my @namespaces;
-    if ($cwd =~ /genome/) {
-        push @namespaces, ('ur', 'workflow', 'genome');
-    } elsif ($cwd =~ /workflow/) {
-        push @namespaces, ('ur', 'workflow');
-    } elsif ($cwd =~ /ur/) {
-        push @namespaces, 'ur';
-    } else {
-        die "Unexpected CWD ($cwd) does not match genome/workflow/ur.\n";
-    }
+    my @submodules = qx(git submodule status);
+    chomp(@submodules);
 
-    my @revisions;
-    for my $namespace (@namespaces) {
-        my $git_out = qx[cd $workspace_base/$namespace && git log --oneline | head -n 1];
-        push @revisions, "$namespace: " . (split(' ', $git_out))[0];
-    }
-
-    return @revisions;
+    return $revision, @submodules;
 }
 
 sub message_body {

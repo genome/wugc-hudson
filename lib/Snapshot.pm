@@ -1,4 +1,4 @@
-package Snapshot;
+package Snapshot2;
 
 use strict;
 use warnings;
@@ -21,8 +21,7 @@ sub new {
     my $class = shift;
 	my (%params) = @_;
 	my $snapshot_dir = delete $params{snapshot_dir} || die;
-	my $source_dirs = delete $params{source_dirs} || die;
-	my $revisions = delete $params{revisions};
+	my $submodules = delete $params{submodules};
 	my $overwrite = delete $params{overwrite};
 
 	if (my @params_keys = keys %params) {
@@ -31,8 +30,7 @@ sub new {
 
     my $self = {
         snapshot_dir => $snapshot_dir,
-		source_dirs => $source_dirs,
-		revisions => $revisions,
+		submodules => $submodules,
 		overwrite => $overwrite,
     };
 
@@ -43,10 +41,7 @@ sub new {
 sub open {
 	my $class = shift;
 	my $snapshot_dir = shift;
-	my @source_dirs = File::Slurp::read_file("$snapshot_dir/source_dirs.txt") if (-s "$snapshot_dir/source_dirs.txt");
-	my @revisions = File::Slurp::read_file("$snapshot_dir/revisions.txt") if (-s "$snapshot_dir/revisions.txt");
-	my (%revisions) = map { split(" ", $_) } @revisions;
-	return $class->new(snapshot_dir => $snapshot_dir, source_dirs => \@source_dirs, revisions => \%revisions);
+	return $class->new(snapshot_dir => $snapshot_dir);
 }
 
 sub create {
@@ -60,11 +55,11 @@ sub create {
 	}
 	
 	my $snapshot_dir = $self->{snapshot_dir};
-	my @source_dirs = @{ $self->{source_dirs} };
+	my @submodules = @{ $self->{submodules} };
 	
-	for my $source_dir (@source_dirs) {
-		unless ( -d $source_dir ) {
-			die "Error: $source_dir is not a directory.\n";
+	for my $submodule (@submodules) {
+		unless ( -d $submodule ) {
+			die "Error: $submodule directory not found.\n";
 		}
 	}
 	
@@ -90,40 +85,23 @@ sub create {
 sub create_snapshot_dir {
 	my $self = shift;
 	my $snapshot_dir = $self->{snapshot_dir};
-	my @source_dirs = @{ $self->{source_dirs} };
+	my @submodules = @{ $self->{submodules} };
 	
 	unless ( system("mkdir -p $snapshot_dir") == 0 ) {
 		die "Error: failed to create directory: '$snapshot_dir'.\n";
 	}
 	
-	unless ( File::Slurp::write_file("$snapshot_dir/source_dirs.txt", join("\n", @source_dirs) . "\n") ) {
-		die "Error: failed to write $snapshot_dir/source_dirs.txt.\n";
-	}
-	
-	my @revisions;
-	for my $source_dir (@source_dirs) {
-        my $name_cmd = "cd $source_dir && " . Defaults::GIT_BIN() . " remote -v | grep origin | head -n 1 | awk '{print \$2}' | sed -e 's|.*/||' -e 's|\.git.*||'";
-		my $origin_name = qx[$name_cmd];
-		chomp $origin_name;
-        my $hash_cmd = "cd $source_dir && " . Defaults::GIT_BIN() . " log | head -n 1 | awk '{print \$2}'";
-		my $origin_hash = qx[$hash_cmd];
-		chomp $origin_hash;
-		push @revisions, "$origin_name $origin_hash";
-	}
-	my (%revisions) = map { split(" ", $_) } @revisions;
-	$self->{revisions} = \%revisions;
-	unless ( File::Slurp::write_file("$snapshot_dir/revisions.txt", join("\n", @revisions) . "\n") ) {
-		die "Error: failed to write $snapshot_dir/revisions.txt.\n";
-	}
-	
-	for my $source_dir (@source_dirs) {
-		unless ( system("rsync -rltoD --exclude .git $source_dir/ $snapshot_dir/") == 0 ) {
-			die "Error: failed to rsync $source_dir.\n";
-		}
-	}
-	
-	wait_for_path($snapshot_dir); # $snapshot_dir doesn't instantly show up on other NFS shares...
-	my @dump_files = qx[find $snapshot_dir -iname '*sqlite3-dump'];
+    for my $dir ('.', @submodules) {
+        for my $subdir ('bin', 'sbin', 'lib') {
+            next unless (-d "$dir/$subdir");
+            unless ( system("rsync -rltoD --exclude .git --exclude *.t $dir/$subdir/ $snapshot_dir/$subdir/") == 0 ) {
+                die "Error: failed to rsync $dir/$subdir/.\n";
+            }
+        }
+    }
+
+    wait_for_path($snapshot_dir); # $snapshot_dir doesn't instantly show up on other NFS shares...
+    my @dump_files = qx[find $snapshot_dir -iname '*sqlite3-dump'];
 	push @dump_files, qx[find $snapshot_dir -iname '*sqlite3n-dump'];
 	for my $sqlite_dump (@dump_files) {
 	    chomp $sqlite_dump;
@@ -155,16 +133,16 @@ sub post_create_cleanup {
 			die "Error: failed to move $path to $new_path.\n";
 		}
 	}
-	
-	for my $unwanted_file ('.gitignore', 'Changes', 'INSTALL', 'LICENSE', 'MANIFEST', 'META.yml', 'Makefile.PL', 'README', 'lib/perl/*-POD') {
-		system("rm -f $snapshot_dir/$unwanted_file");
-	}
 
-	for my $unwanted_dir ('debian', 'doc', 'inc', 't', 'test_results') {
-		system("rm -rf $snapshot_dir/$unwanted_dir");
-	}
-	
-	return 1;
+    for my $ext ('pl', 'sh') {
+        my @files = glob("$snapshot_dir/bin/*.$ext");
+        for my $file (@files) {
+            (my $new_file = $file) =~ s/\.$ext$//;
+            rename($file, $new_file);
+        }
+    }
+
+    return 1;
 }
 
 sub update_tab_completion {
@@ -275,6 +253,7 @@ sub find_snapshot {
 	
 	return $snapshot_path;
 }
+
 
 1;
 
