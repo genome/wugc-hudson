@@ -142,4 +142,8 @@ for my $argv (@ARGV) {
     }
 }
 
+system("chown -R apipe-tester:apipe $new_path");
+system("find $new_path -type f | xargs chmod 664");
+system("find $new_path -type d | xargs chmod 775");
+
 print "Successfully created hotfix at $new_path\n";
