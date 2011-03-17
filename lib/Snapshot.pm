@@ -1,4 +1,4 @@
-package Snapshot2;
+package Snapshot;
 
 use strict;
 use warnings;
