@@ -25,6 +25,11 @@ if ( @ARGV < 3 || $help) {
 	exit;
 }
 
+unless (getpwuid($<) eq 'apipe-tester') {
+    print "ERROR: please create hotfix snapshots as apipe-tester.\n";
+    exit;
+}
+
 
 my $version = shift @ARGV;
 my $old_path;
@@ -141,9 +146,5 @@ for my $argv (@ARGV) {
         exit;
     }
 }
-
-system("chown -R apipe-tester:apipe $new_path");
-system("find $new_path -type f | xargs chmod 664");
-system("find $new_path -type d | xargs chmod 775");
 
 print "Successfully created hotfix at $new_path\n";
