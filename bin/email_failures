@@ -68,7 +68,7 @@ sub send_catastrophic_failure_alert {
 
 sub get_revision_info {
     my $revision = qx(git describe --tags);
-    chomp($revision;
+    chomp($revision);
 
     my @submodules = qx(git submodule status);
     chomp(@submodules);
