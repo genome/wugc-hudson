@@ -13,13 +13,13 @@ BEGIN {
 }
 
 require Defaults;
-require Snapshot2;
+require Snapshot;
 
 my $build_number = shift @ARGV;
 my @submodules = @ARGV;
 
-print "Creating Snapshot2\n";
-my $snapshot = Snapshot2->create(
+print "Creating Snapshot\n";
+my $snapshot = Snapshot->create(
     snapshot_dir => Defaults::TESTED_PATH() . "/genome-$build_number",
     submodules => \@submodules,
 );
