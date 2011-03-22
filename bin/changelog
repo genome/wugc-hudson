@@ -26,7 +26,7 @@ my $rev = join('..',$rev1, $rev2);
 chomp(my $git_has_rev1 = qx(cd $git_repo && git tag -l | grep $rev1));
 chomp(my $git_has_rev2 = qx(cd $git_repo && git tag -l | grep $rev2));
 unless ($git_has_rev1 && $git_has_rev2) {
-	system("cd $git_repo && git reset --hard HEAD && git pull");
+	qx(cd $git_repo && git reset --hard HEAD && git pull);
 }
 my $c = qx[cd $git_repo && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
 if ($?) {
