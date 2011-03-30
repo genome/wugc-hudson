@@ -48,6 +48,14 @@ sub reference_alignment {
     );
 }
 
+sub somatic_variation {
+    return qw(
+        adukes
+        gsanders
+        rlong
+    );
+}
+
 sub somatic {
     return qw(
         gsanders
