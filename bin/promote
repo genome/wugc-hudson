@@ -196,7 +196,19 @@ sub create_changes_summary {
 	}
 	
 	# create git-changelog
-    system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
+    my $lock_file = "$snapshot_path/git-changelog.lock";
+    if (-e $lock_file) {
+        my $start_time = time;
+        while (-e $lock_file) {
+            die "Waiting on lock file for 300 seconds, exiting. Verify lock is valid or remove ($lock_file).\n" if ((time - $start_time) >= 300);
+            sleep 1;
+        }
+    }
+    else {
+        system("touch $lock_file");
+        system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
+        system("rm -f $lock_file");
+    }
 
 	# create CHANGE_SUMMARY
 	unlink("$snapshot_path/CHANGE_SUMMARY");
