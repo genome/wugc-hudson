@@ -183,7 +183,7 @@ sub create_changes_summary {
     my $previous_version_file = "$snapshot_path/previous_version.txt";
 
     if (not $announce_only and not -s $previous_version_file) {
-        system("echo $old_version > $snapshot_path/previous_version.txt")
+        system("echo $old_version >> $snapshot_path/previous_version.txt")
     }
     if (-s $previous_version_file and $new_version =~ /genome-\d+-fix\d+/) {
         chomp($old_version = qx[cat $snapshot_path/previous_version.txt]);
