@@ -5,7 +5,7 @@ BEGIN {
 	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
 }
 
-use Test::More tests => 29;
+use Test::More tests => 17;
 use File::Temp qw/tempdir/;
 use File::Slurp qw/write_file/;
 
@@ -31,7 +31,6 @@ for my $cmd ('fakeroot', 'cmake', 'ctest', 'cpack') {
 }
 
 test_cpack_generator("deb");
-test_cpack_generator("rpm");
 
 sub test_cpack_generator {
     my $generator = shift;
