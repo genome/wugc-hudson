@@ -5,7 +5,7 @@ BEGIN {
 	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
 }
 
-use Test::More tests => 25;
+use Test::More tests => 29;
 use File::Temp qw/tempdir/;
 use File::Slurp qw/write_file/;
 
@@ -25,6 +25,10 @@ set(CPACK_SYSTEM_NAME "Linux")
 set(CPACK_GENERATOR "DEB")
 include(CPack)
 };
+
+for my $cmd ('fakeroot', 'cmake', 'ctest', 'cpack') {
+    ok(qx(which $cmd), "$cmd is installed");
+}
 
 test_cpack_generator("deb");
 test_cpack_generator("rpm");
