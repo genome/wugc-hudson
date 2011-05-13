@@ -1,0 +1,27 @@
+#!/usr/bin/env perl 
+
+use strict;
+use warnings;
+
+BEGIN {
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
+
+require Defaults;
+
+
+my $builds_passed = !system("cd lib/perl && " . Defaults::BIN_DIR() . "/apipe_tests2 " . join(' ', @ARGV));
+
+if ( $builds_passed ) {
+	print "Passed builds\n";
+	exit;
+} else {
+	print "Failed builds\n";
+	exit 1;
+}
+
