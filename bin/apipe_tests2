@@ -83,6 +83,8 @@ foreach my $build (values %builds) {
     $build_master_events{$build->build_id} = $build->the_master_event->id;
 }
 
+create_build_id_files(\%builds);
+
 my @build_ids = sort keys %builds;
 
 # Print out information about the builds that were started so they're recorded in the Hudson raw output
@@ -94,8 +96,6 @@ for my $build_id (@build_ids) {
     print "\tbuild $build_id ($type_string), model " . $model->id . " (" . $model->name . ")\n";
 }
 print "\n";
-
-create_build_id_files(\%builds);
 
 # Record current status of each build, continue until no builds are running or the timeout limit is reached
 my %failures;
