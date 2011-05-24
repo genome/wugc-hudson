@@ -5,6 +5,7 @@ use strict;
 
 use above 'Genome';
 use above 'UR';
+use File::Util;
 
 BEGIN {
     require Cwd;
@@ -23,6 +24,26 @@ my $LOOP_SLEEP_MINS = 1;
 my $TIMEOUT_HOURS = 30;
 
 $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+
+sub create_build_id_file {
+    my ($model_name, $build_id) = @_;
+    my $filename = "test_results/$model_name.build_id";
+    my $fu = new File::Util();
+    $fu->write_file('file' => $filename,
+                    'content' => $build_id,
+                    'bitmask' => 0644,
+                   );
+}
+
+sub create_build_id_files {
+    my ($builds) = @_;
+
+    for my $build_id (keys %{$builds}) {
+        my $build = $builds->{$build_id};
+        my $model = $build->model;
+        create_build_id_file($model->name, $build_id);
+    }
+}
 
 my $model_name;
 if (@ARGV) {
@@ -64,13 +85,15 @@ my @build_ids = sort keys %builds;
 
 # Print out information about the builds that were started so they're recorded in the Hudson raw output
 print "\n\nBuilds started for models, waiting for them to finish:\n";
-for my $build_id (sort keys %builds) {
+for my $build_id (@build_ids) {
     my $build = $builds{$build_id};
     my $model = $build->model;
     my $type_string = Library::model_class_name_to_string($model->class);
     print "\tbuild $build_id ($type_string), model " . $model->id . " (" . $model->name . ")\n";
 }
 print "\n";
+
+create_build_id_files(\%builds);
 
 # Record current status of each build, continue until no builds are running or the timeout limit is reached
 my %failures;
