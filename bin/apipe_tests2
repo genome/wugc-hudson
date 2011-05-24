@@ -28,6 +28,8 @@ $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 sub create_build_id_file {
     my ($model_name, $build_id) = @_;
     my $filename = "test_results/$model_name.build_id";
+    print "creating build id file $filename with id $build_id\n";
+
     my $fu = new File::Util();
     $fu->write_file('file' => $filename,
                     'content' => $build_id,
