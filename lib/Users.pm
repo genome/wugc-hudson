@@ -25,16 +25,21 @@ sub apipe {
         adukes
         bdericks
         boberkfe
+        coliver
         ebelter
         fdu
         gsanders
+        iferguso
         jlolofie
         jmcmicha
         jweible
         kkyung
         nnutter
+        rhancock
         rlong
+        swallace
         tabbott
+        tdutton
         tmooney
     );
 }
