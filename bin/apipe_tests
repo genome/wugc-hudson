@@ -147,15 +147,25 @@ while (!$all_done) {
                 my $model = $build->model;
                 my $type_string = Library::model_class_name_to_string($build->model->class);
                 $msg .= "Build $build_id (type $type_string), Model " . $model->id . " (" . $model->name . ") : " . $hash->{$build_id} . "\n";
+                my @to;
+                my @cc;
+                if (Users->can($type_string)) {
+                    @to = Users->$type_string;
+                    @cc = Users::apipe();
+                } else {
+                    @to = Users::apipe();
+                    @cc = '';
+                }
+
+                Library::send_mail(
+                    from => 'apipe-tester@genome.wustl.edu',
+                    to => Library::users_to_addresses(@to),
+                    cc => Library::users_to_addresses(@cc),
+                    subject => "[fail] Build Test Timed Out! ($type_string)",
+                    body => $msg,
+                );
             }
         }
-
-        Library::send_mail(
-            from => 'apipe-tester@genome.wustl.edu',
-            to => Library::users_to_addresses(Users::apipe()),
-            subject => '[fail] Build Tests Timed Out!',
-            body => $msg,
-        );
 
         exit 1;
     }
