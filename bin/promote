@@ -93,6 +93,18 @@ sub promote {
     no strict 'subs';
     my $announce_email_to_method = 'ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
 
+    my $lock_file = "/tmp/promote.lock";
+    if (-e $lock_file) {
+        my $start_time = time;
+        while (-e $lock_file) {
+            die "Waiting on lock file for 300 seconds, exiting. Verify lock is valid or remove ($lock_file).\n" if ((time - $start_time) >= 300);
+            sleep 1;
+        }
+    }
+    else {
+        system("touch $lock_file");
+    }
+
 	my $changes_summary_file = create_changes_summary(
 	    build_name => $NEW_BUILD_NAME,
 	    old_version => $OLD_BUILD_VERSION,
@@ -100,6 +112,7 @@ sub promote {
 	    announce_only => $announce_only
 	);
     my $changes_summary = File::Slurp::read_file($changes_summary_file);
+    system("rm -f $lock_file");
     my $promote_subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 
     if ( $announce_only || $sleep_one_hour ) {
@@ -196,19 +209,7 @@ sub create_changes_summary {
 	}
 	
 	# create git-changelog
-    my $lock_file = "$snapshot_path/git-changelog.lock";
-    if (-e $lock_file) {
-        my $start_time = time;
-        while (-e $lock_file) {
-            die "Waiting on lock file for 300 seconds, exiting. Verify lock is valid or remove ($lock_file).\n" if ((time - $start_time) >= 300);
-            sleep 1;
-        }
-    }
-    else {
-        system("touch $lock_file");
-        system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
-        system("rm -f $lock_file");
-    }
+    system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
 
 	# create CHANGE_SUMMARY
 	unlink("$snapshot_path/CHANGE_SUMMARY");
