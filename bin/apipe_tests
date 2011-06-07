@@ -30,6 +30,7 @@ if (@ARGV) {
     $software_revision = $ARGV[1];
 }
 
+my @builds_started;
 my $build_start_command;
 if ($software_revision) {
     my @builds = Genome::Model::Build->get(
@@ -45,17 +46,26 @@ if ($software_revision) {
             print "Successful build already exists for $software_revision.\n";
             exit;
         }
-        print STDERR "One build found for software_revision = $software_revision, restarting.\n";
-        $build_start_command = Genome::Model::Build::Command::Restart->create(
-            builds => \@builds,
-        );
-    } elsif (@builds) {
+        elsif ($status && $status eq 'Running') {
+            print "Using already running build " . $build->__display_name__ . ".\n";
+            @builds_started = @builds;
+        }
+        else {
+            print STDERR "One build found for software_revision = $software_revision, restarting.\n";
+            $build_start_command = Genome::Model::Build::Command::Restart->create(
+                builds => \@builds,
+            );
+        }
+    }
+    elsif (@builds) {
         print STDERR "Many builds found for software_revision = $software_revision, starting new build.\n";
-    } else {
+    }
+    else {
         print STDERR "No builds found for software_revision = $software_revision, starting new build.\n";
     }
 }
-unless ($build_start_command) {
+
+unless (@builds_started || $build_start_command) {
     my %model_params;
     if ($model_name) {
         $model_params{name} = $model_name;
@@ -69,17 +79,23 @@ unless ($build_start_command) {
     );
 }
 
-die "Could not create build_start_command object!" unless $build_start_command;
+if ($build_start_command) {
+    my $build_start_rv = $build_start_command->execute;
+    die "Could not execute build_start_command!" unless defined $build_start_rv and $build_start_rv == 1;
 
-my $build_start_rv = $build_start_command->execute;
-die "Could not execute build_start_command!" unless defined $build_start_rv and $build_start_rv == 1;
+    my $commit_rv = UR::Context->commit;
+    die "Could not commit changes!" unless defined $commit_rv and $commit_rv == 1;
 
-my $commit_rv = UR::Context->commit;
-die "Could not commit changes!" unless defined $commit_rv and $commit_rv == 1;
+    @builds_started = $build_start_command->builds;
+}
+
+unless (@builds_started) {
+    die "No builds to monitor!\n";
+}
+
 
 # Get information about builds and master events for monitoring
 my %builds;
-my @builds_started = $build_start_command->builds;
 for my $build (@builds_started) {
     $builds{$build->id} = $build;
 }
