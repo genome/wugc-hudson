@@ -53,7 +53,8 @@ for my $version (@versions) {
     
     print "$version\t$elapsed_atime\t$active_builds\t$has_lsf_jobs\t";
     if ($elapsed_atime > $min_atime && $active_builds == 0
-        && (!$check_lsf || ($check_lsf && $has_lsf_jobs == 0))) {
+        && (!$check_lsf || ($check_lsf && $has_lsf_jobs == 0))
+        && older_than_pipeline($version)) {
             print "stale\n";
             if ($archive) {
                 my $archive_dir = Defaults::OLD_PATH();
@@ -81,6 +82,14 @@ sub get_all_versions {
         push @versions, @dirs;
     }
     return @versions;
+}
+
+sub older_than_pipeline {
+    my $version = shift || die;
+    my ($version_number) = $version =~ /genome-(\d+)/;
+    my $current_path = readlink(Defaults::CURRENT_PIPELINE()) || die;
+    my ($current_version) = $current_path =~ /.*\/genome-(\d+)/;
+    return ($version_number < $current_version);
 }
 
 sub elapsed_atime {
