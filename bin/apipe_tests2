@@ -5,14 +5,17 @@ use strict;
 
 use above 'Genome';
 use above 'UR';
+use File::Basename;
 use File::Util;
+use Getopt::Long;
+use Data::Dumper;
 
 BEGIN {
     require Cwd;
-	require File::Basename;
+    require File::Basename;
     my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
     unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
-        push @INC, $lib_dir;
+        unshift @INC, $lib_dir;
     }
 }
 
@@ -25,65 +28,70 @@ my $TIMEOUT_HOURS = 30;
 
 $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
-sub create_build_id_file {
-    my ($model_name, $build_id) = @_;
-    my $filename = "test_results/$model_name.build_id";
-    print "creating build id file $filename with id $build_id\n";
+sub help_and_exit {
+    my ($ret_val) = @_;
+    my $filename = basename(__FILE__);
+    print <<EOS;
+Usage: $filename [options] --model-name=name_of_model
 
-    my $fu = new File::Util();
-    $fu->write_file('file' => $filename,
-                    'content' => $build_id,
-                    'bitmask' => 0644,
-                   );
-}
+Options:
+    --model-name=           name of model
+    --sw-revision=          software_revision to set on the build
+    --send-emails           send emails on failures
+    --help                  prints this message
 
-sub create_build_id_files {
-    my ($builds) = @_;
+Description:
+    If software-revision is not set the git hash is retrieved from
+    the current git repo (assuming you're in one).
 
-    for my $build_id (keys %{$builds}) {
-        my $build = $builds->{$build_id};
-        my $model = $build->model;
-        create_build_id_file($model->name, $build_id);
-    }
+EOS
+    exit 1;
 }
 
 my $model_name;
-if (@ARGV) {
-    $model_name = $ARGV[0] || die;
+my $sw_revision;
+my $send_emails;
+
+my $r = GetOptions("model-name=s" => \$model_name,
+                   "sw-revision=s" => \$sw_revision,
+                   "send-emails" => \$send_emails,
+                   "help" => \&help_and_exit,
+                   );
+
+help_and_exit() unless $r;
+
+die "Model name not set" unless $model_name;
+my $model = Genome::Model->get(name => $model_name);
+die "Model $model_name not found" unless $model;
+print "Using model: " . $model->id . "\n";
+
+unless ($sw_revision) {
+    $sw_revision = `git rev-parse --short HEAD`;
+    die "Could not get current hash from git" unless $sw_revision;
+    chomp $sw_revision;
 }
 
-my %model_params;
-if ($model_name) {
-    $model_params{name} = $model_name;
-} else {
-    $model_params{'name like'} = 'apipe-test-%';
+my $b = $model->create_build(model_id => $model->id, software_revision => $sw_revision);
+unless ($b) {
+    die "Failed to create build for model (".$model->name.", ID: ".$model->id.")";
 }
-my @models = Genome::Model->get(%model_params);
-my $build_start_command = Genome::Model::Build::Command::Start->create(
-    models => \@models,
-    force => 1,
-);
 
-die "Could not create build_start_command object!" unless $build_start_command;
-
-my $build_start_rv = $build_start_command->execute;
-die "Could not execute build_start_command!" unless defined $build_start_rv and $build_start_rv == 1;
+my $build_started = $b->start();
+unless ($build_started) {
+    die "Failed to start build (" . $b->__display_name__ . ")";
+}
 
 my $commit_rv = UR::Context->commit;
 die "Could not commit changes!" unless defined $commit_rv and $commit_rv == 1;
 
-# Get information about builds and master events for monitoring
+# TODO: remove all this hash stuff, we're only ever doing one model/build at a time anyway.
 my %builds;
-my @builds_started = $build_start_command->builds;
-for my $build (@builds_started) {
-    $builds{$build->id} = $build;
-}
+$builds{$b->id} = $b;
+
 my %build_master_events;
 foreach my $build (values %builds) {
     $build_master_events{$build->build_id} = $build->the_master_event->id;
 }
-
-create_build_id_files(\%builds);
 
 my @build_ids = sort keys %builds;
 
@@ -147,12 +155,14 @@ while (!$all_done) {
             }
         }
 
-        Library::send_mail(
-            from => 'apipe-tester@genome.wustl.edu',
-            to => Library::users_to_addresses(Users::apipe()),
-            subject => '[fail] Build Tests Timed Out!',
-            body => $msg,
-        );
+        if ($send_emails){
+            Library::send_mail(
+                from => 'apipe-tester@genome.wustl.edu',
+                to => Library::users_to_addresses(Users::apipe()),
+                subject => '[fail] Build Tests Timed Out!',
+                body => $msg,
+            );
+        }
 
         exit 1;
     }
@@ -174,7 +184,7 @@ if (scalar keys %failures or scalar keys %others) {
             my $build_url = "https://imp.gsc.wustl.edu/view/Genome/Model/Build/status.html?id=$key";
             my $msg = "Test build $key of type $type_string finished with status $status! Model is " . $model->id . " (" . $model->name . ").\n\n" . 
                 "Check out the status page at $build_url and fix it!\n";
-            
+
             my @to;
             my @cc;
             if (Users->can($type_string)) {
@@ -185,13 +195,15 @@ if (scalar keys %failures or scalar keys %others) {
                 @cc = '';
             }
 
-            Library::send_mail(
-                from => 'apipe-tester@genome.wustl.edu',
-                to => Library::users_to_addresses(@to),
-                cc => Library::users_to_addresses(@cc),
-                subject => "[fail] test build $key failed, type $type_string",
-                body => $msg,
-            );
+            if ($send_emails) {
+                Library::send_mail(
+                    from => 'apipe-tester@genome.wustl.edu',
+                    to => Library::users_to_addresses(@to),
+                    cc => Library::users_to_addresses(@cc),
+                    subject => "[fail] test build $key failed, type $type_string",
+                    body => $msg,
+                );
+            }
         }
     }
     exit 1;
