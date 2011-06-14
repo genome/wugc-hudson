@@ -46,10 +46,10 @@ eval {
     my $model = Genome::Model->get(name => $model_name);
     die "Model $model_name not found" unless $model;
     print "Using model: " . $model->id . "\n";
-    
+
     init_versions();
     my ($ref_build, $cur_build) = get_builds($model);
-    print "Comparing build " . $ref_build->id . " using revision $ref_sw_revision\n" . 
+    print "Comparing build " . $ref_build->id . " using revision $ref_sw_revision\n" .
           "     with build " . $cur_build->id . " using revision $sw_revision\n";
 
     my %diffs = $cur_build->compare_output($ref_build->build_id);
@@ -110,11 +110,11 @@ sub get_model_camel_type {
 
 sub get_builds {
     my ($model) = @_;
-    
+
     my @ref_builds = $model->builds(software_revision => $ref_sw_revision);
     die "Expecting one build with software_revision=$ref_sw_revision, got " . @ref_builds unless @ref_builds == 1;
     my $ref_build = $ref_builds[0];
-    
+
     my @cur_builds = $model->builds(software_revision => $sw_revision);
     die "Expecting one build with software_revision=$sw_revision, got " . @cur_builds unless @cur_builds == 1;
     my $cur_build = $cur_builds[0];
@@ -135,7 +135,7 @@ sub init_versions {
             die "\$PIPELINE_VERSION not defined" unless $pipeline_version;
             chomp $pipeline_version;
         }
-        
+
         $ref_sw_revision = `git rev-parse --short $pipeline_version`;
         die "No reference version available for $pipeline_version" unless $ref_sw_revision;
         chomp $ref_sw_revision;
@@ -149,9 +149,9 @@ sub send_apipe_tester_emails {
     my $failure_msg_body = "Jenkins diff build $jenkins_build_number failed to execute!\n" .
                            "To see raw output, go to $jenkins_build_url\n" .
                            "Errors: " . $errors;
-                           
+
     Library::send_mail(
-        subject => '[fail] Test Build Diff Failed to Execute!', 
+        subject => '[fail] Test Build Diff Failed to Execute!',
         body => $failure_msg_body,
         from => 'apipe-tester@genome.wustl.edu',
         to => Library::users_to_addresses(Users::apipe()),
