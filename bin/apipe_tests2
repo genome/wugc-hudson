@@ -54,7 +54,7 @@ my $send_emails;
 
 my $r = GetOptions("model-name=s"  => \$model_name,
                    "sw-revision=s" => \$sw_revision,
-                   "send-emails:"  => \$send_emails,
+                   "send-emails:s" => \$send_emails,
                    "help"          => \&help_and_exit,
                    );
 
