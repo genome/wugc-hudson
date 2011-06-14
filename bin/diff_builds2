@@ -32,12 +32,12 @@ my $sw_revision;
 my $send_emails;
 
 eval {
-    my $r = GetOptions("model-name=s" => \$model_name,
+    my $r = GetOptions("model-name=s"       => \$model_name,
                        "pipeline-version=s" => \$pipeline_version,
-                       "ref-sw-revision=s" => \$ref_sw_revision,
-                       "sw-revision=s" => \$sw_revision,
-                       "send-emails" => \$send_emails,
-                       "help" => \&help_and_exit,
+                       "ref-sw-revision=s"  => \$ref_sw_revision,
+                       "sw-revision=s"      => \$sw_revision,
+                       "send-emails:s"      => \$send_emails,
+                       "help"               => \&help_and_exit,
                        );
 
     help_and_exit() unless $r;
@@ -88,7 +88,7 @@ Options:
     --pipeline-version=     git tag like 'genome-1130'
     --ref-sw-revision=      software_revision of build to diff against
     --sw-revision=          software_revision of build to diff
-    --send-emails           send emails on failures
+    --send-emails=          (true|false) send emails on failures
     --help                  prints this message
 
 Description:
@@ -99,6 +99,11 @@ Description:
 
 EOS
     exit 1;
+}
+
+sub should_send_emails {
+    return 0 unless defined $send_emails;
+    return ($send_emails =~ /^(true|yes|1|)$/i);
 }
 
 sub get_model_camel_type {
@@ -144,7 +149,7 @@ sub init_versions {
 
 sub send_apipe_tester_emails {
     my ($errors) = @_;
-    return unless ($send_emails);
+    return unless (should_send_emails());
 
     my $failure_msg_body = "Jenkins diff build $jenkins_build_number failed to execute!\n" .
                            "To see raw output, go to $jenkins_build_url\n" .
@@ -160,7 +165,7 @@ sub send_apipe_tester_emails {
 
 sub send_owner_emails {
     my ($model, $diff_string) = @_;
-    return unless ($send_emails);
+    return unless (should_send_emails());
 
     my $build_type = get_model_camel_type($model);
     my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();

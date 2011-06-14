@@ -37,7 +37,7 @@ Usage: $filename [options] --model-name=name_of_model
 Options:
     --model-name=           name of model
     --sw-revision=          software_revision to set on the build
-    --send-emails           send emails on failures
+    --send-emails=          (true|false) send emails on failures
     --help                  prints this message
 
 Description:
@@ -52,10 +52,10 @@ my $model_name;
 my $sw_revision;
 my $send_emails;
 
-my $r = GetOptions("model-name=s" => \$model_name,
+my $r = GetOptions("model-name=s"  => \$model_name,
                    "sw-revision=s" => \$sw_revision,
-                   "send-emails" => \$send_emails,
-                   "help" => \&help_and_exit,
+                   "send-emails:"  => \$send_emails,
+                   "help"          => \&help_and_exit,
                    );
 
 help_and_exit() unless $r;
@@ -155,7 +155,7 @@ while (!$all_done) {
             }
         }
 
-        if ($send_emails){
+        if (should_send_emails()){
             Library::send_mail(
                 from => 'apipe-tester@genome.wustl.edu',
                 to => Library::users_to_addresses(Users::apipe()),
@@ -174,7 +174,7 @@ print "Builds are done, checking statuses and sending failure emails (if necessa
 if (scalar keys %failures or scalar keys %others) {
     for my $hash (\%failures, \%others) {
         for my $key (sort keys %{$hash}) {
-            my $build = $builds{$key}; 
+            my $build = $builds{$key};
             my $model = $build->model;
             my $status = $hash->{$key};
             my $type_string = Library::model_class_name_to_string($build->model->class);
@@ -182,7 +182,7 @@ if (scalar keys %failures or scalar keys %others) {
             print "Build $key, type $type_string, failed (status $status), sending mail\n";
 
             my $build_url = "https://imp.gsc.wustl.edu/view/Genome/Model/Build/status.html?id=$key";
-            my $msg = "Test build $key of type $type_string finished with status $status! Model is " . $model->id . " (" . $model->name . ").\n\n" . 
+            my $msg = "Test build $key of type $type_string finished with status $status! Model is " . $model->id . " (" . $model->name . ").\n\n" .
                 "Check out the status page at $build_url and fix it!\n";
 
             my @to;
@@ -195,7 +195,7 @@ if (scalar keys %failures or scalar keys %others) {
                 @cc = '';
             }
 
-            if ($send_emails) {
+            if (should_send_emails()) {
                 Library::send_mail(
                     from => 'apipe-tester@genome.wustl.edu',
                     to => Library::users_to_addresses(@to),
@@ -211,6 +211,11 @@ if (scalar keys %failures or scalar keys %others) {
 else {
     print "No test build failures found!\n";
     exit 0;
+}
+
+sub should_send_emails {
+    return 0 unless defined $send_emails;
+    return ($send_emails =~ /^(true|yes|1|)$/i);
 }
 
 1;
