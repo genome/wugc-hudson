@@ -63,7 +63,7 @@ help_and_exit() unless $r;
 die "Model name not set" unless $model_name;
 my $model = Genome::Model->get(name => $model_name);
 die "Model $model_name not found" unless $model;
-print "Using model: " . $model->id . "\n";
+print "Using model: " . $model->__display_name__ . "\n";
 
 unless ($sw_revision) {
     $sw_revision = `git rev-parse --short HEAD`;
