@@ -71,7 +71,7 @@ unless ($sw_revision) {
     chomp $sw_revision;
 }
 
-my $b = $model->create_build(model_id => $model->id, software_revision => $sw_revision);
+my $b = Genome::Model::Build->create(model_id => $model->id, software_revision => $sw_revision);
 unless ($b) {
     die "Failed to create build for model (".$model->name.", ID: ".$model->id.")";
 }
