@@ -120,7 +120,7 @@ sub get_builds {
     die "Expecting one build with software_revision=$ref_sw_revision, got " . @ref_builds unless @ref_builds == 1;
     my $ref_build = $ref_builds[0];
 
-    my @cur_builds = $model->builds(software_revision => $sw_revision);
+    my @cur_builds = $model->builds(software_revision => $sw_revision, status => 'Succeeded');
     die "Expecting one build with software_revision=$sw_revision, got " . @cur_builds unless @cur_builds == 1;
     my $cur_build = $cur_builds[0];
 
