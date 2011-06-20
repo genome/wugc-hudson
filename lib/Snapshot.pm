@@ -239,7 +239,9 @@ sub find_snapshot {
 	$build_name =~ s/genome-genome/genome/;
 	my $snapshot_path;
 	
-	if ( -d Defaults::STABLE_PATH() . "/$build_name" ) {
+    if ( -d Defaults::SNAPSHOTS_PATH() . "/$build_name" ) {
+        $snapshot_path = Defaults::SNAPSHOTS_PATH() . "/$build_name";
+    } elsif ( -d Defaults::STABLE_PATH() . "/$build_name" ) {
 		$snapshot_path = Defaults::STABLE_PATH() . "/$build_name";
 	} elsif ( -d Defaults::TESTED_PATH() . "/$build_name" ) {
 		$snapshot_path = Defaults::TESTED_PATH() . "/$build_name";
@@ -248,7 +250,7 @@ sub find_snapshot {
 	} elsif ( -d Defaults::OLD_PATH() . "/$build_name") {
 		$snapshot_path = Defaults::OLD_PATH() . "/$build_name";
 	} else {
-		die "Unable to find $build_name in " . Defaults::BASE_DIR() . "/snapshots/{stable,tested,custom,unstable,old}\n";
+		die "Unable to find $build_name in " . Defaults::BASE_DIR() . "/snapshots/{,stable,tested,custom,unstable,old}\n";
 	}
 	
 	return $snapshot_path;
