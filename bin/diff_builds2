@@ -141,6 +141,10 @@ sub init_versions {
             chomp $pipeline_version;
         }
 
+        # If the deployed version is a hotfix we didn't run builds for it so go back to the
+        # good version before that.
+        $pipeline_version =~ s/-fix\d+$//;
+
         $ref_sw_revision = `git rev-parse --short $pipeline_version`;
         die "No reference version available for $pipeline_version" unless $ref_sw_revision;
         chomp $ref_sw_revision;
