@@ -116,7 +116,7 @@ sub get_model_camel_type {
 sub get_builds {
     my ($model) = @_;
 
-    my @ref_builds = $model->builds(software_revision => $ref_sw_revision);
+    my @ref_builds = $model->builds(software_revision => $ref_sw_revision, status => 'Succeeded');
     die "Expecting one build with software_revision=$ref_sw_revision, got " . @ref_builds unless @ref_builds == 1;
     my $ref_build = $ref_builds[0];
 

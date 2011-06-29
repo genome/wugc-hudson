@@ -20,7 +20,7 @@ my @submodules = @ARGV;
 
 print "Creating Snapshot\n";
 my $snapshot = Snapshot->create(
-    snapshot_dir => Defaults::TESTED_PATH() . "/genome-$build_number",
+    snapshot_dir => Defaults::SNAPSHOTS_PATH() . "/genome-$build_number",
     submodules => \@submodules,
 );
 
