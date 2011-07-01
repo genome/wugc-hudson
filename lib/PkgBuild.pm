@@ -189,7 +189,6 @@ sub deploy {
         chown $UID, $gid, $p;
         system("ls -lh $p");
         run("cp -a $p $dest") and print "deployed $p to $dest\n";
-        run("cp -a $p $dest") and print "deployed $p to $dest\n";
         if ($opts{remove_on_success}) {
             unlink($p) or die "failed to remove $p after deploying";
         }
