@@ -102,8 +102,8 @@ sub build_cpack_package {
         (
             cd $build_dir &&
             cmake $src_dir -DCMAKE_BUILD_TYPE=package &&
-            make &&
-            ctest &&
+            make VERBOSE=1 &&
+            ctest -V &&
             fakeroot cpack -G $generator
         ) 2>&1 | tee $build_log
     };
