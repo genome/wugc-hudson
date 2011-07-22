@@ -208,8 +208,22 @@ sub create_changes_summary {
 		die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
 	}
 	
+
 	# create git-changelog
+    my $git_changelog_lock_file = "/tmp/changelog.lock";
+    if (-e $git_changelog_lock_file) {
+        my $start_time = time;
+        while (-e $git_changelog_lock_file) {
+            die "Waited on changelog lock file for a minute; exiting. Verify lock is valid or remove ($git_changelog_lock_file).\n" if ((time - $start_time) >= 60);
+            sleep 1;
+        }
+    }
+    else {
+        system("touch $git_changelog_lock_file");
+    }
+
     system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
+
 
 	# create CHANGE_SUMMARY
 	unlink("$snapshot_path/CHANGE_SUMMARY");
@@ -218,6 +232,9 @@ sub create_changes_summary {
 		my @git_changelog_lines = File::Slurp::read_file("$snapshot_path/git-changelog");
 		push @change_summary, "== Highlighted Changes From $old_version to $new_version ==\n\n", @git_changelog_lines;
 	}
+
+    unlink $git_changelog_lock_file;
+
 	if ( -s "$snapshot_path/hotfixes" ) {
 		my @hotfixes_lines = File::Slurp::read_file("$snapshot_path/hotfixes");
 		my @hotfixes_reasons = grep { $_ =~ /^Fix/ } @hotfixes_lines;
