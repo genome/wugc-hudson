@@ -88,7 +88,7 @@ sub build_cpan_package {
 sub build_cpack_package {
     my ($package_dir, $generator, $build_log) = @_;
 
-    $build_log = "$package_dir/last_build.log" unless($build_log);
+    my $final_build_log = "$package_dir/last_build.log" unless($build_log);
 
     my $pkg_extension = lc($generator);
     $generator = uc($generator); # cpack is picky
@@ -96,6 +96,7 @@ sub build_cpack_package {
     my $orig_dir = getcwd();
     my $src_dir = abs_path($package_dir);
     my $build_dir = tempdir(CLEANUP => 1);
+    my $tmp_build_log = "$build_dir/last_build.log";
     pushd($build_dir);
     my @pkgs_start = glob("$build_dir/*.$pkg_extension");
     my $cmd = qq{
@@ -105,17 +106,18 @@ sub build_cpack_package {
             make VERBOSE=1 &&
             ctest -V &&
             fakeroot cpack -G $generator
-        ) 2>&1 | tee $build_log
+        ) 2>&1 | tee $tmp_build_log
     };
     run($cmd);
     my @pkgs_now = glob("$build_dir/*.$pkg_extension");
     my @pkgs;
     for my $pkg (@pkgs_now) {
         if (!grep { $_ eq $pkg } @pkgs_start) {
-            run("cp $pkg $src_dir"); 
+            run("cp $pkg $src_dir");
             push(@pkgs, "$package_dir/". basename($pkg));
         }
     }
+    run("mv $tmp_build_log $final_build_log");
 
     return @pkgs;
 }
