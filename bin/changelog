@@ -51,16 +51,16 @@ for my $l (@lines) {
     };
 
     my @log;
-    if ($subj =~ /CHANGELOG:\s*(.*)/) {
+    if ($subj =~ /CHANGELOG\s*(.*)/) {
         push @log, $1;
     }
 
-    if ($body =~ /CHANGELOG:/) {
+    if ($body =~ /CHANGELOG/) {
 
-        if ($body =~ /CHANGELOG:(.*?)\n*^\s*$/ms) {
+        if ($body =~ /CHANGELOG(.*?)\n*^\s*$/ms) {
             push @log, $1; 
         } else {
-            $body =~ /CHANGELOG:(.*)\n/ms;
+            $body =~ /CHANGELOG(.*)\n/ms;
             push @log, $1;
         }
     }
