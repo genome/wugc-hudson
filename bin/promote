@@ -44,8 +44,9 @@ if ( @ARGV != 1 || $help ) {;
 	exit;
 };
 
+# So far this is still called HUDSON_URL even though we're running Jenkins.
 unless( $ENV{HUDSON_URL} || $force) {
-    print STDERR "Please run the hudson job instead of running this manually.\n";
+    print STDERR "Please run the Jenkins job instead of running this manually.\n";
     exit;
 }
 
