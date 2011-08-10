@@ -69,11 +69,7 @@ sub send_catastrophic_failure_alert {
 sub get_revision_info {
     my $revision = qx(git describe --tags);
     chomp($revision);
-
-    my @submodules = qx(git submodule status);
-    chomp(@submodules);
-
-    return $revision, @submodules;
+    return $revision;
 }
 
 sub message_body {
@@ -99,20 +95,18 @@ sub message_body {
 
     if ($failure_count) {
         $message_body .= "\nFailures ($failure_count):\n";
-        map { $message_body .= $testcases->{$_}{message} . "\n"; } @failed_tests;
+        $message_body .= join("\n", map { $testcases->{$_}{message} } @failed_tests) . "\n\n";
     }
 
     if ($error_count) {
         $message_body .= "\nErrors ($error_count):\n";
-        $message_body .= "$error\n";
+        $message_body .= "$error\n\n";
     }
 
-    my @revisions = get_revision_info();
-    my $hudson_url = $ENV{BUILD_URL} || 'unknown';
-    $message_body .= "\nInfo:\n";
-    $message_body .= join("\n", @revisions) . "\n";
-    $message_body .= "hudson url: $hudson_url\n";
-
+    my $revision = get_revision_info();
+    my $jenkins_url = $ENV{BUILD_URL} || 'unknown';
+    $message_body .= "Genome Version: " . $revision . "\n";
+    $message_body .= "Jenkins URL: " . $jenkins_url . "\n";
     if (not ref $system_err) {
         $message_body .= "\n++++system err++++\n";
         $message_body .= truncate_over_4k($system_err) . "\n";
