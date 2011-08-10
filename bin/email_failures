@@ -54,16 +54,11 @@ sub send_catastrophic_failure_alert {
     my @us = map { $_ . '@genome.wustl.edu' } Users::apipe();
     my $us = join(',', @us);
     
-    my $sender = Mail::Sender->new({
-        smtp => 'gscsmtp.wustl.edu',
-        from => 'apipe-tester@genome.wustl.edu',
-    });
-    
-    $sender->MailMsg({
+    send_mail(
         to      => $us,
         subject => '[fail] Over 100 Tests Failed - Suppressing Normal Failure Messages',
         msg     => 'Please visit Hudson (http://apipe-ci.gsc.wustl.edu) and verify that this is not a catastrophic failure!',
-    });
+    );
 }
 
 sub get_revision_info {
@@ -150,26 +145,22 @@ sub send_alert {
     my $user_name = getpwuid($<);
     my $mail_from = $user_name . '@genome.wustl.edu';
 
-    my $sender = Mail::Sender->new({
-        smtp => 'gscsmtp.wustl.edu',
-        from => $mail_from,
-    });
-    if (my $debug_email = $ENV{DEBUG_EMAIL_FAILURES}) {
+    if (my $debug_email = $ENV{DEBUG_EMAIL}) {
         $mail_msg = "To: $mail_to\nCC: $mail_cc\n" . $mail_msg;
-        $sender->MailMsg({
+        send_mail(
             to => $debug_email,
             subject => $mail_subject,
             msg     => $mail_msg,
-        });
+        );
     } else {
         print "To: $mail_to\tSubject: $mail_subject\n";
-        $sender->MailMsg({
+        send_mail(
             to => $mail_to,
             replyto => "$mail_from,$mail_to",
             cc => $mail_cc,
             subject => $mail_subject,
             msg     => $mail_msg,
-        });
+        );
     }
     return 1;
 };
@@ -244,3 +235,51 @@ sub _unique_elements {
     return @unique;
 }
 
+sub filter_emails {
+    # this is to basically filter out committer emails which are often invalid
+    # in our case like usernam@somedesktop.gsc.wustl.edu
+    my $emails = shift || die;
+    my @emails = split(',', $emails);
+    @emails = grep { $_ !~ /\.gsc\.wustl\.edu$/ } @emails;
+    $emails = join(',', @emails);
+    return $emails;
+}
+
+sub send_mail {
+    my %params = @_;
+    my $to = delete $params{to} || 'apipe-tester@genome.wustl.edu';
+    my $from = delete $params{from} || 'apipe-tester@genome.wustl.edu';
+    my $subject = delete $params{subject} || 'No Subject';
+    my $msg = delete $params{msg} || 'No message.';
+    my $fallback_to = delete $params{fallback_to} || $ENV{DEBUG_FALLBACK_EMAIL} || 'apipe-tester@genome.wustl.edu';
+    my $smtp = delete $params{smtp} || 'gscsmtp.wustl.edu';
+    my $cc = delete $params{cc};
+    my $replyto = delete $params{replyto};
+
+    $to = filter_emails($to);
+    $cc = filter_emails($cc);
+    $replyto = filter_emails($replyto);
+    $from = filter_emails($from);
+
+    my $sender = Mail::Sender->new({
+        smtp => $smtp,
+        from => $from,
+    });
+    my $rv = $sender->MailMsg({
+        to => $to,
+        subject => $subject,
+        msg => $msg,
+        cc => $cc,
+        replyto => $replyto,
+    });
+    # MailMsg returns the $sender object on success
+    unless (ref $rv) {
+        my $fallback_msg = join("\n", "To: " . $to, 'CC: ' . $cc, 'Reply-To: ' . $replyto, "Subject: " . $subject, "\n\n" . $msg);
+        my $fallback_subject = 'Failed to Send Message: ' . $subject;
+        $sender->MailMsg({
+            to => $fallback_to,
+            subject => $fallback_subject,
+            msg     => $fallback_msg,
+        });
+    }
+}
