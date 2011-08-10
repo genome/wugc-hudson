@@ -239,9 +239,15 @@ sub filter_emails {
     # this is to basically filter out committer emails which are often invalid
     # in our case like usernam@somedesktop.gsc.wustl.edu
     my $emails = shift || die;
+    my @ignored_users = Users::apipe_ignore();
     my @emails = split(',', $emails);
-    @emails = grep { $_ !~ /\.gsc\.wustl\.edu$/ } @emails;
-    $emails = join(',', @emails);
+    my @filtered_emails;
+    for my $email (@emails) {
+        next if $email =~ /\.gsc\.wustl\.edu$/;
+        next if grep { $email =~ /^$_\@/ } @ignored_users;
+        push @filtered_emails, $email;
+    }
+    $emails = join(',', @filtered_emails);
     return $emails;
 }
 
