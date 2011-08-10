@@ -16,6 +16,8 @@ sub apipe_ignore {
         jschindl
         ccarey
         eclark
+        tdutton
+        iferguso
     );
 }
 
@@ -29,7 +31,6 @@ sub apipe {
         ebelter
         fdu
         gsanders
-        iferguso
         jkoval
         jlolofie
         jmcmicha
@@ -40,7 +41,6 @@ sub apipe {
         rlong
         swallace
         tabbott
-        tdutton
         tmooney
     );
 }
