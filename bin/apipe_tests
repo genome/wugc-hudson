@@ -202,7 +202,7 @@ if (scalar keys %failures or scalar keys %others) {
                 @cc = Users::apipe();
             } else {
                 @to = Users::apipe();
-                @cc = '';
+                @cc = ();
             }
 
             Library::send_mail(

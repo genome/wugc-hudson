@@ -194,7 +194,7 @@ if (scalar keys %failures or scalar keys %others) {
                 @cc = Users::apipe();
             } else {
                 @to = Users::apipe();
-                @cc = '';
+                @cc = ();
             }
 
             if (should_send_emails()) {
