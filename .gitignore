@@ -8,3 +8,4 @@ developers
 old/*
 dist/*
 db/*
+vendor
