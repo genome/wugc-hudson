@@ -74,7 +74,7 @@ sub message_body {
     my $error_count = $testsuite->{errors};
     my $system_err = $testsuite->{'system-err'}; chomp $system_err;
     my $system_out = $testsuite->{'system-out'}; chomp $system_out;
-    my $error = $testsuite->{error}{message}; chomp $error;
+    my $error = ($testsuite->{error}{message} || ''); chomp $error;
 
     my $testcases = $testsuite->{testcase};
     if (exists $testcases->{time}) {
@@ -90,7 +90,7 @@ sub message_body {
 
     if ($failure_count) {
         $message_body .= "\nFailures ($failure_count):\n";
-        $message_body .= join("\n", map { $testcases->{$_}{message} } @failed_tests) . "\n\n";
+        $message_body .= join("\n", map { ($testcases->{$_}{message} || '') } @failed_tests) . "\n\n";
     }
 
     if ($error_count) {
