@@ -153,7 +153,7 @@ sub send_alert {
             msg     => $mail_msg,
         );
     } else {
-        print "To: $mail_to\tSubject: $mail_subject\n";
+        print join("\n", "To: mail_to", "CC: $mail_cc", "Subject: $mail_subject") . "\n";
         send_mail(
             to => $mail_to,
             replyto => "$mail_from,$mail_to",
