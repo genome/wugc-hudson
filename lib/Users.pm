@@ -18,6 +18,7 @@ sub apipe_ignore {
         eclark
         tdutton
         iferguso
+        coliver
     );
 }
 
