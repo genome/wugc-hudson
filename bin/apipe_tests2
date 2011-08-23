@@ -6,7 +6,6 @@ use strict;
 use above 'Genome';
 use above 'UR';
 use File::Basename;
-use File::Util;
 use Getopt::Long;
 use Data::Dumper;
 
