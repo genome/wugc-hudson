@@ -28,7 +28,6 @@ sub apipe {
         adukes
         bdericks
         boberkfe
-        coliver
         ebelter
         fdu
         gsanders
