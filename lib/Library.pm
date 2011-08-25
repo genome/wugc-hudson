@@ -16,6 +16,7 @@ require Defaults;
 sub model_class_name_to_string {
     my $type = shift;
     $type =~ s/Genome::Model:://;
+    $type =~ s/:://g;
     my @words = split( /(?=(?<![A-Z])[A-Z])|(?=(?<!\d)\d)/, $type);
     return join('_', map { lc $_ } @words);
 }
