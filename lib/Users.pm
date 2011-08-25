@@ -96,5 +96,11 @@ sub metagenomic_composition_16s {
     );
 }
 
+sub gene_prediction_eukaryotic {
+    return qw(
+        bdericks
+    );
+}
+
 1;
 
