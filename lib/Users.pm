@@ -19,6 +19,7 @@ sub apipe_ignore {
         tdutton
         iferguso
         coliver
+        rhancock
     );
 }
 
@@ -37,7 +38,6 @@ sub apipe {
         jweible
         kkyung
         nnutter
-        rhancock
         rlong
         swallace
         tabbott
