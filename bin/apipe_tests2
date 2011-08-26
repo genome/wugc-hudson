@@ -65,7 +65,7 @@ my $model = Genome::Model->get(name => $model_name);
 die "Model $model_name not found" unless $model;
 print "Using model: " . $model->__display_name__ . "\n";
 
-$sw_revision = Revision::get_head() unless $sw_revision;
+$sw_revision = Revision::get_head_rev() unless $sw_revision;
 
 my $b;
 $b = Genome::Model::Build->get(model_id => $model->id,

@@ -129,7 +129,7 @@ sub get_builds {
 }
 
 sub init_versions {
-    $sw_revision = Revision::get_head() unless $sw_revision;
+    $sw_revision = Revision::get_head_rev() unless $sw_revision;
 
     unless ($ref_sw_revision) {
         unless ($pipeline_version) {
