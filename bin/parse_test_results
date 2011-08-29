@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Cwd;
+
+my $dir = Cwd::getcwd();
+$dir = $ARGV[0] if ($ARGV[0] && -d $ARGV[0]);
+my @test_files = qx(find "$dir" -type f -name '*.t');
+chomp @test_files;
+for my $test_file (@test_files) {
+    my $junit_file = $test_file . '.junit.xml';
+    if (not -e $junit_file) {
+        my ($short_test_file) = $test_file =~ /test_results\/(.*)/;
+        unless ($short_test_file) {
+            print STDERR "Unable to match pattern (/test_results\/(.*)/) for test_file ($test_file).\n";
+            $short_test_file = '';
+        }
+        print "Test file ($short_test_file) is missing it's JUnit XML file.\n";
+    }
+}
