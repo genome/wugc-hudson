@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Cwd;
 
-my $dir = Cwd::getcwd();
+my $dir = '/gscuser/apipe-tester/jenkins/jobs/1_Genome_Run_Fast_Tests/workspace/test_results';
 $dir = $ARGV[0] if ($ARGV[0] && -d $ARGV[0]);
 my @test_files = qx(find "$dir" -type f -name '*.t');
 chomp @test_files;
