@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-my @hosts = qx(bjobsw -u apipe-tester | grep 'ur test run' | cut -f 7);
+my @hosts = qx(bjobs -W -u apipe-tester | grep 'ur test run' | awk '{print \$6}');
 chomp @hosts;
 
 for my $host (@hosts) {
