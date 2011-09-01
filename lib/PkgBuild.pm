@@ -146,6 +146,11 @@ sub build_deb_package {
     my $deb_upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
     ok(-w "$deb_upload_spool", "$deb_upload_spool directory is writable");
 
+    # cleanup any existing Build script
+    if (-e "$package_dir/Build") {
+        system("cd $package_dir && ./Build realclean");
+    }
+
     # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
     ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$source-build.log"), "built deb");
 
@@ -195,7 +200,7 @@ sub deploy {
         if ($opts{remove_on_success}) {
             unlink($p) or die "failed to remove $p after deploying";
         }
-    } 
+    }
     return 1;
 }
 
