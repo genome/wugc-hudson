@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+require Fcntl::FileLock;
 require File::Basename;
 require IO::File;
 require File::Slurp;
@@ -25,7 +26,7 @@ require Snapshot;
 
 our $BIN_DIR = File::Basename::dirname(__FILE__);
 
-my ($help, $announce_only, $pipeline, $user, $web, $sleep_one_hour, $all, $force, $now) = ('', '', '', '', '', '', '', '', '');
+my ($help, $announce_only, $pipeline, $user, $web, $sleep_one_hour, $all, $force, $now, $test) = ('', '', '', '', '', '', '', '', '', '');
 my $getoptions_rv = Getopt::Long::GetOptions(
 	'help' => \$help,
 	'announce-only' => \$announce_only,
@@ -36,6 +37,7 @@ my $getoptions_rv = Getopt::Long::GetOptions(
 	'all' => \$all,
     'force' => \$force,
     'now' => \$now,
+    'test' => \$test,
 );
 unless($getoptions_rv) {
     exit;
@@ -95,16 +97,11 @@ sub promote {
     no strict 'subs';
     my $announce_email_to_method = 'ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
 
-    my $lock_file = "/tmp/promote.lock";
-    if (-e $lock_file) {
-        my $start_time = time;
-        while (-e $lock_file) {
-            die "Waiting on lock file for 300 seconds, exiting. Verify lock is valid or remove ($lock_file).\n" if ((time - $start_time) >= 300);
-            sleep 1;
-        }
-    }
-    else {
-        system("touch $lock_file");
+    my $file_lock = Fcntl::FileLock->create(path => '/tmp/promote.lock');
+    my $start_time = time;
+    while (!$file_lock->lock) {
+        if ((time - $start_time) >= 300) { die "Waiting on lock file for 300 seconds, exiting.\n" };
+        sleep 1;
     }
 
 	my $changes_summary_file = create_changes_summary(
@@ -114,13 +111,20 @@ sub promote {
 	    announce_only => $announce_only
 	);
     my $changes_summary = File::Slurp::read_file($changes_summary_file);
-    system("rm -f $lock_file");
+    $file_lock->release;
     my $promote_subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 
-    if ( $announce_only || $sleep_one_hour ) {
+    if ( $announce_only || $sleep_one_hour || $test) {
         my $announce_subject = "Promoting $NEW_BUILD_NAME to current/$symlink_name in one hour";
         my $announce_changes_summary = "Please let us know if there are any concerns with promoting this version to current/$symlink_name.\n\n" . $changes_summary;
-        send_announcement_email(to => Defaults->$announce_email_to_method, subject => $announce_subject, msg => $announce_changes_summary);
+        if ($test) {
+            print "To: " . Defaults->$announce_email_to_method . "\n";
+            print "Subject: $announce_subject\n";
+            print "Message:\n$announce_changes_summary\n";
+        }
+        else {
+            send_announcement_email(to => Defaults->$announce_email_to_method, subject => $announce_subject, msg => $announce_changes_summary);
+        }
     }
     
 	if ( $sleep_one_hour ) {
@@ -129,7 +133,7 @@ sub promote {
         sleep(3600);
     }
 
-    unless ($announce_only) {
+    unless ($announce_only || $test) {
         update_symlinks(build_name => $NEW_BUILD_NAME, symlink_name => $symlink_name) || die;
         send_announcement_email(to => Defaults->$announce_email_to_method, subject => $promote_subject, msg => $changes_summary);
     }
