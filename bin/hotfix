@@ -48,8 +48,8 @@ $old_name =~ s/.*\///;
 
 
 my $git_repo = shift @ARGV;
-unless ($git_repo) {
-    print "ERROR: please specify a git repo as second argument\n";
+unless (-d $git_repo) {
+    print "ERROR: please specify a git repo as second argument. '$git_repo' is not a directory.\n";
     exit;
 }
 unless (@ARGV) {
