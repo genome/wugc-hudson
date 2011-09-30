@@ -20,6 +20,7 @@ sub apipe_ignore {
         iferguso
         coliver
         rhancock
+        swallace
     );
 }
 
@@ -39,7 +40,6 @@ sub apipe {
         kkyung
         nnutter
         rlong
-        swallace
         tabbott
         tmooney
     );
