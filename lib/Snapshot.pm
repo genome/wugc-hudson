@@ -165,11 +165,7 @@ sub move_to {
 	(my $snapshot_name = $snapshot_dir) =~ s/.*\///;
 	
 	my $dest_dir;
-	if ( $move_to =~ /tested/ ) {
-		$dest_dir = Defaults::TESTED_PATH() . "/$snapshot_name";
-	} elsif ( $move_to =~ /stable/ ) {
-		$dest_dir = Defaults::STABLE_PATH() . "/$snapshot_name";
-    } elsif ( $move_to =~ /old/ ) {
+    if ( $move_to =~ /old/ ) {
         $dest_dir = Defaults::OLD_PATH() . "/$snapshot_name";
 	} else {
         die "Error: tried to move a directory to unrecognized location; $move_to does not match unstable/tested/stable.\n";
@@ -241,16 +237,12 @@ sub find_snapshot {
 	
     if ( -d Defaults::SNAPSHOTS_PATH() . "/$build_name" ) {
         $snapshot_path = Defaults::SNAPSHOTS_PATH() . "/$build_name";
-    } elsif ( -d Defaults::STABLE_PATH() . "/$build_name" ) {
-		$snapshot_path = Defaults::STABLE_PATH() . "/$build_name";
-	} elsif ( -d Defaults::TESTED_PATH() . "/$build_name" ) {
-		$snapshot_path = Defaults::TESTED_PATH() . "/$build_name";
 	} elsif ( -d Defaults::CUSTOM_PATH() . "/$build_name" ) {
 		$snapshot_path = Defaults::CUSTOM_PATH() . "/$build_name";
 	} elsif ( -d Defaults::OLD_PATH() . "/$build_name") {
 		$snapshot_path = Defaults::OLD_PATH() . "/$build_name";
 	} else {
-		die "Unable to find $build_name in " . Defaults::BASE_DIR() . "/snapshots/{,stable,tested,custom,unstable,old}\n";
+		die "Unable to find $build_name in " . Defaults::BASE_DIR() . "/snapshots/{,custom,old}\n";
 	}
 	
 	return $snapshot_path;
