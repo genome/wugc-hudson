@@ -30,6 +30,8 @@ if (@ARGV) {
     $software_revision = $ARGV[1];
 }
 
+$| = 1;
+
 my @builds_started;
 if ($software_revision) {
     my @builds = Genome::Model::Build->get(

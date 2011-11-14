@@ -60,6 +60,8 @@ my $r = GetOptions("model-name=s"  => \$model_name,
 
 help_and_exit() unless $r;
 
+$| = 1;
+
 die "Model name not set" unless $model_name;
 my $model = Genome::Model->get(name => $model_name);
 die "Model $model_name not found" unless $model;
