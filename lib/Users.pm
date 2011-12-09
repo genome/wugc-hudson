@@ -28,6 +28,7 @@ sub apipe {
     return qw(
         abrummet
         adukes
+        aregier
         bdericks
         boberkfe
         ebelter
