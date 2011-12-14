@@ -81,7 +81,7 @@ sub get_all_versions {
         map { $_ =~ s/.*\/// } @dirs;
         push @versions, @dirs;
     }
-    return @versions;
+    return sort @versions;
 }
 
 sub older_than_pipeline {
