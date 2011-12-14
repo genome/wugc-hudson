@@ -76,7 +76,7 @@ for my $version (@versions) {
 
 sub is_latest_stable_snapshot {
     my $version = shift;
-    my ($latest_stable_version) = qx(curl -k https://apipe-ci.gsc.wustl.edu/job/3%20Genome%20Snapshot/lastStableBuild/api/xml?xpath=freeStyleBuild/number) =~ /<number>(\d+)<\/number>/;
+    my ($latest_stable_version) = qx(curl -sk https://apipe-ci.gsc.wustl.edu/job/3%20Genome%20Snapshot/lastStableBuild/api/xml?xpath=freeStyleBuild/number) =~ /<number>(\d+)<\/number>/;
     return ($latest_stable_version && $version =~ /^genome-$latest_stable_version/);
 }
 
