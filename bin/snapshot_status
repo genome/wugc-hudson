@@ -44,7 +44,7 @@ if ($check_lsf) {
     @bjobs_output = qx(bjobs -l -u all | /gscuser/nnutter/bin/bjobs1l);
 }
 
-my $min_atime = 3600*24*1; # atime is in seconds
+my $min_atime = 3600; # atime is in seconds
 print "VERSION\tELAPSED_GENOME_ATIME\tACTIVE_BUILDS\tACTIVE_LSF\tSTATUS\n";
 for my $version (@versions) {
     my $elapsed_atime = elapsed_atime($version);
