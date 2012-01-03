@@ -100,7 +100,7 @@ sub promote {
     my $file_lock = Fcntl::FileLock->create(path => '/tmp/promote.lock');
     my $start_time = time;
     while (!$file_lock->lock) {
-        if ((time - $start_time) >= 300) { die "Waiting on lock file for 300 seconds, exiting.\n" };
+        if ((time - $start_time) >= 300) { die "ERROR: Waiting on lock file for 300 seconds, exiting.\n" };
         sleep 1;
     }
 
