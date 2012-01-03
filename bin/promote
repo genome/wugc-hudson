@@ -97,7 +97,7 @@ sub promote {
     no strict 'subs';
     my $announce_email_to_method = 'ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
 
-    my $file_lock = Fcntl::FileLock->create(path => '/tmp/promote.lock');
+    my $file_lock = Fcntl::FileLock->create(path => '/gsc/var/lock/genome/promote.lock');
     my $start_time = time;
     while (!$file_lock->lock) {
         if ((time - $start_time) >= 300) { die "ERROR: Waiting on lock file for 300 seconds, exiting.\n" };
@@ -215,7 +215,7 @@ sub create_changes_summary {
 	
 
 	# create git-changelog
-    my $git_changelog_lock_file = "/tmp/changelog.lock";
+    my $git_changelog_lock_file = "/gsc/var/lock/genome/promote_changelog.lock";
     if (-e $git_changelog_lock_file) {
         my $start_time = time;
         while (-e $git_changelog_lock_file) {
