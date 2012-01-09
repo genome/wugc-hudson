@@ -100,7 +100,17 @@ sub promote {
     my $file_lock = Fcntl::FileLock->create(path => '/gsc/var/lock/genome/promote.lock');
     my $start_time = time;
     while (!$file_lock->lock) {
-        if ((time - $start_time) >= 300) { die "ERROR: Waiting on lock file for 300 seconds, exiting.\n" };
+        if ((time - $start_time) >= 300) {
+            my $is_locked = $file_lock->is_locked(); # returns PID of process that has lock or zero
+            my $msg;
+            if ($is_locked) {
+                $msg = "ERROR: Waiting on lock file for 300 seconds. Lock may be held by PID $is_locked. Exiting.\n";
+            }
+            else {
+                $msg = "ERROR: Waiting on lock file for 300 seconds, exiting.\n";
+            }
+            die $msg;
+        };
         sleep 1;
     }
 
