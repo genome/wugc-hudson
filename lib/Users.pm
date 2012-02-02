@@ -21,6 +21,7 @@ sub apipe_ignore {
         coliver
         rhancock
         swallace
+        rlong
     );
 }
 
@@ -40,7 +41,6 @@ sub apipe {
         jweible
         kkyung
         nnutter
-        rlong
         tabbott
         tmooney
     );
@@ -59,7 +59,6 @@ sub somatic_variation {
     return qw(
         fdu
         gsanders
-        rlong
     );
 }
 
