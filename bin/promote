@@ -94,6 +94,11 @@ sub promote {
     (my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
     (my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
 
+    if ($OLD_BUILD_NAME eq $NEW_BUILD_NAME) {
+        print "Already on $NEW_BUILD_NAME.\n";
+        return 1;
+    }
+
     no strict 'subs';
     my $announce_email_to_method = 'ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
 
