@@ -14,7 +14,7 @@ require LWP::UserAgent;
 
 BEGIN {
     require Cwd;
-	require File::Basename;
+    require File::Basename;
     my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
     unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
         push @INC, $lib_dir;
@@ -28,13 +28,13 @@ our $BIN_DIR = File::Basename::dirname(__FILE__);
 
 my ($help, $announce_only, $pipeline, $user, $web, $sleep_one_hour, $all, $force, $now, $test) = ('', '', '', '', '', '', '', '', '', '');
 my $getoptions_rv = Getopt::Long::GetOptions(
-	'help' => \$help,
-	'announce-only' => \$announce_only,
-	'pipeline' => \$pipeline,
-	'user' => \$user,
-	'web' => \$web,
-	'sleep-one-hour' => \$sleep_one_hour,
-	'all' => \$all,
+    'help' => \$help,
+    'announce-only' => \$announce_only,
+    'pipeline' => \$pipeline,
+    'user' => \$user,
+    'web' => \$web,
+    'sleep-one-hour' => \$sleep_one_hour,
+    'all' => \$all,
     'force' => \$force,
     'now' => \$now,
     'test' => \$test,
@@ -43,8 +43,8 @@ unless($getoptions_rv) {
     exit;
 }
 if ( @ARGV != 1 || $help ) {;
-	print help_message();
-	exit;
+    print help_message();
+    exit;
 };
 
 # So far this is still called HUDSON_URL even though we're running Jenkins.
@@ -78,22 +78,22 @@ exit;
 
 
 sub promote {
-	my $symlink_name = shift;
-	
-	my $NEW_BUILD_IDENTIFIER = $ARGV[0];
-	
-    no strict 'subs';
-	my $symlink_method = 'CURRENT_' . uc($symlink_name);
-	my $symlink = Defaults->$symlink_method;
-	
-	my $OLD_BUILD_NAME = readlink($symlink);
-	$OLD_BUILD_NAME =~ s/\/+$//;
-	$OLD_BUILD_NAME =~ s/.*\///;
-	(my $OLD_BUILD_VERSION = $OLD_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
+    my $symlink_name = shift;
 
-	(my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
-	(my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
-	
+    my $NEW_BUILD_IDENTIFIER = $ARGV[0];
+
+    no strict 'subs';
+    my $symlink_method = 'CURRENT_' . uc($symlink_name);
+    my $symlink = Defaults->$symlink_method;
+
+    my $OLD_BUILD_NAME = readlink($symlink);
+    $OLD_BUILD_NAME =~ s/\/+$//;
+    $OLD_BUILD_NAME =~ s/.*\///;
+    (my $OLD_BUILD_VERSION = $OLD_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
+
+    (my $NEW_BUILD_NAME = "genome-$NEW_BUILD_IDENTIFIER") =~ s/genome-genome/genome/;
+    (my $NEW_BUILD_VERSION = $NEW_BUILD_NAME) =~ s/.*(genome-\d+).*/$1/;
+
     no strict 'subs';
     my $announce_email_to_method = 'ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
 
@@ -115,12 +115,12 @@ sub promote {
         sleep 1;
     }
 
-	my $changes_summary_file = create_changes_summary(
-	    build_name => $NEW_BUILD_NAME,
-	    old_version => $OLD_BUILD_VERSION,
-	    new_version => $NEW_BUILD_VERSION,
-	    announce_only => $announce_only
-	);
+    my $changes_summary_file = create_changes_summary(
+        build_name => $NEW_BUILD_NAME,
+        old_version => $OLD_BUILD_VERSION,
+        new_version => $NEW_BUILD_VERSION,
+        announce_only => $announce_only
+    );
     my $changes_summary = File::Slurp::read_file($changes_summary_file);
     $file_lock->release;
     my $promote_subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
@@ -137,8 +137,8 @@ sub promote {
             send_announcement_email(to => Defaults->$announce_email_to_method, subject => $announce_subject, msg => $announce_changes_summary);
         }
     }
-    
-	if ( $sleep_one_hour ) {
+
+    if ( $sleep_one_hour ) {
         system("date");
         print "Sleeping for one hour before actual promote...\n";
         sleep(3600);
@@ -150,65 +150,65 @@ sub promote {
     }
 
     unlink($changes_summary_file);
-	print "current/$symlink_name: " . readlink($symlink) . "\n";
+    print "current/$symlink_name: " . readlink($symlink) . "\n";
 
-	if ( $symlink_name =~ /web/ && !$announce_only) {
+    if ( $symlink_name =~ /web/ && !$announce_only) {
         return restart_web_server($NEW_BUILD_IDENTIFIER);
-	}
+    }
 
     return 1;
 }
 
 sub help_message {
-	my $help_message;
-	$help_message .= "Usage:\n";
+    my $help_message;
+    $help_message .= "Usage:\n";
     $help_message .= "\t$0 genome-9000 --pipeline --web \t-- promotes version and announces it to apipe\n";
-	$help_message .= "Options:\n";
+    $help_message .= "Options:\n";
     $help_message .= "\t--announce-only               \t\t-- only announces that promotion will occur in one hour\n";
-	$help_message .= "\t--pipeline                    \t\t-- promote the current/pipeline symlink\n";
-	$help_message .= "\t--user                        \t\t-- promote the current/user symlink\n";
-	$help_message .= "\t--web                         \t\t-- promote the current/web symlink\n";
-	return $help_message;
+    $help_message .= "\t--pipeline                    \t\t-- promote the current/pipeline symlink\n";
+    $help_message .= "\t--user                        \t\t-- promote the current/user symlink\n";
+    $help_message .= "\t--web                         \t\t-- promote the current/web symlink\n";
+    return $help_message;
 };
 
 sub update_symlinks {
-	my (%params) = @_;
-	my $symlink_name = delete $params{symlink_name} || die;
-	my $build_name = delete $params{build_name} || die;
-	my $snapshot_path = Snapshot::find_snapshot($build_name);
-		
-	if (my @params_keys = keys %params) {
-		die "Invalid params passed to promote_symlinks: '" . join(', ', @params_keys) . "'\n";
-	}
-	
-	if ( $symlink_name =~ /pipeline/ ) {
-		print "Changing pipeline symlink ($build_name)\n";
-		system("ln -sf $snapshot_path " . Defaults::CURRENT_PIPELINE() . "-new");
-		system("mv -Tf " . Defaults::CURRENT_PIPELINE() . "-new " . Defaults::CURRENT_PIPELINE());
-	}
-	
-	if ( $symlink_name =~ /web/ ) {
-		print "Changing web symlink ($build_name, needs a restart)\n";
-		system("ln -sf $snapshot_path " . Defaults::CURRENT_WEB() . "-new");
-		system("mv -Tf " . Defaults::CURRENT_WEB() . "-new " . Defaults::CURRENT_WEB());
-	}
-	
+    my (%params) = @_;
+    my $symlink_name = delete $params{symlink_name} || die;
+    my $build_name = delete $params{build_name} || die;
+    my $snapshot_path = Snapshot::find_snapshot($build_name);
+
+    if (my @params_keys = keys %params) {
+        die "Invalid params passed to promote_symlinks: '" . join(', ', @params_keys) . "'\n";
+    }
+
+    if ( $symlink_name =~ /pipeline/ ) {
+        print "Changing pipeline symlink ($build_name)\n";
+        system("ln -sf $snapshot_path " . Defaults::CURRENT_PIPELINE() . "-new");
+        system("mv -Tf " . Defaults::CURRENT_PIPELINE() . "-new " . Defaults::CURRENT_PIPELINE());
+    }
+
+    if ( $symlink_name =~ /web/ ) {
+        print "Changing web symlink ($build_name, needs a restart)\n";
+        system("ln -sf $snapshot_path " . Defaults::CURRENT_WEB() . "-new");
+        system("mv -Tf " . Defaults::CURRENT_WEB() . "-new " . Defaults::CURRENT_WEB());
+    }
+
     if ( $symlink_name =~ /user/ ) {
       print "Changing user symlink ($build_name)\n";
       system("ln -sf $snapshot_path " . Defaults::CURRENT_USER() . "-new");
       system("mv -Tf " . Defaults::CURRENT_USER() . "-new " . Defaults::CURRENT_USER());
     }
 
-	return 1;
+    return 1;
 }
 
 sub create_changes_summary {
-	my (%params) = @_;
-	my $build_name = delete $params{build_name} || die;
-	my $old_version = delete $params{old_version} || die;
-	my $new_version = delete $params{new_version} || die;
+    my (%params) = @_;
+    my $build_name = delete $params{build_name} || die;
+    my $old_version = delete $params{old_version} || die;
+    my $new_version = delete $params{new_version} || die;
     my $announce_only = delete $params{announce_only};
-	my $snapshot_path = Snapshot::find_snapshot($build_name);
+    my $snapshot_path = Snapshot::find_snapshot($build_name);
     my $previous_version_file = "$snapshot_path/previous_version.txt";
 
     if (not $announce_only and not -s $previous_version_file) {
@@ -217,15 +217,15 @@ sub create_changes_summary {
     if (-s $previous_version_file and $new_version =~ /genome-\d+-fix\d+/) {
         chomp($old_version = qx[cat $snapshot_path/previous_version.txt]);
     }
-	(my $old_git_version = $old_version) =~ s/.*(genome-\d+).*/$1/;
-	(my $new_git_version = $new_version) =~ s/.*(genome-\d+).*/$1/;
-	
-	if (my @params_keys = keys %params) {
-		die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
-	}
-	
+    (my $old_git_version = $old_version) =~ s/.*(genome-\d+).*/$1/;
+    (my $new_git_version = $new_version) =~ s/.*(genome-\d+).*/$1/;
 
-	# create git-changelog
+    if (my @params_keys = keys %params) {
+        die "Invalid params passed to sync_snapshot_to_lib_perl: '" . join(', ', @params_keys) . "'\n";
+    }
+
+
+    # create git-changelog
     my $git_changelog_lock_file = "/gsc/var/lock/genome/promote_changelog.lock";
     if (-e $git_changelog_lock_file) {
         my $start_time = time;
@@ -241,45 +241,45 @@ sub create_changes_summary {
     system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
 
 
-	# create CHANGE_SUMMARY
-	unlink("$snapshot_path/CHANGE_SUMMARY");
-	my @change_summary;
-	if ( -s "$snapshot_path/git-changelog" ) {
-		my @git_changelog_lines = File::Slurp::read_file("$snapshot_path/git-changelog");
-		push @change_summary, "== Highlighted Changes From $old_version to $new_version ==\n\n", @git_changelog_lines;
-	}
+    # create CHANGE_SUMMARY
+    unlink("$snapshot_path/CHANGE_SUMMARY");
+    my @change_summary;
+    if ( -s "$snapshot_path/git-changelog" ) {
+        my @git_changelog_lines = File::Slurp::read_file("$snapshot_path/git-changelog");
+        push @change_summary, "== Highlighted Changes From $old_version to $new_version ==\n\n", @git_changelog_lines;
+    }
 
     unlink $git_changelog_lock_file;
 
-	if ( -s "$snapshot_path/hotfixes" ) {
-		my @hotfixes_lines = File::Slurp::read_file("$snapshot_path/hotfixes");
-		my @hotfixes_reasons = grep { $_ =~ /^Fix/ } @hotfixes_lines;
-		my @hotfixes_details = grep { $_ !~ /^Fix/ } @hotfixes_lines;
-		unshift @change_summary, "== Hotfix History ==\n\n", @hotfixes_reasons, "\n";
-		push @change_summary, "== Hotfix Commit Details ==\n\n", @hotfixes_details;
-	}
+    if ( -s "$snapshot_path/hotfixes" ) {
+        my @hotfixes_lines = File::Slurp::read_file("$snapshot_path/hotfixes");
+        my @hotfixes_reasons = grep { $_ =~ /^Fix/ } @hotfixes_lines;
+        my @hotfixes_details = grep { $_ !~ /^Fix/ } @hotfixes_lines;
+        unshift @change_summary, "== Hotfix History ==\n\n", @hotfixes_reasons, "\n";
+        push @change_summary, "== Hotfix Commit Details ==\n\n", @hotfixes_details;
+    }
     if (@change_summary == 0) {
         push @change_summary, "No changes highlighted.\n\n";
     }
 
-	push @change_summary, "== Disclaimer ==\n\n", "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For a more exhaustive list try 'git log $old_git_version..$new_git_version'.\n";
-	File::Slurp::write_file("$snapshot_path/CHANGE_SUMMARY", @change_summary);
-	return "$snapshot_path/CHANGE_SUMMARY";
+    push @change_summary, "== Disclaimer ==\n\n", "This is a summary of highlighted changes since $old_version and any hotfixes made to $new_version. For a more exhaustive list try 'git log $old_git_version..$new_git_version'.\n";
+    File::Slurp::write_file("$snapshot_path/CHANGE_SUMMARY", @change_summary);
+    return "$snapshot_path/CHANGE_SUMMARY";
 }
 
 sub send_announcement_email {
-	my (%params) = @_;
-	my $mail_to = delete $params{to} || die;
-	my $mail_subject = delete $params{subject} || die;
-	my $mail_msg = delete $params{msg} || die;
-	
-	if (my @params_keys = keys %params) {
-		die "Invalid params passed to send_announcement_email: " . join(', ', @params_keys) . ".\n";
-	}
-	
-	my $user_name = getpwuid($<);
-	my $mail_from = $user_name . '@genome.wustl.edu';
-	
+    my (%params) = @_;
+    my $mail_to = delete $params{to} || die;
+    my $mail_subject = delete $params{subject} || die;
+    my $mail_msg = delete $params{msg} || die;
+
+    if (my @params_keys = keys %params) {
+        die "Invalid params passed to send_announcement_email: " . join(', ', @params_keys) . ".\n";
+    }
+
+    my $user_name = getpwuid($<);
+    my $mail_from = $user_name . '@genome.wustl.edu';
+
     my $sender = Mail::Sender->new({
         smtp => 'gscsmtp.wustl.edu',
         from => $mail_from,
@@ -289,7 +289,7 @@ sub send_announcement_email {
         subject => $mail_subject,
         msg     => $mail_msg,
     });
-	print "Sent annnouncement mail to $mail_to...\n";
+    print "Sent annnouncement mail to $mail_to...\n";
     return 1;
 };
 
