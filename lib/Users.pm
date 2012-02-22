@@ -28,6 +28,7 @@ sub apipe_ignore {
 sub apipe { 
     return qw(
         abrummet
+        acoffman
         adukes
         aregier
         bdericks
