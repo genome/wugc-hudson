@@ -359,7 +359,7 @@ sub valid_http_response {
 }
 
 sub reload_genome_view {
-    my $reload_genome_view_cmd = "ssh -t apipe sudo /etc/init.d/genome_view reload";
+    my $reload_genome_view_cmd = "ssh -t imp-apipe sudo /etc/init.d/genome_view reload";
     print "RUNNING ($reload_genome_view_cmd)...\n";
     my $exit_code = system("$reload_genome_view_cmd");
     if ($exit_code != 0) {
@@ -370,7 +370,7 @@ sub reload_genome_view {
 }
 
 sub stop_genome_view {
-    my $stop_genome_view_cmd = "ssh -t apipe sudo /etc/init.d/genome_view stop";
+    my $stop_genome_view_cmd = "ssh -t imp-apipe sudo /etc/init.d/genome_view stop";
     print "RUNNING ($stop_genome_view_cmd)...\n";
     my $exit_code = system("$stop_genome_view_cmd");
     if ($exit_code != 0) {
@@ -381,7 +381,7 @@ sub stop_genome_view {
 }
 
 sub start_genome_view {
-    my $start_genome_view_cmd = "ssh -t apipe sudo /etc/init.d/genome_view start";
+    my $start_genome_view_cmd = "ssh -t imp-apipe sudo /etc/init.d/genome_view start";
     print "RUNNING ($start_genome_view_cmd)...\n";
     my $exit_code = system("$start_genome_view_cmd");
     if ($exit_code != 0) {
