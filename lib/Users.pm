@@ -5,6 +5,7 @@ use warnings;
 
 sub apipe_ignore {
     return qw(
+        adukes
         lcarmich
         jpeck
         pkimmey
@@ -29,7 +30,6 @@ sub apipe {
     return qw(
         abrummet
         acoffman
-        adukes
         aregier
         bdericks
         boberkfe
