@@ -6,23 +6,23 @@ use warnings;
 sub apipe_ignore {
     return qw(
         adukes
-        lcarmich
-        jpeck
-        pkimmey
-        ehvatum
-        josborne
-        mjohnson
-        edemello
-        rmeyer
-        jschindl
         ccarey
-        eclark
-        tdutton
-        iferguso
         coliver
+        eclark
+        edemello
+        ehvatum
+        iferguso
+        josborne
+        jpeck
+        jschindl
+        lcarmich
+        mjohnson
+        pkimmey
         rhancock
-        swallace
         rlong
+        rmeyer
+        swallace
+        tdutton
     );
 }
 
