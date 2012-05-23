@@ -10,7 +10,6 @@ require File::Slurp;
 require Mail::Sender;
 require Getopt::Long;
 require Cwd;
-require LWP::UserAgent;
 
 BEGIN {
     require Cwd;
@@ -157,10 +156,6 @@ sub promote {
     unlink($changes_summary_file);
     print "current/$symlink_name: " . readlink($symlink) . "\n";
 
-    if ( $symlink_name =~ /web/ && !$announce_only) {
-        return restart_web_server($NEW_BUILD_IDENTIFIER);
-    }
-
     return 1;
 }
 
@@ -297,96 +292,3 @@ sub send_announcement_email {
     print "Sent annnouncement mail to $mail_to...\n";
     return 1;
 };
-
-sub restart_web_server {
-    my $snapshot_version = shift;
-
-    reload_genome_view();
-    my $restart_succeeded = wait_for_valid_http_response($snapshot_version);
-    unless ($restart_succeeded) {
-        print "\n\nReload failed so attempting a stop and start.\n\n";
-        return unless stop_genome_view();
-        return unless start_genome_view();
-        $restart_succeeded = wait_for_valid_http_response($snapshot_version);
-    }
-
-    return $restart_succeeded;
-}
-
-sub wait_for_valid_http_response {
-    my $snapshot_version = shift;
-    my $start_time = time;
-    my $max_elapsed_seconds = 120;
-
-    my $url = 'https://imp.gsc.wustl.edu/view/genome/search/status.html';
-
-    my $user_agent = LWP::UserAgent->new(timeout => 10);
-    if ($user_agent->can('ssl_opts')) {
-        $user_agent->ssl_opts(verify_hostname => 0);
-    }
-
-    my $response;
-    do {
-        $response = $user_agent->get($url);
-        sleep(3);
-    } until (valid_http_response($response, $snapshot_version) || (time - $start_time) >= $max_elapsed_seconds);
-
-    return valid_http_response($response, $snapshot_version);
-}
-
-sub valid_http_response {
-    my $response = shift || return;
-    my $snapshot_version = shift || die;
-
-    my $code = $response->code;
-    my $snapshot_path = Snapshot::find_snapshot($snapshot_version);
-
-    if ($response->is_success) {
-        my @content = split("\n", $response->decoded_content);
-        if ( grep { $_ =~ /^<!-- Genome: $snapshot_path\/lib\/perl\/Genome.pm-->$/ } @content ) {
-            print "OK: Web server is up (HTTP $code) on new version ($snapshot_version).\n";
-            return 1;
-        }
-        else {
-            print "Not OK: Web server is up (HTTP $code) but *not* on new version ($snapshot_version).\n";
-            return;
-        }
-    }
-    else {
-        print "Not OK: Failed to get successful response (HTTP $code) from URL (". $response->filename . ").\n";
-        return;
-    }
-}
-
-sub reload_genome_view {
-    my $reload_genome_view_cmd = "ssh -t imp-apipe sudo /etc/init.d/genome_view reload";
-    print "RUNNING ($reload_genome_view_cmd)...\n";
-    my $exit_code = system("$reload_genome_view_cmd");
-    if ($exit_code != 0) {
-        print "Command ($reload_genome_view_cmd) did not succeed.\n";
-        return;
-    }
-    return 1;
-}
-
-sub stop_genome_view {
-    my $stop_genome_view_cmd = "ssh -t imp-apipe sudo /etc/init.d/genome_view stop";
-    print "RUNNING ($stop_genome_view_cmd)...\n";
-    my $exit_code = system("$stop_genome_view_cmd");
-    if ($exit_code != 0) {
-        print "Command ($stop_genome_view_cmd) did not succeed.\n";
-        return;
-    }
-    return 1;
-}
-
-sub start_genome_view {
-    my $start_genome_view_cmd = "ssh -t imp-apipe sudo /etc/init.d/genome_view start";
-    print "RUNNING ($start_genome_view_cmd)...\n";
-    my $exit_code = system("$start_genome_view_cmd");
-    if ($exit_code != 0) {
-        print "Command ($start_genome_view_cmd) did not succeed.\n";
-        return;
-    }
-    return 1;
-}
