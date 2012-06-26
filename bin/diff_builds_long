@@ -1,0 +1,121 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use MIME::Lite;
+
+BEGIN {
+    require Cwd;
+	require File::Basename;
+    my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
+    unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
+        push @INC, $lib_dir;
+    }
+}
+
+require Users;
+require Library;
+require Defaults;
+require Snapshot;
+
+## If run by Hudson, this environment variable should be set
+my $hudson_build_number = $ENV{BUILD_NUMBER} || "'manual build'";
+my $hudson_build_url = $ENV{BUILD_URL} || "'no URL - manual build'";
+
+my $latest_snapshot_name = $ENV{SNAPSHOT_VERSION} || die;
+my $latest_snapshot_dir = Snapshot::find_snapshot($latest_snapshot_name);
+die "No current/pipeline snapshot found at $latest_snapshot_dir" unless -d $latest_snapshot_dir;
+print "testing snapshot is $latest_snapshot_dir\n";
+
+my $model_names;
+if (@ARGV > 1) {
+    die "Multiple ARGV not yet supported.";
+} elsif (@ARGV == 1) {
+    $model_names = $ARGV[0];
+} else {
+    $model_names = 'group_names=apipe-test-07-modelgroup';
+}
+
+# Figure out what the current/pipeline snapshot is
+my $pipeline_snapshot_name = $ENV{PIPELINE_VERSION} || die;
+my $pipeline_snapshot_dir = Snapshot::find_snapshot($pipeline_snapshot_name);
+die "No current/pipeline snapshot found at $pipeline_snapshot_dir" unless -d $pipeline_snapshot_dir;
+print "last stable snapshot was $pipeline_snapshot_dir\n";
+
+if ($latest_snapshot_dir eq $pipeline_snapshot_dir) {
+    print "Stable snapshot $pipeline_snapshot_dir matches latest successful snapshot $latest_snapshot_dir, skipping diff\n";
+    exit 0;
+}
+
+my $diff_cmd = "perl -I $latest_snapshot_dir/lib/perl $latest_snapshot_dir/bin/genome model diff --first-revision " .
+    "$latest_snapshot_dir --second-revision $pipeline_snapshot_dir --models=$model_names";
+print "Build diff command: $diff_cmd\n";
+
+# Run command and check return values. Send out failure email if necessary.
+my $diff_out = eval { `$diff_cmd 2>&1` };
+if ($@ or $?) {
+    my $exit_code = $@ ? $@ : ($? >> 8);
+    print "Problems executing diff command\nExit code: $exit_code\nOutput:\n$diff_out";
+    my $failure_msg_body = "Hudson diff build $hudson_build_number failed to execute! To see raw output, go to $hudson_build_url";
+    Library::send_mail(
+        subject => '[fail] Test Build Diff Failed to Execute!', 
+        body => $failure_msg_body,
+        from => 'apipe-tester@genome.wustl.edu',
+        to => Library::users_to_addresses(Users::apipe()),
+    );
+    exit 1;
+}
+
+# Now that the command is run, see if there were any differences or if some builds couldn't be found and
+# send emails to the appropriate people.
+print "Diff command output:\n$diff_out\n";
+my $problems = 0;
+while ($diff_out =~ /(DIFFERENCES FOUND|BUILD NOT FOUND) (\w+) (\d+)/cg) {
+    my $error_type = $1;
+    my $build_type = $2;
+    my $model_id = $3;
+    $problems = 1;
+
+    # See if there are owners defined for this build type and send the mail to them
+    # cc the entire apipe team (but don't send to apipe@genome.wustl.edu because 
+    # people outside of the group get mail from that alias)
+    my @to;
+    if (Users->can($build_type)) {
+        @to = Users->$build_type;
+    }
+    else {
+        @to = Users::apipe();
+    }
+    my @cc = Users::apipe();
+
+    my ($failure_msg, $failure_subject);
+    if ($error_type =~ /DIFFERENCES FOUND/) {
+        $failure_msg = "Output differences detected when comparing builds of type $build_type from model $model_id " .
+            "run on latest snapshot $latest_snapshot_name and current/pipeline snapshot $pipeline_snapshot_dir.\n\nTo see raw output, go to $hudson_build_url.";
+        $failure_subject = "[fail] differences found, model $model_id, $build_type - " . join(",", @to);
+    }
+    else {
+        $failure_msg = "Problem occurred when attempting to compare builds of type $build_type from model $model_id " .
+            "run on latest snapshot $latest_snapshot_name and current/pipeline snapshot $pipeline_snapshot_dir.\n\n" .
+            "Please take a look at $hudson_build_url.";
+        $failure_subject = "[fail] problem executing build differ, model $model_id, $build_type - " . join(",", @to);
+    }
+
+    Library::send_mail(
+        to => Library::users_to_addresses(@to),
+        from => 'apipe-tester@genome.wustl.edu',
+        cc => Library::users_to_addresses(@cc),
+        subject => $failure_subject,
+        body => $failure_msg,
+    );
+}
+
+if ($problems) {
+    print "Differences or errors encountered, please review and/or fix!\n";
+    exit 1;
+}
+else {
+    print "Test build differ completed successfully and no differences found!\n";
+    exit 0;
+}
+
