@@ -22,6 +22,13 @@ require Mail::Sender;
 require LWP::Simple;
 
 
+use Getopt::Long;
+my $subject_prefix = '';
+GetOptions(
+    'subject-prefix=s' => \$subject_prefix,
+);
+
+
 my @xml_files = qx[find test_results -name '*.junit.xml'];
 map { chomp $_ } @xml_files;
 
@@ -53,10 +60,11 @@ exit;
 sub send_catastrophic_failure_alert {
     my @us = map { $_ . '@genome.wustl.edu' } Users::apipe();
     my $us = join(',', @us);
-    
+    my $subject = 'Over 100 Tests Failed - Suppressing Normal Failure Messages';
+    $subject = join(' ', $subject_prefix, $subject) if $subject_prefix;
     send_mail(
         to      => $us,
-        subject => '[fail] Over 100 Tests Failed - Suppressing Normal Failure Messages',
+        subject => $subject,
         msg     => 'Please visit Hudson (http://apipe-ci.gsc.wustl.edu) and verify that this is not a catastrophic failure!',
     );
 }
@@ -139,7 +147,8 @@ sub send_alert {
     my ($to, $cc, $names) = git_blame($path);
     my $mail_to = join(',', @$to);
     my $mail_cc = join(',', @$cc);
-    my $mail_subject = "[fail] $path - " . join(', ', @$names);
+    my $mail_subject = "$path - " . join(', ', @$names);
+    $mail_subject = join(' ', $subject_prefix, $mail_subject) if $subject_prefix;
     my $mail_msg = message_body($testsuite);
 
     my $user_name = getpwuid($<);
