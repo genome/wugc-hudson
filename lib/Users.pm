@@ -13,6 +13,7 @@ sub apipe_ignore {
         ehvatum
         iferguso
         josborne
+        jkoval
         jpeck
         jschindl
         lcarmich
@@ -31,16 +32,16 @@ sub apipe {
         abrummet
         acoffman
         aregier
-        bdericks
         boberkfe
+        dmorton
         ebelter
         fdu
         gsanders
-        jkoval
         jlolofie
         jmcmicha
         jweible
         kkyung
+        mburnett
         nnutter
         tabbott
         tmooney
@@ -49,7 +50,6 @@ sub apipe {
 
 sub reference_alignment {
     return qw(
-        bdericks
         boberkfe
         fdu
         tmooney
@@ -99,7 +99,6 @@ sub metagenomic_composition_16s {
 
 sub gene_prediction_eukaryotic {
     return qw(
-        bdericks
         ssurulir
         xzhang
     );
