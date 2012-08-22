@@ -15,7 +15,6 @@ sub apipe_ignore {
         eclark
         edemello
         ehvatum
-        iferguso
         josborne
         jkoval
         jpeck
@@ -45,6 +44,7 @@ sub apipe {
         ebelter
         fdu
         gsanders
+        iferguso
         jlolofie
         jmcmicha
         jweible
