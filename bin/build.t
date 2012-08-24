@@ -150,8 +150,10 @@ sub diff {
     my $has_diffs = (defined($diff_cmd->diffs) && scalar(keys %{$diff_cmd->diffs})) || 0;
     is($has_diffs, 0, 'No Diffs Found') or diag $diff_cmd->diffs_message();
 
-    unless ($has_diffs) {
         my $set_cmd = sprintf('set-blessed-build -m %s -p %s -g %s', $model->id, Revision->perl_version(), $test_revision);
+    if ($has_diffs) {
+        diag qq(If you want to bless this build run '$set_cmd'.)
+    } else {
         my $set_cmd_exit = system($set_cmd);
         is($set_cmd_exit, 0, 'Set Blessed Build');
     }
