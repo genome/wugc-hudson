@@ -26,50 +26,6 @@ sub test_version {
     return sprintf("%s-%s", $package->perl_version(), $package->git_short_rev(@_));
 }
 
-package JenkinsBuild; ##################################################
-
-use JSON;
-use LWP::Simple;
-
-sub new {
-    my $class = shift;
-    my $url = shift;
-    return bless({url => $url}, $class);
-}
-
-sub url {
-    return shift->{url};
-}
-
-sub get_json_hash {
-    my $self = shift;
-    my $content = get($self->url);
-    return unless $content;
-    my $hash = decode_json($content);
-    return $hash;
-}
-
-sub get_action {
-    my $self = shift;
-    my $action = shift;
-    my $hash = $self->get_json_hash();
-    my ($action_node) = grep { exists $_->{$action} } @{$hash->{'actions'}};
-    return $action_node->{$action};
-}
-
-sub lastBuiltRevision {
-    my $self = shift;
-    return $self->get_action('lastBuiltRevision')->{SHA1};
-}
-
-sub get_parameter_value {
-    my $self = shift;
-    my $parameter_name = shift;
-    my $parameters_array = $self->get_action('parameters');
-    my ($parameter_node) = grep { $_->{name} eq $parameter_name } @$parameters_array;
-    return $parameter_node->{value};
-}
-
 package main; ##########################################################
 
 use Genome;
@@ -85,7 +41,7 @@ my $timeout = $ENV{BUILD_TIMEOUT};
 if ($skip_diff) {
     plan tests => 8;
 } else {
-    plan tests => 12;
+    plan tests => 13;
 }
 
 ok($model_name, 'model name was specified') or BAIL_OUT('model name was not specified');
@@ -155,11 +111,20 @@ sub diff {
     my $job_url = shift;
     my $test_revision = shift;
 
-    my $build_url = sprintf("%s/lastStableBuild/api/json", $job_url);
-    my $build = JenkinsBuild->new($build_url);
-    my $last_stable_revision = substr($build->lastBuiltRevision(), 0, 7);
-    ok($last_stable_revision, 'got a last stable revision') or BAIL_OUT('Failed to get last stable revision.');
-    my $blessed_snapshot_version = sprintf('%s-%s', Revision->perl_version(), $last_stable_revision);
+    my $model = Genome::Model->get(name => $model_name);
+    unless ($model) {
+        print STDERR "Model not found: $model_name\n";
+        return;
+    }
+    my $list_cmd = sprintf('list-blessed-build -m %s -p %s', $model->id, Revision->perl_version());
+    my $list_cmd_output = qx($list_cmd);
+    my $blessed_git_revision = (split("\t", $list_cmd_output))[2];
+    unless ($blessed_git_revision) {
+        print STDERR "Blessed Git Revision not defined:\n$list_cmd_output";
+        return;
+    }
+    my $blessed_snapshot_version = sprintf('%s-%s', Revision->perl_version(), $blessed_git_revision);
+
     my $blessed_build = Genome::Model::Build->get(
         model_name => $model_name,
         run_by => 'apipe-tester',
@@ -184,4 +149,10 @@ sub diff {
 
     my $has_diffs = (defined($diff_cmd->diffs) && scalar(keys %{$diff_cmd->diffs})) || 0;
     is($has_diffs, 0, 'No Diffs Found') or diag $diff_cmd->diffs_message();
+
+    unless ($has_diffs) {
+        my $set_cmd = sprintf('set-blessed-build -m %s -p %s -g %s', $model->id, Revision->perl_version(), $test_revision);
+        system($set_cmd);
+        is($set_cmd_exit, 0, 'Set Blessed Build');
+    }
 }
