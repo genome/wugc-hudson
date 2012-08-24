@@ -6,9 +6,9 @@ use Data::Dump 'pp';
 
 package Revision; ######################################################
 
-sub git_short_rev {
+sub git_revision {
     my $package = shift;
-    my $ref = shift;
+    my $ref = shift || 'HEAD';
     my $rev = qx(git rev-parse --short $ref);
     chomp $rev;
     return $rev;
@@ -23,13 +23,13 @@ sub perl_version {
 
 sub test_version {
     my $package = shift;
-    return sprintf("%s-%s", $package->perl_version(), $package->git_short_rev(@_));
+    return sprintf("%s-%s", $package->perl_version(), $package->git_revision(@_));
 }
 
 package main; ##########################################################
 
 use Genome;
-use Test::More tests => 13;
+use Test::More tests => 11;
 
 my $test_count = 0;
 
@@ -41,22 +41,19 @@ ok($model_name, 'model name was specified') or BAIL_OUT('model name was not spec
 ok($job_url, 'job url was specified') or BAIL_OUT('job url was not specified');
 ok($timeout, 'timeout was specified') or BAIL_OUT('timeout was not specified');
 
-my $test_revision = Revision->test_version('HEAD');
-ok($test_revision, 'test revision is specified');
+build($model_name, $timeout);
 
-build($model_name, $test_revision, $timeout);
-
-diff($model_name, $job_url, $test_revision);
+diff($model_name, $job_url);
 
 sub build {
     my $model_name = shift;
-    my $test_revision = shift;
     my $timeout = shift;
 
+    my $test_version = Revision->test_version();
     my $build = Genome::Model::Build->get(
         model_name => $model_name,
         run_by => 'apipe-tester',
-        software_revision => $test_revision,
+        software_revision => $test_version,
         status => ['Scheduled', 'Running', 'Succeeded'],
     );
     if ($build) {
@@ -65,7 +62,7 @@ sub build {
         my $model = Genome::Model->get(name => $model_name) or die;
         $build = Genome::Model::Build->create(
             model_id => $model->id,
-            software_revision => $test_revision,
+            software_revision => $test_version,
         ) or die;
         $build->start();
         UR::Context->commit();
@@ -98,7 +95,8 @@ sub build {
 sub diff {
     my $model_name = shift;
     my $job_url = shift;
-    my $test_revision = shift;
+
+    my $test_version = Revision->test_version();;
 
     my $model = Genome::Model->get(name => $model_name);
     unless ($model) {
@@ -115,10 +113,13 @@ sub diff {
     }
     my $blessed_snapshot_version = sprintf('%s-%s', Revision->perl_version(), $blessed_git_revision);
 
+    diag "model_name = $model_name";
+    diag "software_revision = $blessed_snapshot_version";
+
     my $blessed_build = Genome::Model::Build->get(
         model_name => $model_name,
         run_by => 'apipe-tester',
-        software_revision => "$blessed_snapshot_version",
+        software_revision => $blessed_snapshot_version,
         status => 'Succeeded',
     );
     ok($blessed_build, 'Found Blessed Build') or die;
@@ -126,7 +127,7 @@ sub diff {
     my $new_build = Genome::Model::Build->get(
         model_name => $model_name,
         run_by => 'apipe-tester',
-        software_revision => $test_revision,
+        software_revision => $test_version,
         status => 'Succeeded',
     );
     ok($new_build, 'Found New Build') or die;
@@ -137,10 +138,10 @@ sub diff {
     );
     ok($diff_cmd->execute, sprintf('Executed Diff Command (blessed build = %s and new build = %s)', $blessed_build->id, $new_build->id)) or die;
 
-    my $has_diffs = (defined($diff_cmd->diffs) && scalar(keys %{$diff_cmd->diffs})) || 0;
+    my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
     is($has_diffs, 0, 'No Diffs Found') or diag $diff_cmd->diffs_message();
 
-        my $set_cmd = sprintf('set-blessed-build -m %s -p %s -g %s', $model->id, Revision->perl_version(), $test_revision);
+        my $set_cmd = sprintf('set-blessed-build -m %s -p %s -g %s', $model->id, Revision->perl_version(), Revision->git_revision());
     if ($has_diffs) {
         diag qq(If you want to bless this build run '$set_cmd'.)
     } else {
