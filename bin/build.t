@@ -105,7 +105,7 @@ sub diff {
         print STDERR "Model not found: $model_name\n";
         return;
     }
-    my $list_cmd = sprintf('list-blessed-build -m %s -p %s', $model->id, Revision->perl_version());
+    my $list_cmd = sprintf('list-blessed-builds -m %s -p %s', $model->id, Revision->perl_version());
     my $list_cmd_output = qx($list_cmd);
     my $blessed_git_revision = (split("\t", $list_cmd_output))[2];
     unless ($blessed_git_revision) {
