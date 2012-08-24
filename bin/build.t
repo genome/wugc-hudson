@@ -107,6 +107,7 @@ sub diff {
     }
     my $list_cmd = sprintf('list-blessed-builds -m %s -p %s', $model->id, Revision->perl_version());
     my $list_cmd_output = qx($list_cmd);
+    chomp $list_cmd_output;
     my $blessed_git_revision = (split("\t", $list_cmd_output))[2];
     unless ($blessed_git_revision) {
         print STDERR "Blessed Git Revision not defined:\n$list_cmd_output";
