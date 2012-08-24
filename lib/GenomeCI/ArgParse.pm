@@ -21,6 +21,9 @@ sub argparse {
         exit(2);
     }
 
+    if ($ENV{GENOMECI_DB}) {
+        $db = $ENV{GENOMECI_DB};
+    }
     unless (-e $db) {
         print STDERR "--database does not exist: $db\n";
         exit(2);
