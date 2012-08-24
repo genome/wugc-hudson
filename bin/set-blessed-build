@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use GenomeCI::ArgParse;
+use GenomeCI::Schema;
+use Pod::Usage;
+
+my %arg = GenomeCI::ArgParse::argparse();
+
+my $schema = GenomeCI::Schema->connect(sprintf('dbi:SQLite:%s', $arg{db}), { AutoCommit => 1 });
+
+my %blessed_build_args = (
+    model_id => $arg{model_id},
+    perl_version => $arg{perl_version},
+);
+my $blessed_build_rs = $schema->resultset('BlessedBuild');
+my $blessed_build = $blessed_build_rs->find({%blessed_build_args});
+if ($blessed_build) {
+    my $old_git_revision = $blessed_build->git_revision;
+    $blessed_build->git_revision($arg{git_revision});
+    printf("Changed git_revision for BlessedBuild(model_id: %s, perl_version: %s) from %s to %s.\n",
+        $blessed_build->model_id,
+        $blessed_build->perl_version,
+        $old_git_revision,
+        $blessed_build->git_revision,
+    );
+    $blessed_build->update;
+} else {
+    $blessed_build = $blessed_build_rs->new({%blessed_build_args, git_revision => $arg{git_revision}});
+    printf("Created BlessedBuild(model_id: %s, perl_version: %s, git_revision: %s).\n",
+        $blessed_build->model_id,
+        $blessed_build->perl_version,
+        $blessed_build->git_revision,
+    );
+    $blessed_build->insert;
+}
+
+exit();
+
+__END__
+
+=head1 NAME
+
+set-blessed-build
+
+=head1 SYNOPSIS
+
+set-blessed-build [options] --model-id <MODEL_ID> --perl-version <PERL_VERSION --git-revision <GIT_REVISION>
+
+ Options:
+   --help              brief help message
+   --man               full documentation
+   --model-id, -m      the model id
+   --perl-version, -p  the perl version
+   --git-revision, -g  the git revision
+
+=head1 DESCRIPTION
+
+B<This program> does something useful!
+
+=cut

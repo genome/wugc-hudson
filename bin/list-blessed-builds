@@ -1,0 +1,46 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use GenomeCI::ArgParse;
+use GenomeCI::Schema;
+use Pod::Usage;
+
+my %arg = GenomeCI::ArgParse::argparse();
+
+my $schema = GenomeCI::Schema->connect(sprintf('dbi:SQLite:%s', $arg{db}));
+
+my %blessed_build_args;
+$blessed_build_args{model_id} = $arg{model_id} if defined $arg{model_id};
+$blessed_build_args{perl_version} = $arg{perl_version} if defined $arg{perl_version};
+$blessed_build_args{git_revision} = $arg{git_revision} if defined $arg{git_revision};
+my $blessed_build_rs = $schema->resultset('BlessedBuild')->search({%blessed_build_args});
+while (my $bb = $blessed_build_rs->next) {
+    print join("\t", $bb->model_id, $bb->perl_version, $bb->git_revision), "\n";
+}
+
+exit();
+
+__END__
+
+=head1 NAME
+
+list-blessed-build
+
+=head1 SYNOPSIS
+
+list-blessed-build [options] --model-id <MODEL_ID> --perl-version <PERL_VERSION --git-revision <GIT_REVISION>
+
+ Options:
+   --help              brief help message
+   --man               full documentation
+   --model-id, -m      the model id
+   --perl-version, -p  the perl version
+   --git-revision, -g  the git revision
+
+=head1 DESCRIPTION
+
+B<This program> does something useful!
+
+=cut
