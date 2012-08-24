@@ -152,7 +152,7 @@ sub diff {
 
     unless ($has_diffs) {
         my $set_cmd = sprintf('set-blessed-build -m %s -p %s -g %s', $model->id, Revision->perl_version(), $test_revision);
-        system($set_cmd);
+        my $set_cmd_exit = system($set_cmd);
         is($set_cmd_exit, 0, 'Set Blessed Build');
     }
 }
