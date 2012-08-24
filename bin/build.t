@@ -29,20 +29,13 @@ sub test_version {
 package main; ##########################################################
 
 use Genome;
-use Test::More;
+use Test::More tests => 13;
 
 my $test_count = 0;
 
-my $skip_diff = ($ENV{SKIP_DIFF} eq 'true' ? 1 : 0);
 my $model_name = $ENV{MODEL_NAME};
 my $job_url = $ENV{JOB_URL};
 my $timeout = $ENV{BUILD_TIMEOUT};
-
-if ($skip_diff) {
-    plan tests => 8;
-} else {
-    plan tests => 13;
-}
 
 ok($model_name, 'model name was specified') or BAIL_OUT('model name was not specified');
 ok($job_url, 'job url was specified') or BAIL_OUT('job url was not specified');
@@ -53,11 +46,7 @@ ok($test_revision, 'test revision is specified');
 
 build($model_name, $test_revision, $timeout);
 
-if ($skip_diff) {
-    ok(1, 'SKIP_DIFF turned on');
-} else {
-    diff($model_name, $job_url, $test_revision);
-}
+diff($model_name, $job_url, $test_revision);
 
 sub build {
     my $model_name = shift;
