@@ -34,6 +34,7 @@ if ($model) {
 }
 
 my $timeout = 7200;
+my $test_version = Revision->test_version();
 
 # Per Model Customizations
 if (grep { $model_subname eq $_ } (
@@ -46,13 +47,12 @@ if (grep { $model_subname eq $_ } (
 ) {
     print("Customizing test environment...\n");
     print("Set GENOME_SOFTWARE_RESULT_TEST_NAME to 'jenkins-$job_name-$build_number'.\n");
-    $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = "jenkins-$job_name-$build_number";
+    $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = $test_version;
 } else {
     print "No customizations for $model_name.\n";
 }
 print "\n";
 
-my $test_version = Revision->test_version();
 my $build = Genome::Model::Build->get(
     model_name => $model->name,
     run_by => 'apipe-tester',
