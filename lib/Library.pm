@@ -33,6 +33,15 @@ sub send_mail {
     my $from = $params{from} || sprintf('%s@genome.wustl.edu', $ENV{'USER'});
     my $cc = $params{cc} || '';
     my $to = $params{to} || die "No to parameters provided to send_mail method!"; 
+    my $stdout = $params{stdout};
+
+    if ($stdout) {
+        printf("Sending mail...\n");
+        printf("From => %s\n", $from);
+        printf("To => %s\n", $to);
+        printf("Subject => %s\n", $subject);
+        printf("%s\n", $body);
+    }
 
     my $msg = MIME::Lite->new(
         From => $from,
