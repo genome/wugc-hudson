@@ -37,6 +37,9 @@ my $timeout = 7200;
 my $test_version = Revision->test_version();
 
 # Per Model Customizations
+print("Customizing test environment...\n");
+
+# GENOME_SOFTWARE_RESULT_TEST_NAME
 if (grep { $model_subname eq $_ } (
         'somatic-variation',
         'somatic-short',
@@ -45,12 +48,16 @@ if (grep { $model_subname eq $_ } (
         'somatic-variation-sv-detection',
         )
 ) {
-    print("Customizing test environment...\n");
     print("Set GENOME_SOFTWARE_RESULT_TEST_NAME to 'jenkins-$job_name-$build_number'.\n");
     $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = $test_version;
-} else {
-    print "No customizations for $model_name.\n";
 }
+
+# timeout
+if ($model_subname eq 'somatic-variation') {
+    $timout = 86400;
+}
+
+# Done with Per Model Customizations
 print "\n";
 
 my $build = Genome::Model::Build->get(
