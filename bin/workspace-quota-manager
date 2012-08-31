@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+
+use Genome;
+use Library;
+
+my $a = Genome::Disk::Allocation->get(allocation_path => 'jenkins/jobs/workspace');
+unless ($a) {
+    print("ERROR: Unable to get allocation!\n") and exit 255;
+}
+
+my $kb_requested = $a->kilobytes_requested;
+unless ($kb_requested) {
+    print("ERROR: Unable to get kilobytes_requested!\n") and exit 255;
+}
+
+my $path = $a->absolute_path;
+unless ($path) {
+    print("ERROR: Unable to get absolute_path!\n") and exit 255;
+}
+unless (-d $path) {
+    printf("ERROR: Path (%s) is not a directory!\n", $path) and exit 255;
+}
+
+my ($kb_used) = qx(du -ks $path) =~ /^(\d+)/;
+unless ($kb_used) {
+    print("ERROR: Unable to parse kb_used!\n") and exit 255;
+}
+
+my $percent_used = $kb_used / $kb_requested * 100;
+
+if ($percent_used > 95) {
+    printf("Allocation Usage NOT OK: %.2f%%\n", $percent_used);
+
+    my $new_kb_requested = 1.05 * ($percent_used / 0.95) * $kb_requested;
+    my $kb_delta = $new_kb_requested - $kb_requested;
+    if ($kb_delta < 0) {
+        die 'Trying to reallocate to smaller size should not happen!';
+    }
+
+    my $subject;
+
+    my $rv = eval { $a->reallocate($new_kb_requested) };
+    my $error_message = $@;
+    if ($rv) {
+        $subject = 'Automatically Resized Jenkins Workspace';
+        @body = (
+            sprintf("Automatically resized Jenkins' workspace by %s kB, from %s kB to %s kB.", $kb_delta),
+            sprintf("Allocation path is '%s'.", $a->allocation_path),
+        );
+    } else {
+        $subject = 'Failed to Automatically Resize Jenkins Workspace';
+        @body = (
+            sprintf("Failed to automatically resize Jenkins' workspace by %s kB, from %s kB to %s kB.", $kb_delta),
+            sprintf("Allocation path is '%s'.", $a->allocation_path),
+            sprintf("Error:\n%s", $error_message),
+        );
+    }
+
+    Library::send_mail(
+        from => 'apipe-tester@genome.wustl.edu',
+        to => 'nnutter@genome.wustl.edu',
+        subject => $subject,
+        body => join('\n', @body),
+    );
+
+    return $rv;
+} else {
+    printf("Allocation Usage OK: %.2f%%\n", $percent_used);
+}
