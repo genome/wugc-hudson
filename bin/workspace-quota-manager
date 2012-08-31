@@ -43,7 +43,7 @@ if ($percent_used > 95.0) {
     if ($rv) {
         $subject = 'Automatically Resized Jenkins Workspace';
         @body = (
-            sprintf("Automatically resized Jenkins' workspace by %s kB, from %s kB to %s kB.", $kb_delta, $kb_requested, $new_kb_requested),
+            sprintf("Automatically resized Jenkins' workspace by %.2f MB, from %.2f GB to %.2f GB.", $kb_delta / 1024.0, $kb_requested / 1048576.0, $new_kb_requested / 1048576.0),
             sprintf("Allocation path is '%s'.", $a->allocation_path),
             sprintf("Absolute path is '%s'.", $a->absolute_path),
         );
@@ -52,7 +52,7 @@ if ($percent_used > 95.0) {
     } else {
         $subject = 'Failed to Automatically Resize Jenkins Workspace';
         @body = (
-            sprintf("Failed to automatically resize Jenkins' workspace by %s kB, from %s kB to %s kB.", $kb_delta, $kb_requested, $new_kb_requested),
+            sprintf("Failed to automatically resize Jenkins' workspace by %.2f MB, from %.2f GB to %.2f GB.", $kb_delta / 1024.0, $kb_requested / 1048576.0, $new_kb_requested / 1048576.0),
             sprintf("Allocation path is '%s'.", $a->allocation_path),
             sprintf("Error:\n%s", $error_message),
             sprintf("Absolute path is '%s'.", $a->absolute_path),
