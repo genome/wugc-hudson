@@ -13,6 +13,8 @@ my $build_url = $ENV{BUILD_URL} or die 'BUILD_URL not set.';
 my $build_number = $ENV{BUILD_NUMBER} or die 'BUILD_NUMBER not set.';
 my $test_spec = $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
 
+$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, $test_spec);
+
 print "\n\n => Environment Info\n";
 print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
 print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
