@@ -172,9 +172,8 @@ if (!$has_diffs) {
 
     Library::send_mail(
         from => 'apipe-tester@genome.wustl.edu',
-        #to => Library::users_to_addresses(@to),
-        #cc => Library::users_to_addresses(@cc),
-        to => 'nnutter@genome.wustl.edu',
+        to => Library::users_to_addresses(@to),
+        cc => Library::users_to_addresses(@cc),
         subject => $subject,
         body => $body,
     );
