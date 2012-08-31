@@ -138,10 +138,19 @@ if ($build->status eq 'Succeeded') {
     exit(255);
 }
 
+my $set_blessed_build_path = qx(which set-blessed-build);
+unless ($set_blessed_build_path) {
+    print("Unable to find set-blessed-build command!\n") and exit(255);
+}
+chomp $set_blessed_build_path;
+my $set_cmd = sprintf('%s -m %s -p %s -g %s', $set_blessed_build_path, $model->id, Revision->perl_version(), Revision->git_revision());
+
 my $list_cmd = sprintf('list-blessed-builds -m %s -p %s', $model->id, $perl_version);
 my $list_cmd_output = qx($list_cmd);
 unless ($list_cmd_output) {
-    printf("No output from list command: %s!\n", $list_cmd) and exit(255);
+    printf("No output from list command: %s!\n", $list_cmd);
+    printf"If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd);
+    exit(255);
 }
 chomp $list_cmd_output;
 my $blessed_git_revision = (split("\t", $list_cmd_output))[2];
@@ -178,13 +187,6 @@ my $diff_cmd = Genome::Model::Build::Command::Diff->create(
 unless ($diff_cmd->execute) {
     print("Diff command failed to execute!\n") and exit(255);
 }
-
-my $set_blessed_build_path = qx(which set-blessed-build);
-unless ($set_blessed_build_path) {
-    print("Unable to find set-blessed-build command!\n") and exit(255);
-}
-chomp $set_blessed_build_path;
-my $set_cmd = sprintf('%s -m %s -p %s -g %s', $set_blessed_build_path, $model->id, Revision->perl_version(), Revision->git_revision());
 
 my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
 if (!$has_diffs) {
