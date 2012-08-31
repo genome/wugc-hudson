@@ -65,7 +65,7 @@ if ($percent_used > 95) {
         body => join("\n", @body),
     );
 
-    return $rv;
+    exit($rv ? 0 : 1);
 } else {
     printf("Allocation Usage OK: %.2f%%\n", $percent_used);
 }
