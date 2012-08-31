@@ -44,6 +44,7 @@ if (grep { $model_subname eq $_ } (
         'somatic-variation-sv-detection',
         )
 ) {
+    print("Customizing test environment...\n");
     print("Set GENOME_SOFTWARE_RESULT_TEST_NAME to 'jenkins-$job_name-$build_number'.\n");
     $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = "jenkins-$job_name-$build_number";
 } else {
