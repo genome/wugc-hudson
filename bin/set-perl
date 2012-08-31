@@ -1,0 +1,22 @@
+echo -e "\n\n => Setting Up Perl Interpreters..."
+
+PERL_VERSION="$1"
+
+case $PERL_VERSION in
+    5.8)
+        ln -nsf genome-perl$PERL_VERSION bin/genome-perl
+        ln -nsf /gsc/bin/perl bin/perl
+        ln -nsf /gsc/bin/prove bin/prove
+        # TODO ln -nsf $(readlink bin/genome-perl$PERL_VERSION) bin/perl
+        ;;
+    5.10)
+        ln -nsf genome-perl$PERL_VERSION bin/genome-perl
+        ln -nsf /usr/bin/perl bin/perl
+        ln -nsf /usr/bin/prove bin/prove
+        # TODO ln -nsf $(readlink bin/genome-perl$PERL_VERSION) bin/perl
+        ;;
+    *)
+        echo "ERROR: Unrecognized Perl Version: $PERL_VERSION"
+        exit 2
+        ;;
+esac

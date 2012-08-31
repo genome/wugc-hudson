@@ -1,6 +1,26 @@
 package Revision;
 
-sub get_perl_version {
+sub git_revision {
+    my $package = shift;
+    my $ref = shift || 'HEAD';
+    my $rev = qx(git rev-parse --short $ref);
+    chomp $rev;
+    return $rev;
+}
+
+sub perl_version {
+    my $package = shift;
+    my $v = sprintf("%vd", $^V);
+    my ($maj, $min, $bug) = split(/\./, $v);
+    return "$maj.$min";
+}
+
+sub test_version {
+    my $package = shift;
+    return sprintf("%s-%s", $package->perl_version(), $package->git_revision(@_));
+}
+
+sub get_perl_version { # DEPRECATED
     # Watch out! This works in 5.8 and up - $^V is a vstring in 5.8
     # Other, nicer-looking ways of dealing with $^V won't work in 5.8.
     my $version = sprintf("%vd", $^V);
@@ -11,11 +31,11 @@ sub get_perl_version {
     return $version;
 }
 
-sub get_head_rev {
+sub get_head_rev { # DEPRECATED
     return get_pipeline_rev("HEAD");
 }
 
-sub get_pipeline_rev {
+sub get_pipeline_rev { # DEPRECATED
     my ($pipeline_version) = @_;
 
     $git_rev = `git rev-parse --short $pipeline_version`;

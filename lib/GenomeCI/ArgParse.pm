@@ -1,6 +1,7 @@
 package GenomeCI::ArgParse;
 
 use Getopt::Long;
+use Cwd;
 
 sub argparse {
     my ($man, $help, $db, $model_id, $perl_version, $git_revision) = (0) x 2;
@@ -23,6 +24,9 @@ sub argparse {
 
     if ($ENV{GENOMECI_DB}) {
         $db = $ENV{GENOMECI_DB};
+    } else {
+        my $pm_path = Cwd::abs_path(__FILE__);
+        ($db = $pm_path) =~ s/lib\/GenomeCI\/ArgParse\.pm/db\/Schema.db/;
     }
     unless (-e $db) {
         print STDERR "--database does not exist: $db\n";
