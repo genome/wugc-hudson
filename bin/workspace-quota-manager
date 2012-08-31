@@ -29,7 +29,6 @@ unless ($kb_used) {
 my $percent_used = $kb_used / $kb_requested * 100;
 
 if ($percent_used > 95.0) {
-    printf("Allocation Usage NOT OK: %.2f%%\n", $percent_used);
 
     my $new_kb_requested = 1.05 * ($percent_used / 95.0) * $kb_requested;
     my $kb_delta = $new_kb_requested - $kb_requested;
@@ -48,6 +47,8 @@ if ($percent_used > 95.0) {
             sprintf("Allocation path is '%s'.", $a->allocation_path),
             sprintf("Absolute path is '%s'.", $a->absolute_path),
         );
+        $percent_used = $kb_used / $new_kb_requested * 100;
+        printf("Allocation Usage OK: %.2f%%\n", $percent_used);
     } else {
         $subject = 'Failed to Automatically Resize Jenkins Workspace';
         @body = (
@@ -56,6 +57,7 @@ if ($percent_used > 95.0) {
             sprintf("Error:\n%s", $error_message),
             sprintf("Absolute path is '%s'.", $a->absolute_path),
         );
+        printf("Allocation Usage NOT OK: %.2f%%\n", $percent_used);
     }
 
     Library::send_mail(
