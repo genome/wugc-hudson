@@ -30,7 +30,7 @@ my $percent_used = $kb_used / $kb_requested * 100;
 
 if ($percent_used > 95.0) {
 
-    my $new_kb_requested = 1.05 * ($percent_used / 95.0) * $kb_requested;
+    my $new_kb_requested = int(1.05 * ($percent_used / 95.0) * $kb_requested);
     my $kb_delta = $new_kb_requested - $kb_requested;
     if ($kb_delta < 0) {
         die 'Trying to reallocate to smaller size should not happen!';
