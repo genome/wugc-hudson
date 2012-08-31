@@ -4,7 +4,7 @@ require File::Basename;
 my $base_dir = File::Basename::dirname(__FILE__) . '/../';
 
 my @files;
-push @files, qx[find $base_dir/bin -type f];
+push @files, qx[grep -l -r '^#!.*perl' $base_dir/bin];
 push @files, qx[find $base_dir/lib -type f -name '*.pm'];
 
 @files = grep { $_ !~ /.*~/ } @files;
