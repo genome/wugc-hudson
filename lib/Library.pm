@@ -33,7 +33,7 @@ sub send_mail {
     my $from = $params{from} || sprintf('%s@genome.wustl.edu', $ENV{'USER'});
     my $cc = $params{cc} || '';
     my $to = $params{to} || die "No to parameters provided to send_mail method!"; 
-    my $stdout = $params{stdout};
+    my $stdout = $params{stdout} || 1;
 
     if ($stdout) {
         printf("Sending mail...\n");
