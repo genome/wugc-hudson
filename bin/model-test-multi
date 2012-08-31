@@ -54,7 +54,7 @@ if (grep { $model_subname eq $_ } (
 
 # timeout
 if ($model_subname eq 'somatic-variation') {
-    $timout = 86400;
+    $timeout = 86400;
 }
 
 # Done with Per Model Customizations
@@ -149,7 +149,7 @@ my $list_cmd = sprintf('list-blessed-builds -m %s -p %s', $model->id, $perl_vers
 my $list_cmd_output = qx($list_cmd);
 unless ($list_cmd_output) {
     printf("No output from list command: %s!\n", $list_cmd);
-    printf"If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd);
+    printf("If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd);
     exit(255);
 }
 chomp $list_cmd_output;
