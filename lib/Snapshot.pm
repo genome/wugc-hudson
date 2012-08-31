@@ -119,8 +119,8 @@ sub create_snapshot_dir {
 	}
 
     # Something to do with generating InlineConfig*. Figure out a better/faster way to generate it.
-    system("cd $snapshot_dir/lib/perl/Genome && /gsc/bin/perl $(which ur) test use");
-    system("cd $snapshot_dir/lib/perl/Genome && /usr/bin/perl $(which ur) test use");
+    system("cd $snapshot_dir/lib/perl/Genome && /gsc/bin/perl \$(which ur) test use");
+    system("cd $snapshot_dir/lib/perl/Genome && /usr/bin/perl \$(which ur) test use");
 	
 	return 1;
 }
