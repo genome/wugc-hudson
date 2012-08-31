@@ -62,7 +62,7 @@ if ($percent_used > 95) {
         from => 'apipe-tester@genome.wustl.edu',
         to => 'nnutter@genome.wustl.edu',
         subject => $subject,
-        body => join('\n', @body),
+        body => join("\n", @body),
     );
 
     return $rv;
