@@ -67,6 +67,7 @@ if ($percent_used > 95.0) {
         body => join("\n", @body),
     );
 
+    UR::Context->commit;
     exit($rv ? 0 : 1);
 } else {
     printf("Allocation Usage OK: %.2f%%\n", $percent_used);
