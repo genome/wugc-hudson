@@ -1,5 +1,8 @@
 package Library;
 
+use strict;
+use warnings;
+
 BEGIN {
     require Cwd;
 	require File::Basename;
