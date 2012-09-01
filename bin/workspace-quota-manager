@@ -38,9 +38,11 @@ if ($percent_used > 95.0) {
 
     my $subject;
 
-    my $rv = eval { $a->reallocate($new_kb_requested) };
+    my $tx = UR::Context::Transaction->begin();
+    my $rv = eval { $a->reallocate(kilobytes_requested => $new_kb_requested) };
     my $error_message = $@;
     if ($rv) {
+        $tx->commit();
         $subject = 'Automatically Resized Jenkins Workspace';
         @body = (
             sprintf("Automatically resized Jenkins' workspace by %.2f MB, from %.2f GB to %.2f GB.", $kb_delta / 1024.0, $kb_requested / 1048576.0, $new_kb_requested / 1048576.0),
@@ -50,6 +52,7 @@ if ($percent_used > 95.0) {
         $percent_used = $kb_used / $new_kb_requested * 100;
         printf("Allocation Usage OK: %.2f%%\n", $percent_used);
     } else {
+        $tx->rollback();
         $subject = 'Failed to Automatically Resize Jenkins Workspace';
         @body = (
             sprintf("Failed to automatically resize Jenkins' workspace by %.2f MB, from %.2f GB to %.2f GB.", $kb_delta / 1024.0, $kb_requested / 1048576.0, $new_kb_requested / 1048576.0),
