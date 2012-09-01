@@ -43,7 +43,7 @@ sub send_mail {
         printf("From => %s\n", $from);
         printf("To => %s\n", $to);
         printf("Subject => %s\n", $subject);
-        printf("%s\n", $body);
+        printf("%s\n", $data);
     }
 
     my $msg = MIME::Lite->new(
