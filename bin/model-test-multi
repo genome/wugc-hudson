@@ -30,9 +30,9 @@ if ($perl_version ne Revision->perl_version()) {
 my $model_name = sprintf('apipe-test-%s', $model_subname);
 my $model = Genome::Model->get(name => $model_name);
 if ($model) {
-    printf("Found model (%s) with name '%s'.\n", $model->id, $model->name);
+    printf("Found model (%s) with name '%s'.\n\n", $model->id, $model->name);
 } else {
-    printf("Could not get test model by name (%S)!\n", $model_name) and exit(255);
+    printf("Could not get test model by name (%S)!\n\n", $model_name) and exit(255);
 }
 
 my $timeout = 7200;
