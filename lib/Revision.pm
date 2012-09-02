@@ -1,5 +1,8 @@
 package Revision;
 
+use strict;
+use warnings;
+
 sub git_revision {
     my $package = shift;
     my $ref = shift || 'HEAD';
