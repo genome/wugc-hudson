@@ -41,7 +41,7 @@ sub get_head_rev { # DEPRECATED
 sub get_pipeline_rev { # DEPRECATED
     my ($pipeline_version) = @_;
 
-    $git_rev = `git rev-parse --short $pipeline_version`;
+    my $git_rev = `git rev-parse --short $pipeline_version`;
     die "No reference version available for $pipeline_version" unless $git_rev;
     chomp $git_rev;
 
