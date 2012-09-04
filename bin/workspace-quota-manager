@@ -65,7 +65,7 @@ if ($percent_used > 95.0) {
 
     Library::send_mail(
         from => 'apipe-tester@genome.wustl.edu',
-        to => 'nnutter@genome.wustl.edu',
+        to => 'apipe-tester@genome.wustl.edu',
         subject => $subject,
         body => join("\n", @body),
     );
