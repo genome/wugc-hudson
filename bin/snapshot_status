@@ -51,7 +51,7 @@ for my $version (@versions) {
     my $active_builds = active_builds($version);
     my $has_lsf_jobs = has_active_lsf_jobs($version);
     my $is_latest_stable_snapshot = is_latest_stable_snapshot($version);
-    
+
     print "$version\t$elapsed_atime\t$active_builds\t$has_lsf_jobs\t";
     if ($elapsed_atime > $min_atime && $active_builds == 0
         && (!$check_lsf || ($check_lsf && $has_lsf_jobs == 0))
@@ -76,7 +76,7 @@ for my $version (@versions) {
 
 sub is_latest_stable_snapshot {
     my $version = shift;
-    my ($latest_stable_version) = qx(curl -sk https://apipe-ci.gsc.wustl.edu/job/3%20Genome%20Snapshot/lastStableBuild/api/xml?xpath=freeStyleBuild/number) =~ /<number>(\d+)<\/number>/;
+    my ($latest_stable_version) = qx(curl -sk https://apipe-ci.gsc.wustl.edu/job/3-Create-Genome-Snapshot/lastStableBuild/api/xml?xpath=freeStyleBuild/number) =~ /<number>(\d+)<\/number>/;
     return ($latest_stable_version && $version =~ /^genome-$latest_stable_version/);
 }
 
@@ -103,7 +103,7 @@ sub older_than_pipeline {
 sub elapsed_atime {
     my $version = shift || die;
     my $snapshot_dir = Snapshot::find_snapshot($version) || die;
-    my $genome_module = "$snapshot_dir/lib/perl/Genome.pm";   
+    my $genome_module = "$snapshot_dir/lib/perl/Genome.pm";
     my $atime = (stat($genome_module))[8];
     my $elapsed_atime = time - $atime;
     return $elapsed_atime;
