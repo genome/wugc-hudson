@@ -35,7 +35,7 @@ if ($model) {
     printf("Could not get test model by name (%S)!\n\n", $model_name) and exit(255);
 }
 
-my $timeout = 7200;
+my $timeout = 14400;
 my $test_version = Revision->test_version();
 
 # Per Model Customizations
