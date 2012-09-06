@@ -223,5 +223,6 @@ sub get_model_camel_type {
     my ($model) = shift;
     my $type = $model->class;
     $type =~ s/Genome::Model:://;
+    $type =~ s/:://g;
     return Genome::Utility::Text::camel_case_to_string($type, '_');
 }
