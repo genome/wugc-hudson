@@ -110,6 +110,7 @@ sub gene_prediction_eukaryotic {
         kpepin
         vbhonagi
         xzhang
+        tmooney
     );
 }
 
