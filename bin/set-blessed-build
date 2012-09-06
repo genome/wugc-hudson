@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Cwd;
+use File::Temp;
 use File::Basename;
 use lib File::Basename::dirname(Cwd::abs_path(__FILE__)) . "/../lib";
 use GenomeCI::ArgParse;
@@ -11,6 +12,8 @@ use GenomeCI::Schema;
 use Pod::Usage;
 
 my %arg = GenomeCI::ArgParse::argparse();
+
+validate_write_access($arg{db});
 
 my $schema = GenomeCI::Schema->connect(sprintf('dbi:SQLite:%s', $arg{db}), { AutoCommit => 1 });
 
@@ -41,6 +44,31 @@ if ($blessed_build) {
 }
 
 exit();
+
+sub validate_write_access {
+    my $db = shift;
+
+    unless (-w $db) {
+        die "No write permission to database ($db)!";
+    }
+
+    my $dir = File::Basename::dirname($db);
+    my $fh = eval {
+        return File::Temp->new(
+            UNLINK => 1,
+            DIR => $dir,
+            TEMPLATE => 'XXXXXX',
+        );
+    };
+    my $error = $@;
+    unless ($fh) {
+        if ($error =~ /Read-only file system/) {
+            die "Read-only file system ($dir)!";
+        } else {
+            die $error;
+        }
+    }
+}
 
 __END__
 
