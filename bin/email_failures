@@ -158,7 +158,7 @@ sub send_alert {
         $mail_msg = "To: $mail_to\nCC: $mail_cc\n" . $mail_msg;
         send_mail(
             to => $debug_email,
-            subject => $mail_subject,
+            subject => '[DEBUG]' . $mail_subject,
             msg     => $mail_msg,
         );
     } else {
