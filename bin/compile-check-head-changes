@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -o errexit
+
+declare -a FAILED_FILES
+echo "Checking Syntax..."
+for FILE in $(git diff --name-only HEAD^ HEAD | grep -P '\.p[lm]$'); do
+    if [ -f "$FILE" ]; then
+        set +o errexit
+        perl -c $FILE
+        if [ "$?" -ne "0" ]; then
+            FAILED_FILES=("${FAILED_FILES[@]}" "$FILE")
+        fi
+        set -o errexit
+    fi
+done
+
+if [ "${#FAILED_FILES[@]}" -gt "0" ]; then
+    echo -e "\nFailures:"
+    for FAILED_FILE in ${FAILED_FILES[@]}; do
+        echo $FAILED_FILE
+    done
+    exit 1
+else
+    exit 0
+fi
