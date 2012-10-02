@@ -56,7 +56,7 @@ if (grep { $model_subname eq $_ } (
 
 # timeout
 if ($model_subname eq 'somatic-variation') {
-    $timeout = 86400;
+    $timeout = 129600;
 }
 
 # Done with Per Model Customizations
