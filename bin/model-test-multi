@@ -205,7 +205,7 @@ if (!$has_diffs) {
         sprintf('Build: %s', $build_url),
         sprintf('Console: %sconsole', $build_url),
         '********************************************************************************',
-        sprintf('If you want to bless this build run `%s`.', $set_cmd),
+        sprintf('If you want to bless this build run `ssh apipe-ci %s`.', $set_cmd),
         '********************************************************************************',
         $diff_cmd->diffs_message,
     );
