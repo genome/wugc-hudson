@@ -1,0 +1,57 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use IO::File qw();
+use File::Temp qw();
+use File::Copy qw(move);
+use File::Basename qw(basename);
+
+my @filenames = @ARGV;
+my $filename_count = scalar(@filenames);
+
+@filenames = map { -l $_ ? resolve_symlink($_) : $_ } grep { -f $_ } @filenames;
+unless (@filenames == $filename_count) {
+    die 'some filenames were not found';
+}
+
+for my $filename (@filenames) {
+    my $in_file = IO::File->new($filename, 'r') or die "failed to open: $filename";
+    my $out_file = File::Temp->new() or die "faile to create temp file";
+    my $out_filename = $out_file->filename;
+
+    my $line = '';
+    while ($line = $in_file->getline) {
+        if ($line !~ /^\s*#!/ && ($line =~ /^\s*$/ || $line =~ /^\s*#/)) {
+            $out_file->print($line);
+        } else {
+            last;
+        }
+    }
+    if ($line =~ /^\s*#!\/usr\/bin\/env perl/) {
+        $line = "#!/usr/bin/env genome-perl\n";
+    }
+    $out_file->print($line);
+    while ($line = $in_file->getline) {
+        $out_file->print($line);
+    }
+    $out_file->close;
+    $in_file->close;
+
+    system("head -v $out_filename");
+    my $base_filename = basename $filename;
+    move($out_filename, "/gscuser/nnutter/gbin/$base_filename");
+
+}
+
+sub resolve_symlink {
+    my $filename = shift;
+    unless ( -l $filename ) {
+        die "not a symlink: $filename";
+    }
+    while ( -l $filename ) {
+        $filename = readlink $filename;
+    }
+    return $filename;
+}

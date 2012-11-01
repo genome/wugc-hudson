@@ -146,6 +146,8 @@ sub post_create_cleanup {
         }
     }
 
+    system("file $snapshot_dir/bin/* | grep text | cut -d : -f 1 | xargs reshebang");
+
     return 1;
 }
 
