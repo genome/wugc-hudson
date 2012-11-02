@@ -17,6 +17,7 @@ sub apipe_ignore {
         ehvatum
         josborne
         jkoval
+        jlolofie
         jpeck
         jschindl
         lcarmich
@@ -45,7 +46,6 @@ sub apipe {
         fdu
         gsanders
         iferguso
-        jlolofie
         jmcmicha
         jweible
         kkyung
