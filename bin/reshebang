@@ -39,9 +39,7 @@ for my $filename (@filenames) {
     $out_file->close;
     $in_file->close;
 
-    system("head -v $out_filename");
-    my $base_filename = basename $filename;
-    move($out_filename, "/gscuser/nnutter/gbin/$base_filename");
+    move($out_filename, $filename);
 
 }
 
