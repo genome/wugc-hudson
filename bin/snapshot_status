@@ -112,14 +112,14 @@ sub elapsed_atime {
 sub active_builds {
     my $version = shift || die;
     my @active_builds = ();
-    push @active_builds, Genome::Model::Build->get(status => 'Running', 'software_revision like' => "\%$version\%");
+    push @active_builds, Genome::Model::Build->get(status => 'Running', 'software_revision like' => "\%/$version/\%");
     return @active_builds;
 }
 
 sub has_active_lsf_jobs {
     my $version = shift || die;
     if ($check_lsf) {
-        return grep { $_ =~ /$version/ } @bjobs_output;
+        return grep { $_ =~ /\/$version\// } @bjobs_output;
     }
     else {
         return '-';
