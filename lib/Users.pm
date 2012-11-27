@@ -114,5 +114,13 @@ sub gene_prediction_eukaryotic {
     );
 }
 
+sub clin_seq {
+    return qw(
+        mgriffit
+        ogriffit
+        ssmith
+    );
+}
+
 1;
 
