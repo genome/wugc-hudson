@@ -35,7 +35,6 @@ if ($model) {
     printf("Could not get test model by name (%S)!\n\n", $model_name) and exit(255);
 }
 
-my $timeout = 6 * 3600; # N hours
 my $test_version = Revision->test_version();
 
 # Per Model Customizations
@@ -55,9 +54,12 @@ if (grep { $model_subname eq $_ } (
 }
 
 # timeout
-if ($model_subname eq 'somatic-variation') {
-    $timeout = 129600;
-}
+my $HOUR = 3600;
+my %timeouts = (
+    'somtatic-variation' => 36 * $HOUR,
+    'clinseq-v1' => 12 * $HOUR,
+);
+my $timeout = $timeouts{$model_subname} || (6 * $HOUR);
 
 # Done with Per Model Customizations
 print "\n";
