@@ -56,7 +56,7 @@ if (grep { $model_subname eq $_ } (
 # timeout
 my $HOUR = 3600;
 my %timeouts = (
-    'somtatic-variation' => 36 * $HOUR,
+    'somatic-variation' => 36 * $HOUR,
     'clinseq-v1' => 12 * $HOUR,
 );
 my $timeout = $timeouts{$model_subname} || (6 * $HOUR);
