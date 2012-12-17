@@ -143,7 +143,9 @@ sub post_create_cleanup {
 
     for my $ext ('pl', 'sh') {
         my @files = glob("$snapshot_dir/bin/*.$ext");
+        my @exceptions = ('genome-re\.pl$');
         for my $file (@files) {
+            next if grep { $file =~ /$_/ } @exceptions;
             (my $new_file = $file) =~ s/\.$ext$//;
             rename($file, $new_file);
         }
