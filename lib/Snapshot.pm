@@ -2,8 +2,10 @@ package Snapshot;
 
 use strict;
 use warnings;
-use File::Path qw();
+use File::Path qw(rmtree);
 use File::Slurp qw();
+use File::Temp qw();
+use File::Copy qw(move);
 
 BEGIN {
     require Cwd;
@@ -54,7 +56,10 @@ sub create {
         $self = $class->new(@_);
     }
 
+    my $tmp_snapshot_dir = File::Temp->newdir(TMPDIR => 1);
     my $snapshot_dir = $self->{snapshot_dir};
+
+    $self->{snapshot_dir} = $tmp_snapshot_dir;
     my @submodules = @{ $self->{submodules} };
 
     for my $submodule (@submodules) {
@@ -62,6 +67,12 @@ sub create {
             die "Error: $submodule directory not found.\n";
         }
     }
+
+    $self->create_snapshot_dir;
+
+    $self->post_create_cleanup;
+
+    $self->update_tab_completion;
 
     if ( -d $snapshot_dir ) {
         if ($self->{overwrite}) {
@@ -73,11 +84,10 @@ sub create {
         }
     }
 
-    $self->create_snapshot_dir;
-
-    $self->post_create_cleanup;
-
-    $self->update_tab_completion;
+    $self->{snapshot_dir} = $snapshot_dir;
+    unless (move($tmp_snapshot_dir, $snapshot_dir)) {
+        rmtree($snapshot_dir);
+    }
 
     return $self;
 }
