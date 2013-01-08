@@ -2,8 +2,8 @@ package Snapshot;
 
 use strict;
 use warnings;
-require File::Path;
-require File::Slurp;
+use File::Path qw();
+use File::Slurp qw();
 
 BEGIN {
     require Cwd;
@@ -14,8 +14,8 @@ BEGIN {
     }
 }
 
-require Library;
-require Defaults;
+use Library qw();
+use Defaults qw();
 
 sub new {
     my $class = shift;
