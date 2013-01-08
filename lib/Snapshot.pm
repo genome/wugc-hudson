@@ -59,6 +59,17 @@ sub create {
     my $tmp_snapshot_dir = File::Temp->newdir(TMPDIR => 1);
     my $snapshot_dir = $self->{snapshot_dir};
 
+    if ( -d $snapshot_dir ) {
+        if ($self->{overwrite}) {
+            unless ( system("rm -rf $snapshot_dir") == 0) {
+                die "Error: failed to remove $snapshot_dir.\n";
+            }
+        } else {
+            die "Error: $snapshot_dir already exists and overwrite was not specified.\n";
+        }
+    }
+
+
     $self->{snapshot_dir} = $tmp_snapshot_dir;
     my @submodules = @{ $self->{submodules} };
 
@@ -73,16 +84,6 @@ sub create {
     $self->post_create_cleanup;
 
     $self->update_tab_completion;
-
-    if ( -d $snapshot_dir ) {
-        if ($self->{overwrite}) {
-            unless ( system("rm -rf $snapshot_dir") == 0) {
-                die "Error: failed to remove $snapshot_dir.\n";
-            }
-        } else {
-            die "Error: $snapshot_dir already exists and overwrite was not specified.\n";
-        }
-    }
 
     $self->{snapshot_dir} = $snapshot_dir;
     unless (move($tmp_snapshot_dir, $snapshot_dir)) {
