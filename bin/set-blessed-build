@@ -25,6 +25,7 @@ my $blessed_build_rs = $schema->resultset('BlessedBuild');
 my $blessed_build = $blessed_build_rs->find({%blessed_build_args});
 if ($blessed_build) {
     my $old_git_revision = $blessed_build->git_revision;
+    $blessed_build->username(getpwuid($<));
     $blessed_build->git_revision($arg{git_revision});
     printf("Changed git_revision for BlessedBuild(model_id: %s, perl_version: %s) from %s to %s.\n",
         $blessed_build->model_id,
@@ -34,7 +35,11 @@ if ($blessed_build) {
     );
     $blessed_build->update;
 } else {
-    $blessed_build = $blessed_build_rs->new({%blessed_build_args, git_revision => $arg{git_revision}});
+    $blessed_build = $blessed_build_rs->new({
+            %blessed_build_args,
+            git_revision => $arg{git_revision},
+            username => getpwuid($<),
+    });
     printf("Created BlessedBuild(model_id: %s, perl_version: %s, git_revision: %s).\n",
         $blessed_build->model_id,
         $blessed_build->perl_version,

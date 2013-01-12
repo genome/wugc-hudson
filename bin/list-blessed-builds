@@ -20,7 +20,7 @@ $blessed_build_args{perl_version} = $arg{perl_version} if defined $arg{perl_vers
 $blessed_build_args{git_revision} = $arg{git_revision} if defined $arg{git_revision};
 my $blessed_build_rs = $schema->resultset('BlessedBuild')->search({%blessed_build_args});
 while (my $bb = $blessed_build_rs->next) {
-    print join("\t", $bb->model_id, $bb->perl_version, $bb->git_revision), "\n";
+    print join("\t", $bb->model_id, $bb->perl_version, $bb->git_revision, $bb->username), "\n";
 }
 
 exit();
