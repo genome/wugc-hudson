@@ -1,7 +1,8 @@
 package GenomeCI::ArgParse;
 
-use Getopt::Long;
 use Cwd;
+use Getopt::Long;
+use Pod::Usage;
 
 sub argparse {
     my ($man, $help, $db, $model_id, $perl_version, $git_revision) = (0) x 2;
