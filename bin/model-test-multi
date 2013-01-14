@@ -164,7 +164,7 @@ unless ($list_cmd_output) {
         sprintf('Build: %s', $build_url),
         sprintf('Console: %sconsole', $build_url),
         sprintf("No output from list command: %s!\n", $list_cmd),
-        sprintf("If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd),
+        sprintf("If you need to bootstrap this model into the diff chain run `ssh apipe-ci %s`.\n", $set_cmd),
     );
     Library::send_mail(
         from => 'apipe-tester@genome.wustl.edu',
