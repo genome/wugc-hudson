@@ -10,6 +10,7 @@ use lib File::Basename::dirname(Cwd::abs_path(__FILE__)) . "/../lib";
 use GenomeCI::ArgParse;
 use GenomeCI::Schema;
 use Pod::Usage;
+use Data::Dumper;
 
 my %arg = GenomeCI::ArgParse::argparse();
 
@@ -35,11 +36,15 @@ if ($blessed_build) {
     );
     $blessed_build->update;
 } else {
-    $blessed_build = $blessed_build_rs->new({
+    my $username = getpwuid($<);
+    my $inputs = {
             %blessed_build_args,
             git_revision => $arg{git_revision},
-            username => getpwuid($<),
-    });
+            username => $username,
+    };
+    $blessed_build = $blessed_build_rs->new(
+        $inputs
+    );
     printf("Created BlessedBuild(model_id: %s, perl_version: %s, git_revision: %s).\n",
         $blessed_build->model_id,
         $blessed_build->perl_version,
