@@ -158,12 +158,41 @@ my $list_cmd_output = qx($list_cmd);
 unless ($list_cmd_output) {
     printf("No output from list command: %s!\n", $list_cmd);
     printf("If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd);
+    my $subject = sprintf('%s - Build %d - No Blessed Builds', $test_spec, $build_number);
+    my $body = join("\n",
+        sprintf('Project: %s', $job_name),
+        sprintf('Build: %s', $build_url),
+        sprintf('Console: %sconsole', $build_url),
+        sprintf("No output from list command: %s!\n", $list_cmd);
+        sprintf("If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd);
+    );
+    Library::send_mail(
+        from => 'apipe-tester@genome.wustl.edu',
+        to => Library::users_to_addresses(@to),
+        cc => Library::users_to_addresses(@cc),
+        subject => $subject,
+        body => $body,
+    );
     exit(255);
 }
 chomp $list_cmd_output;
 my $blessed_git_revision = (split("\t", $list_cmd_output))[2];
 unless ($blessed_git_revision) {
     printf("No blessed git revision parsed from list command output:\n%s\n", $list_cmd_output) and exit(255);
+    my $subject = sprintf('%s - Build %d - No Blessed Builds', $test_spec, $build_number);
+    my $body = join("\n",
+        sprintf('Project: %s', $job_name),
+        sprintf('Build: %s', $build_url),
+        sprintf('Console: %sconsole', $build_url),
+        sprintf("No blessed git revision parsed from list command output:\n%s\n", $list_cmd_output);
+    );
+    Library::send_mail(
+        from => 'apipe-tester@genome.wustl.edu',
+        to => Library::users_to_addresses(@to),
+        cc => Library::users_to_addresses(@cc),
+        subject => $subject,
+        body => $body,
+    );
 }
 my $blessed_snapshot_version = sprintf('%s-%s', $perl_version, $blessed_git_revision);
 
