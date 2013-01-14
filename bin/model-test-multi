@@ -163,8 +163,8 @@ unless ($list_cmd_output) {
         sprintf('Project: %s', $job_name),
         sprintf('Build: %s', $build_url),
         sprintf('Console: %sconsole', $build_url),
-        sprintf("No output from list command: %s!\n", $list_cmd);
-        sprintf("If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd);
+        sprintf("No output from list command: %s!\n", $list_cmd),
+        sprintf("If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd),
     );
     Library::send_mail(
         from => 'apipe-tester@genome.wustl.edu',
@@ -184,7 +184,7 @@ unless ($blessed_git_revision) {
         sprintf('Project: %s', $job_name),
         sprintf('Build: %s', $build_url),
         sprintf('Console: %sconsole', $build_url),
-        sprintf("No blessed git revision parsed from list command output:\n%s\n", $list_cmd_output);
+        sprintf("No blessed git revision parsed from list command output:\n%s\n", $list_cmd_output),
     );
     Library::send_mail(
         from => 'apipe-tester@genome.wustl.edu',
