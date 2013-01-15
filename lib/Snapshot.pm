@@ -56,8 +56,9 @@ sub create {
         $self = $class->new(@_);
     }
 
-    my $tmp_snapshot_dir = File::Temp->newdir(TMPDIR => 1);
     my $snapshot_dir = $self->{snapshot_dir};
+    my $tmp_snapshot_dir = "$snapshot_dir.tmp";
+    $self->{snapshot_dir} = $tmp_snapshot_dir;
 
     if ( -d $snapshot_dir ) {
         if ($self->{overwrite}) {
@@ -86,9 +87,19 @@ sub create {
     $self->update_tab_completion;
 
     $self->{snapshot_dir} = $snapshot_dir;
+    print "Moving to final location...";
     unless (move($tmp_snapshot_dir, $snapshot_dir)) {
+        print "ERROR: move: $!\n";
+        print "Removing (corrupt) snapshot_dir: $snapshot_dir\n";
         rmtree($snapshot_dir);
+        print "Removing tmp_snapshot_dir: $tmp_snapshot_dir\n";
+        rmtree($tmp_snapshot_dir);
+        print "Aborting.\n";
+        exit 1;
     }
+
+    print "Removing tmp_snapshot_dir: $tmp_snapshot_dir\n";
+    rmtree($tmp_snapshot_dir);
 
     return $self;
 }
