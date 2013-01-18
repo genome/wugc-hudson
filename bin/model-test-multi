@@ -146,66 +146,6 @@ if ($build->status eq 'Succeeded') {
     exit(255);
 }
 
-my $set_blessed_build_path = qx(which set-blessed-build);
-unless ($set_blessed_build_path) {
-    print("Unable to find set-blessed-build command!\n") and exit(255);
-}
-chomp $set_blessed_build_path;
-my $set_cmd = sprintf('%s -m %s -p %s -g %s', $set_blessed_build_path, $model->id, Revision->perl_version(), Revision->git_revision());
-
-my $list_cmd = sprintf('list-blessed-builds -m %s -p %s', $model->id, $perl_version);
-my $list_cmd_output = qx($list_cmd);
-unless ($list_cmd_output) {
-    printf("No output from list command: %s!\n", $list_cmd);
-    printf("If you need to bootstrap this model into the diff chain run `%s`.\n", $set_cmd);
-    my $subject = sprintf('%s - Build %d - No Blessed Builds', $test_spec, $build_number);
-    my $body = join("\n",
-        sprintf('Project: %s', $job_name),
-        sprintf('Build: %s', $build_url),
-        sprintf('Console: %sconsole', $build_url),
-        sprintf("No output from list command: %s!\n", $list_cmd),
-        sprintf("If you need to bootstrap this model into the diff chain run `ssh apipe-ci %s`.\n", $set_cmd),
-    );
-    Library::send_mail(
-        from => 'apipe-tester@genome.wustl.edu',
-        to => Library::users_to_addresses(@to),
-        cc => Library::users_to_addresses(@cc),
-        subject => $subject,
-        body => $body,
-    );
-    exit(255);
-}
-chomp $list_cmd_output;
-my $blessed_git_revision = (split("\t", $list_cmd_output))[2];
-unless ($blessed_git_revision) {
-    printf("No blessed git revision parsed from list command output:\n%s\n", $list_cmd_output) and exit(255);
-    my $subject = sprintf('%s - Build %d - No Blessed Builds', $test_spec, $build_number);
-    my $body = join("\n",
-        sprintf('Project: %s', $job_name),
-        sprintf('Build: %s', $build_url),
-        sprintf('Console: %sconsole', $build_url),
-        sprintf("No blessed git revision parsed from list command output:\n%s\n", $list_cmd_output),
-    );
-    Library::send_mail(
-        from => 'apipe-tester@genome.wustl.edu',
-        to => Library::users_to_addresses(@to),
-        cc => Library::users_to_addresses(@cc),
-        subject => $subject,
-        body => $body,
-    );
-}
-my $blessed_snapshot_version = sprintf('%s-%s', $perl_version, $blessed_git_revision);
-
-my $blessed_build = Genome::Model::Build->get(
-    model_name => $model_name,
-    run_by => 'apipe-tester',
-    software_revision => $blessed_snapshot_version,
-    status => 'Succeeded',
-);
-unless ($blessed_build) {
-    printf("Could not get blessed build (%s)!\n", $blessed_snapshot_version) and exit(255);
-}
-
 my $new_build = Genome::Model::Build->get(
     model_name => $model_name,
     run_by => 'apipe-tester',
@@ -216,9 +156,8 @@ unless ($new_build) {
     print("Could not get test build!\n") and exit(255);
 }
 
-printf('Starting diff (blessed build = %s and new build = %s)...', $blessed_build->id, $new_build->id);
-my $diff_cmd = Genome::Model::Build::Command::Diff->create(
-    blessed_build => $blessed_build,
+printf('Starting diff (new build = %s)...', $new_build->id);
+my $diff_cmd = Genome::Model::Build::Command::DiffBlessed->create(
     new_build => $new_build,
 );
 unless ($diff_cmd->execute) {
@@ -236,7 +175,7 @@ if (!$has_diffs) {
         sprintf('Build: %s', $build_url),
         sprintf('Console: %sconsole', $build_url),
         '********************************************************************************',
-        sprintf('If you want to bless this build run `ssh apipe-ci %s`.', $set_cmd),
+        sprintf('If you want to bless this build update and commit the file %s.', $diff_cmd->db_file),
         '********************************************************************************',
         $diff_cmd->diffs_message,
     );
