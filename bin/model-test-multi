@@ -165,10 +165,7 @@ unless ($diff_cmd->execute) {
 }
 
 my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
-if (!$has_diffs) {
-    print qq($set_cmd\n);
-    my $set_cmd_exit = system($set_cmd);
-} else {
+if ($has_diffs) {
     my $subject = sprintf('%s - Build %d - Diffs Found', $test_spec, $build_number);
     my $body = join("\n",
         sprintf('Project: %s', $job_name),
