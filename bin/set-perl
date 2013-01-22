@@ -2,17 +2,19 @@ echo -e "\n\n => Setting Up Perl Interpreters..."
 
 PERL_VERSION="$1"
 
+[[ -d $WORKSPACE/bin ]] || mkdir $WORKSPACE/bin
+export PATH=$WORKSPACE/bin:$PATH
+
+[[ -f "genome-perl$PERL_VERSION" ]] && ln -nsf genome-perl$PERL_VERSION $WORKSPACE/bin/genome-perl
 case $PERL_VERSION in
     5.8)
-        ln -nsf genome-perl$PERL_VERSION bin/genome-perl
-        ln -nsf /gsc/bin/perl bin/perl
-        ln -nsf /gsc/bin/prove bin/prove
+        ln -nsf /gsc/bin/perl $WORKSPACE/bin/perl
+        ln -nsf /gsc/bin/prove $WORKSPACE/bin/prove
         # TODO ln -nsf $(readlink bin/genome-perl$PERL_VERSION) bin/perl
         ;;
     5.10)
-        ln -nsf genome-perl$PERL_VERSION bin/genome-perl
-        ln -nsf /usr/bin/perl bin/perl
-        ln -nsf /usr/bin/prove bin/prove
+        ln -nsf /usr/bin/perl $WORKSPACE/bin/perl
+        ln -nsf /usr/bin/prove $WORKSPACE/bin/prove
         # TODO ln -nsf $(readlink bin/genome-perl$PERL_VERSION) bin/perl
         ;;
     *)
@@ -20,3 +22,5 @@ case $PERL_VERSION in
         exit 2
         ;;
 esac
+
+hash -r
