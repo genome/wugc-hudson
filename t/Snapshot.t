@@ -14,7 +14,7 @@ done_testing();
 
 sub test_execute_or_die {
 	{
-		my $rv = eval { Snapshot::execute_or_die("perl -e 'die;'") };
+		my $rv = eval { Snapshot::execute_or_die("perl -e 'die;' 2> /dev/null") };
 		my $errors = $@;
 		ok($errors, 'execute_or_die died when not exiting cleanly');
 	}
