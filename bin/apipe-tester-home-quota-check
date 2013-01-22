@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use IPC::System::Simple qw(capture);
+
+my $user = getpwuid($<);
+unless ($user) {
+    print "ERROR: Could not get username.\n";
+    exit 255;
+}
+
+my @quota_out = capture('quota -A -w');
+my ($user_quota) = grep { /\/vol\/home\/$user\b/ } @quota_out;
+unless ($user_quota) {
+    print "ERROR: Could not find user's quota.\n";
+    exit 255;
+}
+
+my ($used, $avail) = (split(/\s+/, $user_quota))[1,2];
+unless ($used && $avail) {
+    print "ERROR: Could not parse quota.\n";
+    exit 255;
+}
+
+printf("Usage: %.0f%%\n", $used/$avail*100);
+
+unless ($used/$avail < 0.9) {
+    print "\n\n";
+    print "ERROR: Disk quota is over 90%.\n";
+    print "Check if anyone has added a new job recently. For instance, the Genome repo can take up several gigabytes of space. Contact storage to upgrade space with an explanation of why more space is needed.\n";
+    print "\n\n";
+    exit 255;
+}
