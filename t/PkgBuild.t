@@ -5,7 +5,7 @@ BEGIN {
 	push @INC, File::Basename::dirname(__FILE__) . '/../lib/';
 }
 
-use Test::More tests => 17;
+use Test::More tests => 11;
 use File::Temp qw/tempdir/;
 use File::Slurp qw/write_file/;
 
