@@ -21,7 +21,6 @@ BEGIN {
 require Defaults;
 
 my $DIST_DIR = Defaults::DIST_DIR();
-my $deb_upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
 
 sub execute {
     my $package_name = shift;
@@ -141,11 +140,6 @@ sub build_deb_package {
     }
     close(FH);
 
-    # .debs get signed and added to the apt repo via the codesigner role
-    # Check that we can write there before we build.
-    my $deb_upload_spool = "/gscuser/codesigner/incoming/lucid-genome-development/";
-    ok(-w "$deb_upload_spool", "$deb_upload_spool directory is writable");
-
     # cleanup any existing Build script
     if (-e "$package_dir/Build") {
         system("cd $package_dir && ./Build realclean");
@@ -154,24 +148,11 @@ sub build_deb_package {
     # .debs get built via pdebuild, must be run on a build host, probably a slave to hudson
     ok(run("cd $package_dir && /usr/bin/pdebuild --auto-debsign --logfile /var/cache/pbuilder/result/$source-build.log"), "built deb");
 
-    # Put all files, source, binary, and meta into spool.
-    my %pkgs;
-    my @bfiles;
-    my @sfiles = glob("/var/cache/pbuilder/result/${source}_*");
-    foreach my $package (@packages) {
-      # Note that members of bfiles may also be in sfiles
-      push @bfiles, glob("/var/cache/pbuilder/result/${package}_*");
-    }
-    # uniqify
-    map { $pkgs{$_} = 1 } @sfiles;
-    map { $pkgs{$_} = 1 } @bfiles;
-    my @pkgfiles = keys %pkgs;
+    # Publish all files, source, binary, and meta.
+    my @sfiles = glob("/var/cache/pbuilder/result/${source}_*.changes");
+    die "More than one package present: @sfiles" if (@sfiles != 1);
 
-    deploy($deb_upload_spool, \@pkgfiles, remove_on_success => 1);
-    system("ls -lh $deb_upload_spool");
-
-    # Clean up
-    unlink "/var/cache/pbuilder/result/$source-build.log";
+    ok(run("tgi-dput --delete --repo lucid-genome-development $sfiles[0]") and print "deployed $sfiles[0]\n", "deployed deb");
 
     return 1;
 }
@@ -185,23 +166,6 @@ sub run {
     } else {
         die "ERROR: Failed to execute ($cmd)!\n";
     }
-}
-
-sub deploy {
-    my ($dest, $packages, %opts) = @_;
-    die "$dest directory is writable" unless -w "$dest";
-    for my $p (@$packages) {
-        my $gid = getgrnam("codesigner");
-        chmod 0664, $p;
-        chown $UID, $gid, $p;
-        system("ls -lh $p");
-        run("cp -a $p $dest") and print "deployed $p to $dest\n";
-        run("cp -a $p $dest") and print "deployed $p to $dest\n";
-        if ($opts{remove_on_success}) {
-            unlink($p) or die "failed to remove $p after deploying";
-        }
-    }
-    return 1;
 }
 
 1;
