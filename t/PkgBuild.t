@@ -47,16 +47,4 @@ sub test_cpack_generator {
     is(scalar @deb, 1, "got 1 package");
     is($deb[0], "$proj_dir/$pkgname", "package has expected name");
     ok(-f "$proj_dir/$pkgname", "found package file");
-
-    my $target = "$tmpdir/deploy";
-    mkdir($target);
-    ok(PkgBuild::deploy($target, \@deb), "deployed packages");
-    ok(-f "$target/$pkgname", "found deployed package file at $target/$pkgname");
-    ok(-f "$proj_dir/$pkgname", "deploy did not remove file when not asked to");
-
-    $target .= "2";
-    mkdir($target);
-    ok(PkgBuild::deploy($target, \@deb, remove_on_success => 1), "deployed packages");
-    ok(-f "$target/$pkgname", "found deployed package file");
-    ok(! -f "$proj_dir/$pkgname", "deploy did remove file when asked to");
 }
