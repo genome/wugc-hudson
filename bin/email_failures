@@ -176,7 +176,8 @@ sub send_alert {
 
 sub git_blame {
     my $job = $ENV{JOB_NAME} || die;
-    my $last_stable_hash = _hash_for_build($job, 'lastStableBuild');
+    # 'snapshot' is unfortunately very tied to Genome but I think this whole script is
+    my $last_stable_hash = eval { _hash_for_build($job, 'lastStableBuild') } || 'snapshot';
     my $last_hash = _hash_for_build($job, 'lastBuild');
 
     my @emails;
