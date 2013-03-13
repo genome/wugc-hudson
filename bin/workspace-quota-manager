@@ -3,7 +3,7 @@
 use Genome;
 use Library;
 
-my $a = Genome::Disk::Allocation->get(allocation_path => 'jenkins/jobs/workspace');
+my $a = Genome::Disk::Allocation->get(allocation_path => 'model_data/apipe-ci/workspace');
 unless ($a) {
     print("ERROR: Unable to get allocation!\n") and exit 255;
 }
