@@ -14,6 +14,10 @@ PATH="$(echo $PATH | tr : "\n" | grep -v "$SNAPSHOT_BIN" | tr '\n' : | sed 's/:$
 PERL5LIB=$GIT_BASE_DIR/ur/lib:$PERL5LIB
 PATH=$GIT_BASE_DIR/ur/bin:$PATH
 
+PERL5LIB=$GIT_BASE_DIR/configuration-manager/lib:$PERL5LIB
+
+GENOME_CONFIG_PATH=$GIT_BASE_DIR/gms-confg/etc/gms
+
 PERL5LIB=$GIT_BASE_DIR/workflow/lib:$PERL5LIB
 PATH=$GIT_BASE_DIR/workflow/bin:$PATH
 

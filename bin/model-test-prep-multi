@@ -9,7 +9,7 @@ set -o nounset
 PERL_VERSION="$1"
 
 # GENOMECI_BASEDIR is set in ~/.bashrc
-$GENOMECI_BASEDIR/bin/prepare-submodules ur workflow
+$GENOMECI_BASEDIR/bin/prepare-submodules ur workflow gms-config configuration-manager
 $GENOMECI_BASEDIR/bin/rebuild-meta-db
 $GENOMECI_BASEDIR/bin/set-perl $PERL_VERSION
 
