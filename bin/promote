@@ -98,9 +98,6 @@ sub promote {
         return 1;
     }
 
-    no strict 'subs';
-    my $announce_email_to_method = 'ANNOUNCE_' . uc($symlink_name) . '_EMAIL_TO';
-
     my $file_lock = Fcntl::FileLock->create(path => '/gsc/var/lock/genome/promote.lock');
     my $start_time = time;
     while (!$file_lock->lock) {
@@ -133,12 +130,11 @@ sub promote {
         my $announce_subject = "Promoting $NEW_BUILD_NAME to current/$symlink_name in one hour";
         my $announce_changes_summary = "Please let us know if there are any concerns with promoting this version to current/$symlink_name.\n\n" . $changes_summary;
         if ($test) {
-            print "To: " . Defaults->$announce_email_to_method . "\n";
             print "Subject: $announce_subject\n";
             print "Message:\n$announce_changes_summary\n";
         }
         else {
-            send_announcement_email(to => Defaults->$announce_email_to_method, subject => $announce_subject, msg => $announce_changes_summary);
+            send_announcement_email(subject => $announce_subject, msg => $announce_changes_summary);
         }
     }
 
@@ -150,7 +146,7 @@ sub promote {
 
     unless ($announce_only || $test) {
         update_symlinks(build_name => $NEW_BUILD_NAME, symlink_name => $symlink_name) || die;
-        send_announcement_email(to => Defaults->$announce_email_to_method, subject => $promote_subject, msg => $changes_summary);
+        send_announcement_email(subject => $promote_subject, msg => $changes_summary);
     }
 
     unlink($changes_summary_file);
@@ -269,7 +265,6 @@ sub create_changes_summary {
 
 sub send_announcement_email {
     my (%params) = @_;
-    my $mail_to = delete $params{to} || die;
     my $mail_subject = delete $params{subject} || die;
     my $mail_msg = delete $params{msg} || die;
 
@@ -277,6 +272,7 @@ sub send_announcement_email {
         die "Invalid params passed to send_announcement_email: " . join(', ', @params_keys) . ".\n";
     }
 
+    my $mail_to = 'genome-announce@genome.wustl.edu';
     my $user_name = getpwuid($<);
     my $mail_from = $user_name . '@genome.wustl.edu';
 
