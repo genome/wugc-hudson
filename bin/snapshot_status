@@ -84,7 +84,7 @@ sub get_all_versions {
     my $custom_dir = Defaults::CUSTOM_PATH();
     my $snapshots_dir = Defaults::SNAPSHOTS_PATH();
     for my $dir ($custom_dir, $snapshots_dir) {
-        chomp(my @dirs = capture(q(find "$dir" -maxdepth 1 -name 'genome-*')));
+        chomp(my @dirs = capture(qq(find "$dir" -maxdepth 1 -name 'genome-*')));
         map { $_ =~ s/.*\/// } @dirs;
         push @versions, @dirs;
     }
