@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 my @hosts = qx(bjobs -W -u apipe-tester | grep 'ur test run' | awk '{print \$6}');
 chomp @hosts;
