@@ -42,7 +42,7 @@ if ($archive && !$check_lsf) {
 
 my @bjobs_output;
 if ($check_lsf) {
-    @bjobs_output = capture(q(bjobs -l -u all | /gscuser/nnutter/bin/bjobs1l));
+    @bjobs_output = capture(q(bjobs -l -u all | bjobs1l));
 }
 
 my $min_atime = 3600; # atime is in seconds
