@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use IPC::System::Simple qw(capture run);
 require Getopt::Long;
 
 BEGIN {
@@ -41,7 +42,7 @@ if ($archive && !$check_lsf) {
 
 my @bjobs_output;
 if ($check_lsf) {
-    @bjobs_output = qx(bjobs -l -u all | /gscuser/nnutter/bin/bjobs1l);
+    @bjobs_output = capture(q(bjobs -l -u all | /gscuser/nnutter/bin/bjobs1l));
 }
 
 my $min_atime = 3600; # atime is in seconds
@@ -64,9 +65,7 @@ for my $version (@versions) {
                 my $snapshot = Snapshot->open($snapshot_dir);
                 $snapshot->move_to('old');
                 $snapshot_dir = $snapshot->{snapshot_dir};
-                unless(!system("chmod -R o-rwx $snapshot_dir")) {
-                    die "Failed to make '$snapshot_dir' only readable by APipe.\n";
-                }
+                run(q(chmod -R o-rwx "$snapshot_dir"));
             }
     }
     else {
@@ -76,7 +75,7 @@ for my $version (@versions) {
 
 sub is_latest_stable_snapshot {
     my $version = shift;
-    my ($latest_stable_version) = qx(curl -sk https://apipe-ci.gsc.wustl.edu/job/3-Create-Genome-Snapshot/lastStableBuild/api/xml?xpath=freeStyleBuild/number) =~ /<number>(\d+)<\/number>/;
+    my ($latest_stable_version) = capture(q(curl -sk "https://apipe-ci.gsc.wustl.edu/job/3-Create-Genome-Snapshot/lastStableBuild/api/xml?xpath=freeStyleBuild/number")) =~ /<number>(\d+)<\/number>/;
     return ($latest_stable_version && $version =~ /^genome-$latest_stable_version/);
 }
 
@@ -85,7 +84,7 @@ sub get_all_versions {
     my $custom_dir = Defaults::CUSTOM_PATH();
     my $snapshots_dir = Defaults::SNAPSHOTS_PATH();
     for my $dir ($custom_dir, $snapshots_dir) {
-        chomp(my @dirs = qx(find $dir -maxdepth 1 -name 'genome-*'));
+        chomp(my @dirs = capture(q(find "$dir" -maxdepth 1 -name 'genome-*')));
         map { $_ =~ s/.*\/// } @dirs;
         push @versions, @dirs;
     }
