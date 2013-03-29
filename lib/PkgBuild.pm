@@ -152,7 +152,7 @@ sub build_deb_package {
     my @sfiles = glob("/var/cache/pbuilder/result/${source}_*.changes");
     die "More than one package present: @sfiles" if (@sfiles != 1);
 
-    ok(run("tgi-dput --delete --repo lucid-genome-development $sfiles[0]") and print "deployed $sfiles[0]\n", "deployed deb");
+    ok(run("tgi-dput --delete --repo lucid-genome-development --changes $sfiles[0]") and print "deployed $sfiles[0]\n", "deployed deb");
 
     return 1;
 }
