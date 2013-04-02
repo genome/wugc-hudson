@@ -22,6 +22,16 @@ print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
 print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
 print "\n";
 
+if (index($test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
+    printf("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n") and exit(255);
+}
+
+if (index($test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
+    printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
+}
+
+$test_spec =~ s/^GQP-//;
+
 my ($perl_version, $model_subname) = $test_spec =~ /(.*?)-(.*)/;
 if ($perl_version ne Revision->perl_version()) {
     printf("Perl version specified by TEST_SPEC (%s) does not matching running version (%S)!\n", $perl_version, Revision->perl_version()) and exit(255);
@@ -100,6 +110,10 @@ unless ($event) {
 my $build_type = get_model_camel_type($model);
 my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();
 my @cc = Users::apipe();
+if ($ENV{GENOME_QUERY_POSTGRES}) {
+    @to = ('apipe-tester', 'boberkfe');
+    @cc = ();
+}
 
 printf("Monitoring build (%s) until it completes or timeout of %s minutes is reached.\n\n", $build->id, $timeout / 60);
 my $interval = ($timeout > 30 ? 30 : 1);
