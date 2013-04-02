@@ -46,6 +46,9 @@ if ($model) {
 }
 
 my $test_version = Revision->test_version();
+if ($ENV{GENOME_QUERY_POSTGRES}) {
+    $test_version = "GQP-$test_version";
+}
 
 # Per Model Customizations
 print("Customizing test environment...\n");
