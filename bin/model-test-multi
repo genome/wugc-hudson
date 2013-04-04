@@ -49,6 +49,9 @@ my $test_version = Revision->test_version();
 if ($ENV{GENOME_QUERY_POSTGRES}) {
     $test_version = "GQP-$test_version";
 }
+if ($ENV{WF_USE_FLOW}) {
+    $test_version = "FLOW-$test_version";
+}
 
 # Per Model Customizations
 print("Customizing test environment...\n");
