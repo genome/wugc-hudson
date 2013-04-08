@@ -58,6 +58,7 @@ print("Customizing test environment...\n");
 
 # GENOME_SOFTWARE_RESULT_TEST_NAME
 if (grep { $model_subname eq $_ } (
+        'reference-alignment',
         'somatic-variation',
         'somatic-short',
         'somatic-validation',
