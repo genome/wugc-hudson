@@ -66,7 +66,7 @@ for my $version (@versions) {
                 my $snapshot = Snapshot->open($snapshot_dir);
                 $snapshot->move_to('old');
                 $snapshot_dir = $snapshot->{snapshot_dir};
-                run(q(chmod -R o-rwx "$snapshot_dir"));
+                run(qq(chmod -R o-rwx "$snapshot_dir"));
             }
     }
     else {
