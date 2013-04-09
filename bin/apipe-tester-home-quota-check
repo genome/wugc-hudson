@@ -8,14 +8,14 @@ unless ($user) {
     exit 255;
 }
 
-my @quota_out = capture('quota -A -w');
-my ($user_quota) = grep { /\/vol\/home\/$user\b/ } @quota_out;
+my @quota_out = capture(qq(ssh home /usr/lpp/mmfs/bin/mmlsquota -v --block-size 1M -u $user aggr0-home:home));
+my ($user_quota) = grep { /^aggr0-home/ } @quota_out;
 unless ($user_quota) {
-    print "ERROR: Could not find user's quota.\n";
+    print "ERROR: Could not find ${user}'s quota.\n";
     exit 255;
 }
 
-my ($used, $avail) = (split(/\s+/, $user_quota))[1,2];
+my ($used, $avail) = (split(/\s+/, $user_quota))[3, 5];
 unless ($used && $avail) {
     print "ERROR: Could not parse quota.\n";
     exit 255;
