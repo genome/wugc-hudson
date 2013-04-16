@@ -71,6 +71,7 @@ if ($headers) {
 }
 
 for my $bjob (@bjobs) {
+    next unless ($bjob =~ /^\d/);
     my %values = parse_bjob($bjob);
     my @values = map { $values{$_} || '-' } @fields;
     push @table, [@values];
@@ -90,7 +91,7 @@ sub parse_bjob {
     my $bjob = shift;
     $bjob =~ m{
         ^
-        (?<job_id>\S+)
+        (?<job_id>\d+)
         \s+
         (?<user>\S+)
         \s+
@@ -114,7 +115,7 @@ sub parse_bjob {
         \s+
         (?<swap>\d+)
         \s+
-        (?<pids>[\d,]+)
+        (?<pids>([\d,]+|-))
         \s+
         (?<start_time>(\d{2}\/\d{2}-\d{2}:\d{2}:\d{2}|-))
         \s+
