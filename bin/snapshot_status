@@ -114,7 +114,7 @@ sub active_builds {
 sub has_active_lsf_jobs {
     my $version = shift || die;
     if ($check_lsf) {
-        my @bjobs_output = capture(q(bjobs -l -u all | bjobs1l));
+        my @bjobs_output = capture(q(bjobsu -l -u all));
         return grep { $_ =~ /\/$version\// } @bjobs_output;
     }
     else {
