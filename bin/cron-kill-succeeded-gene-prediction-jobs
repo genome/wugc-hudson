@@ -28,12 +28,17 @@ while (my $b = $i->next) {
     }
 }
 
-sub since_dt {
-    my $url = sprintf('%s/lastStableBuild/api/xml?xpath=/freeStyleBuild/timestamp/int()', $ENV{JOB_URL});
-    my $java_epoch = capture(qq(curl --silent --insecure "$url"));
+sub get_lastStableBuild_timestamp {
+    my $url = sprintf('%s/lastStableBuild/api/xml?xpath=/freeStyleBuild/timestamp', $ENV{JOB_URL});
+    my $curl = capture(qq(curl --silent --insecure "$url"));
+    my $timestamp = ($curl =~ /^<timestamp>(\d+)<\/timestamp>$/)[0];
+    return $timestamp;
+}
 
+sub since_dt {
+    my $java_epoch = get_lastStableBuild_timestamp();
     my $since_dt;
-    if ($java_epoch =~ /^\d+$/) {
+    if ($java_epoch) {
         my $epoch = int($java_epoch/1000); # looks like the timestamp from Jenkins has three extra digits, presumably milliseconds
         my $prev_dt = DateTime->from_epoch(epoch => $epoch);
         $since_dt = $prev_dt->subtract(days => 1); # "paranoia" about object being committed after time
