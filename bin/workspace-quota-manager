@@ -49,6 +49,14 @@ if ($percent_used > 95.0) {
         $subject = 'Automatically Resized Jenkins Workspace';
         @body = (
             'Verify that new content is expected (via its respective owner).',
+        );
+        if ($ENV{JOB_NAME}) {
+            push @body, 'Jenkins Job: ' . $ENV{JOB_NAME};
+        }
+        if ($ENV{BUILD_URL}) {
+            push @body, 'Build URL: ' . $ENV{BUILD_URL};
+        }
+        push @body, (
             '',
             sprintf("Automatically resized Jenkins' workspace by %.2f MB, from %.2f GB to %.2f GB.", $kb_delta / 1024.0, $kb_requested / 1048576.0, $new_kb_requested / 1048576.0),
             sprintf("Allocation path is '%s'.", $a->allocation_path),
@@ -62,6 +70,14 @@ if ($percent_used > 95.0) {
         $subject = 'Failed to Automatically Resize Jenkins Workspace';
         @body = (
             'Verify that new content is expected (via its respective owner) and determine why resize failed.',
+        );
+        if ($ENV{JOB_NAME}) {
+            push @body, 'Jenkins Job: ' . $ENV{JOB_NAME};
+        }
+        if ($ENV{BUILD_URL}) {
+            push @body, 'Build URL: ' . $ENV{BUILD_URL};
+        }
+        push @body, (
             '',
             sprintf("Failed to automatically resize Jenkins' workspace by %.2f MB, from %.2f GB to %.2f GB.", $kb_delta / 1024.0, $kb_requested / 1048576.0, $new_kb_requested / 1048576.0),
             sprintf("Allocation path is '%s'.", $a->allocation_path),
