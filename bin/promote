@@ -236,7 +236,6 @@ sub create_changes_summary {
 
     system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
 
-
     # create CHANGE_SUMMARY
     unlink("$snapshot_path/CHANGE_SUMMARY");
     my @change_summary;

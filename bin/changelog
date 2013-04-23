@@ -6,7 +6,7 @@ use Data::Dumper;
 
 BEGIN {
     require Cwd;
-	require File::Basename;
+    require File::Basename;
     my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
     unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
         push @INC, $lib_dir;
@@ -27,11 +27,11 @@ system('git checkout snapshot');
 chomp(my $git_has_rev1 = qx(cd $git_repo && git tag -l | grep $rev1));
 chomp(my $git_has_rev2 = qx(cd $git_repo && git tag -l | grep $rev2));
 unless ($git_has_rev1 && $git_has_rev2) {
-	qx(cd $git_repo && git reset --hard HEAD && git pull);
+    qx(cd $git_repo && git reset --hard HEAD && git pull);
 }
 my $c = qx[cd $git_repo && git log --pretty="format:JAGVILLSOVA%h	%ce	%s	%b " $rev];
 if ($?) {
-	die "Failed to get log from git.\n";
+    die "Failed to get log from git.\n";
 }
 
 my $now = localtime();
