@@ -198,7 +198,7 @@ if ($has_diffs) {
             sprintf('Build: %s', $build_url),
             sprintf('Console: %sconsole', $build_url),
             '********************************************************************************',
-            sprintf('If you want to bless this build (%s) update and commit the DB file: %s.', $new_build->id, $diff_cmd->db_file),
+            $diff_cmd->bless_message,
             '********************************************************************************',
             $diff_cmd->diffs_message,
         );
