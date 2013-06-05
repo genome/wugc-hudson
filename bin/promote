@@ -25,14 +25,13 @@ require Snapshot;
 
 our $BIN_DIR = File::Basename::dirname(__FILE__);
 
-my ($help, $announce_only, $pipeline, $user, $web, $sleep_one_hour, $all, $force, $now, $test) = ('', '', '', '', '', '', '', '', '', '');
+my ($help, $announce_only, $pipeline, $user, $web, $all, $force, $now, $test) = ('', '', '', '', '', '', '', '', '', '');
 my $getoptions_rv = Getopt::Long::GetOptions(
     'help' => \$help,
     'announce-only' => \$announce_only,
     'pipeline' => \$pipeline,
     'user' => \$user,
     'web' => \$web,
-    'sleep-one-hour' => \$sleep_one_hour,
     'all' => \$all,
     'force' => \$force,
     'now' => \$now,
@@ -53,27 +52,21 @@ unless( $ENV{HUDSON_URL} || $force) {
 }
 
 my $success = 1;
-if ( !$now != !$sleep_one_hour ) { # $a xor $b
-    if ( $pipeline || $all) {
-        $success = (promote('pipeline') && $success);
-    }
-    if ( $user || $all ) {
-        $success = (promote('user') && $success);
-    }
-    if ( $web || $all) {
-        $success = (promote('web') && $success);
-    }
-    if ($success) {
-        exit;
-    } else {
-        exit 255;
-    }
-} else {
-    print STDERR "Please specify either --now xor --sleep-one-hour.\n";
+if ( $pipeline || $all) {
+    $success = (promote('pipeline') && $success);
+}
+if ( $user || $all ) {
+    $success = (promote('user') && $success);
+}
+if ( $web || $all) {
+    $success = (promote('web') && $success);
 }
 
-exit;
-
+if ($success) {
+    exit;
+} else {
+    exit 255;
+}
 
 
 sub promote {
@@ -126,7 +119,7 @@ sub promote {
     $file_lock->release;
     my $promote_subject = "$NEW_BUILD_NAME promoted to current/$symlink_name";
 
-    if ( $announce_only || $sleep_one_hour || $test) {
+    if ( $announce_only || $test) {
         my $announce_subject = "Promoting $NEW_BUILD_NAME to current/$symlink_name in one hour";
         my $announce_changes_summary = "Please let us know if there are any concerns with promoting this version to current/$symlink_name.\n\n" . $changes_summary;
         if ($test) {
@@ -136,12 +129,6 @@ sub promote {
         else {
             send_announcement_email(subject => $announce_subject, msg => $announce_changes_summary);
         }
-    }
-
-    if ( $sleep_one_hour ) {
-        system("date");
-        print "Sleeping for one hour before actual promote...\n";
-        sleep(3600);
     }
 
     unless ($announce_only || $test) {
