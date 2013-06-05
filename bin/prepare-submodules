@@ -1,9 +1,24 @@
 #!/bin/bash
 set -o errexit
 
-echo -e "\n\n => Preparing Submodules..."
+echo -e "\n\n=> Preparing Submodules..."
 
 for submodule in $@; do
-    git submodule update --init $submodule
-    cd $submodule && git reset --hard HEAD && git clean -xdf && cd -
+    echo -n "   $submodule..."
+    git submodule update --init $submodule > /dev/null
+    cd $submodule
+
+    if [ "$(git rev-parse --abbrev-ref HEAD)" != "HEAD" ]; then
+        STASH_COUNT=$(git stash list | wc -l)
+        git stash save --include-untracked --quiet
+        NEW_STASH_COUNT=$(git stash list | wc -l)
+        if [ $NEW_STASH_COUNT -gt $STASH_COUNT ]; then
+            echo -n ' stashed changes...'
+        fi
+    fi
+
+    git reset --hard HEAD > /dev/null
+    git clean -d --force > /dev/null
+    cd - > /dev/null
+    echo ' done'
 done
