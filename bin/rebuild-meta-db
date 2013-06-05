@@ -1,8 +1,9 @@
 #!/bin/bash
+
 set -o errexit
 set -o nounset
 
-echo -en "\n\n=> Rebuilding Meta DB..."
+echo -en "\n=> Rebuilding Meta DB..."
 find "$WORKSPACE" -iname '*sqlite3-dump' -or -iname '*sqlite3n-dump' | while read DB_TXT; do
     echo -n '.'
     DB_BIN=${DB_TXT/-dump/}

@@ -1,6 +1,6 @@
 set -o nounset
 
-echo -e "\n\n => Setting Up Test Environment..."
+echo -e "\n=> Setting Up Test Environment..."
 
 GIT_BASE_DIR="$1"
 

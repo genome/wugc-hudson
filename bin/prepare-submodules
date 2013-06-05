@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o errexit
 
-echo -e "\n\n=> Preparing Submodules..."
+echo -e "\n=> Preparing Submodules..."
 
 for submodule in $@; do
     echo -n "   $submodule..."

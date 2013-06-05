@@ -1,4 +1,6 @@
-echo -e "\n\n => Setting Up Perl Interpreters..."
+#!/bin/bash
+
+echo -e "\n => Setting Up Perl Interpreters..."
 
 PERL_VERSION="$1"
 
