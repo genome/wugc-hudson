@@ -7,7 +7,9 @@ echo -en "\n=> Rebuilding Meta DB..."
 find "$WORKSPACE" -iname '*sqlite3-dump' -or -iname '*sqlite3n-dump' | while read DB_TXT; do
     echo -n '.'
     DB_BIN=${DB_TXT/-dump/}
-    rm -f "$DB_BIN"
-    sqlite3 "$DB_BIN" < "$DB_TXT"
+    if [[ "$DB_BIN" -ot "$DB_TXT" ]]; then
+        rm -f "$DB_BIN"
+        sqlite3 "$DB_BIN" < "$DB_TXT"
+    fi
 done
 echo ' done'
