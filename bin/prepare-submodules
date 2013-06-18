@@ -5,9 +5,12 @@ echo -e "\n=> Preparing Submodules..."
 
 for submodule in $@; do
     echo -n "   $submodule..."
+    set +o errexit
     OUT=$(git submodule update --init $submodule 2>&1)
+    set -o errexit
     if [ $? -ne 0 ]; then
         echo $OUT
+        exit $?
     fi
     cd $submodule
 
