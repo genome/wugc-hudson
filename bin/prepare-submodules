@@ -5,7 +5,10 @@ echo -e "\n=> Preparing Submodules..."
 
 for submodule in $@; do
     echo -n "   $submodule..."
-    git submodule update --init $submodule > /dev/null 2> /dev/null
+    OUT=$(git submodule update --init $submodule 2>&1)
+    if [ $? -ne 0 ]; then
+        echo $OUT
+    fi
     cd $submodule
 
     if [ "$(git rev-parse --abbrev-ref HEAD)" != "HEAD" ]; then
