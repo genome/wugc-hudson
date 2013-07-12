@@ -26,13 +26,6 @@ print("Customizing test environment...\n");
 
 set_genome_software_result_test_name($model_subname, $test_version);
 
-# timeout
-my $HOUR = 3600;
-my %timeouts = (
-    'somatic-variation' => 36 * $HOUR,
-    'clinseq-v1' => 12 * $HOUR,
-);
-my $timeout = $timeouts{$model_subname} || (6 * $HOUR);
 
 # Done with Per Model Customizations
 print "\n";
@@ -75,6 +68,7 @@ if ($ENV{GENOME_QUERY_POSTGRES}) {
     @cc = ();
 }
 
+my $timeout = get_timeout($model_subname);
 printf("Monitoring build (%s) until it completes or timeout of %s minutes is reached.\n\n", $build->id, $timeout / 60);
 my $interval = ($timeout > 30 ? 30 : 1);
 my $start_time = time;
@@ -259,4 +253,17 @@ sub get_model {
         printf("Could not get test model by name (%S)!\n\n", $model_name) and exit(255);
     }
     return $model;
+}
+
+my %MODEL_TIMEOUTS = (
+    'somatic-variation' => 36,
+    'clinseq-v1' => 12,
+);
+my $DEFAULT_TIMEOUT = 6;
+sub get_timeout {
+    my $model_subname = shift;
+
+    my $timeout_hours = $MODEL_TIMEOUTS{$model_subname} || $DEFAULT_TIMEOUT;
+    my $timeout_seconds = $timeout_hours * 3600;
+    return $timeout_seconds;
 }
