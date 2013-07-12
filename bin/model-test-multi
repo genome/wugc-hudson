@@ -10,25 +10,9 @@ use Users;
 
 local $| = 1;
 
-my $job_name = $ENV{JOB_NAME} or die 'JOB_NAME not set.';
-my $build_url = $ENV{BUILD_URL} or die 'BUILD_URL not set.';
-my $build_number = $ENV{BUILD_NUMBER} or die 'BUILD_NUMBER not set.';
-my $test_spec = $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
+my ($job_name, $build_url, $build_number, $test_spec, $test_version) = query_and_validate_environment();
 
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, $test_spec);
-
-print "\n\n => Environment Info\n";
-print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
-print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
-print "\n";
-
-if (index($test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
-    printf("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n") and exit(255);
-}
-
-if (index($test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
-    printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
-}
 
 $test_spec =~ s/^GQP-//;
 
@@ -43,14 +27,6 @@ if ($model) {
     printf("Found model (%s) with name '%s'.\n\n", $model->id, $model->name);
 } else {
     printf("Could not get test model by name (%S)!\n\n", $model_name) and exit(255);
-}
-
-my $test_version = Revision->test_version();
-if ($ENV{GENOME_QUERY_POSTGRES}) {
-    $test_version = "GQP-$test_version";
-}
-if ($ENV{WF_USE_FLOW}) {
-    $test_version = "FLOW-$test_version";
 }
 
 # Per Model Customizations
@@ -225,4 +201,35 @@ sub get_model_camel_type {
     $type =~ s/Genome::Model:://;
     $type =~ s/:://g;
     return Genome::Utility::Text::camel_case_to_string($type, '_');
+}
+
+sub query_and_validate_environment {
+    my $job_name = $ENV{JOB_NAME} or die 'JOB_NAME not set.';
+    my $build_url = $ENV{BUILD_URL} or die 'BUILD_URL not set.';
+    my $build_number = $ENV{BUILD_NUMBER} or die 'BUILD_NUMBER not set.';
+    my $test_spec = $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
+
+
+    print "\n\n => Environment Info\n";
+    print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
+    print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
+    print "\n";
+
+    if (index($test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
+        printf("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n") and exit(255);
+    }
+
+    if (index($test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
+        printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
+    }
+
+    my $test_version = Revision->test_version();
+    if ($ENV{GENOME_QUERY_POSTGRES}) {
+        $test_version = "GQP-$test_version";
+    }
+    if ($ENV{WF_USE_FLOW}) {
+        $test_version = "FLOW-$test_version";
+    }
+
+    return ($job_name, $build_url, $build_number, $test_spec, $test_version);
 }
