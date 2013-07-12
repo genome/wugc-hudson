@@ -86,21 +86,7 @@ $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
 if ($build->status eq 'Succeeded') {
     printf("Build status is %s.\n", $build->status);
 } else {
-    unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Build Failed', $test_spec, $build_number);
-        my $body = join("\n",
-            sprintf('Project: %s', $job_name),
-            sprintf('Build: %s', $build_url),
-            sprintf('Console: %sconsole', $build_url),
-        );
-        Library::send_mail(
-            from => 'apipe-tester@genome.wustl.edu',
-            to => Library::users_to_addresses(@to),
-            cc => Library::users_to_addresses(@cc),
-            subject => $subject,
-            body => $body,
-        );
-    }
+    send_fail_mail($test_spec, $build_number, $job_name, $build_url, \@to, \@cc);
     exit(255);
 }
 
@@ -264,6 +250,31 @@ sub send_timeout_mail {
 
     unless ($ENV{WF_USE_FLOW}) {
         my $subject = sprintf('%s - Build %d - Timed Out', $test_spec, $build_number);
+        my $body = join("\n",
+            sprintf('Project: %s', $job_name),
+            sprintf('Build: %s', $build_url),
+            sprintf('Console: %sconsole', $build_url),
+        );
+        Library::send_mail(
+            from => 'apipe-tester@genome.wustl.edu',
+            to => Library::users_to_addresses(@to),
+            cc => Library::users_to_addresses(@cc),
+            subject => $subject,
+            body => $body,
+        );
+    }
+}
+
+sub send_fail_mail {
+    my $test_spec = shift;
+    my $build_number = shift;
+    my $job_name = shift;
+    my $build_url = shift;
+    my @to = @{(shift)};
+    my @cc = @{(shift)};
+
+    unless ($ENV{WF_USE_FLOW}) {
+        my $subject = sprintf('%s - Build %d - Build Failed', $test_spec, $build_number);
         my $body = join("\n",
             sprintf('Project: %s', $job_name),
             sprintf('Build: %s', $build_url),
