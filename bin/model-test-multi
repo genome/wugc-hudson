@@ -105,25 +105,7 @@ unless ($diff_cmd->execute) {
 
 my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
 if ($has_diffs) {
-    unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Diffs Found', $test_spec, $build_number);
-        my $body = join("\n",
-            sprintf('Project: %s', $job_name),
-            sprintf('Build: %s', $build_url),
-            sprintf('Console: %sconsole', $build_url),
-            '********************************************************************************',
-            $diff_cmd->bless_message,
-            '********************************************************************************',
-            $diff_cmd->diffs_message,
-        );
-        Library::send_mail(
-            from => 'apipe-tester@genome.wustl.edu',
-            to => Library::users_to_addresses(@to),
-            cc => Library::users_to_addresses(@cc),
-            subject => $subject,
-            body => $body,
-        );
-    }
+    send_diff_mail($test_spec, $build_number, $job_name, $build_url, $diff_cmd, \@to, \@cc);
     exit(255);
 }
 
@@ -279,6 +261,36 @@ sub send_fail_mail {
             sprintf('Project: %s', $job_name),
             sprintf('Build: %s', $build_url),
             sprintf('Console: %sconsole', $build_url),
+        );
+        Library::send_mail(
+            from => 'apipe-tester@genome.wustl.edu',
+            to => Library::users_to_addresses(@to),
+            cc => Library::users_to_addresses(@cc),
+            subject => $subject,
+            body => $body,
+        );
+    }
+}
+
+sub send_diff_mail {
+    my $test_spec = shift;
+    my $build_number = shift;
+    my $job_name = shift;
+    my $build_url = shift;
+    my $diff_cmd = shift;
+    my @to = @{(shift)};
+    my @cc = @{(shift)};
+
+    unless ($ENV{WF_USE_FLOW}) {
+        my $subject = sprintf('%s - Build %d - Diffs Found', $test_spec, $build_number);
+        my $body = join("\n",
+            sprintf('Project: %s', $job_name),
+            sprintf('Build: %s', $build_url),
+            sprintf('Console: %sconsole', $build_url),
+            '********************************************************************************',
+            $diff_cmd->bless_message,
+            '********************************************************************************',
+            $diff_cmd->diffs_message,
         );
         Library::send_mail(
             from => 'apipe-tester@genome.wustl.edu',
