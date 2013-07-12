@@ -81,12 +81,9 @@ my $timeout = $timeouts{$model_subname} || (6 * $HOUR);
 # Done with Per Model Customizations
 print "\n";
 
-my $build = Genome::Model::Build->get(
-    model_name => $model->name,
-    run_by => 'apipe-tester',
-    software_revision => $test_version,
-    status => ['Scheduled', 'Running', 'Succeeded'],
-);
+my @statuses = ('Scheduled', 'Running', 'Succeeded');
+my $build = get_build($model_name, $test_version, @statuses);
+
 if ($build) {
     printf("Got existing build (%s) for current test version.\n", $build->__display_name__);
 } else {
@@ -171,12 +168,7 @@ if ($build->status eq 'Succeeded') {
     exit(255);
 }
 
-my $new_build = Genome::Model::Build->get(
-    model_name => $model_name,
-    run_by => 'apipe-tester',
-    software_revision => $test_version,
-    status => 'Succeeded',
-);
+my $new_build = get_build($model_name, $test_version, 'Succeeded');
 unless ($new_build) {
     print("Could not get test build!\n") and exit(255);
 }
@@ -211,6 +203,20 @@ if ($has_diffs) {
         );
     }
     exit(255);
+}
+
+sub get_build {
+    my $model_name = shift;
+    my $test_version = shift;
+    my @statuses = @_;
+
+    my $build = Genome::Model::Build->get(
+        model_name => $model_name,
+        run_by => 'apipe-tester',
+        software_revision => $test_version,
+        status => \@statuses,
+    );
+    return $build;
 }
 
 sub get_model_camel_type {
