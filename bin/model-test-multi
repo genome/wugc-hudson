@@ -8,6 +8,7 @@ use Revision;
 use Library;
 use Users;
 
+# flush output buffer after every write or print
 local $| = 1;
 
 my ($job_name, $build_url, $build_number, $test_spec, $test_version) = query_and_validate_environment();
