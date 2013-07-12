@@ -14,12 +14,7 @@ my ($job_name, $build_url, $build_number, $test_spec, $test_version) = query_and
 
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, $test_spec);
 
-$test_spec =~ s/^GQP-//;
-
-my ($perl_version, $model_subname) = $test_spec =~ /(.*?)-(.*)/;
-if ($perl_version ne Revision->perl_version()) {
-    printf("Perl version specified by TEST_SPEC (%s) does not matching running version (%S)!\n", $perl_version, Revision->perl_version()) and exit(255);
-}
+my $model_subname = parse_test_spec($test_spec);
 
 my $model_name = sprintf('apipe-test-%s', $model_subname);
 my $model = Genome::Model->get(name => $model_name);
@@ -232,4 +227,15 @@ sub query_and_validate_environment {
     }
 
     return ($job_name, $build_url, $build_number, $test_spec, $test_version);
+}
+
+sub parse_test_spec {
+    my $test_spec = shift;
+
+    $test_spec =~ s/^GQP-//;
+    my ($perl_version, $model_subname) = $test_spec =~ /(.*?)-(.*)/;
+    if ($perl_version ne Revision->perl_version()) {
+        printf("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n", $perl_version, Revision->perl_version()) and exit(255);
+    }
+    return $model_subname;
 }
