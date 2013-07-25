@@ -13,7 +13,8 @@ use warnings;
 # flush output buffer after every write or print
 local $| = 1;
 
-validate_and_log_environment();
+log_environment();
+validate_environment();
 
 # set the title of this process
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
@@ -101,12 +102,14 @@ sub build_type {
     return Genome::Utility::Text::camel_case_to_string($type, '_');
 }
 
-sub validate_and_log_environment {
+sub log_environment {
     print "\n\n => Environment Info\n";
     print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
     print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
     print "\n";
+}
 
+sub validate_environment {
     if (index(JenkinsData->test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
         printf("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n") and exit(255);
     }
