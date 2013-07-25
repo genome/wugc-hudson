@@ -11,7 +11,7 @@ use Users;
 # flush output buffer after every write or print
 local $| = 1;
 
-my ($build_url, $test_spec, $test_version) = query_and_validate_environment();
+my ($test_spec, $test_version) = query_and_validate_environment();
 
 # set the title of this process
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, $test_spec);
@@ -68,7 +68,7 @@ while (!grep { $event->event_status eq $_ } ('Succeeded', 'Failed', 'Crashed')) 
     UR::Context->current->reload($event);
     my $elapsed_time = time - $start_time;
     if ($elapsed_time > $timeout) {
-        send_timeout_mail($test_spec, $build_url, $model);
+        send_timeout_mail($test_spec, $model);
         exit(255);
     }
     sleep($interval);
@@ -78,7 +78,7 @@ $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
 if ($build->status eq 'Succeeded') {
     printf("Build status is %s.\n", $build->status);
 } else {
-    send_fail_mail($test_spec, $build_url, $model);
+    send_fail_mail($test_spec, $model);
     exit(255);
 }
 
@@ -97,7 +97,7 @@ unless ($diff_cmd->execute) {
 
 my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
 if ($has_diffs) {
-    send_diff_mail($test_spec, $build_url, $diff_cmd, $model);
+    send_diff_mail($test_spec, $diff_cmd, $model);
     exit(255);
 }
 
@@ -124,7 +124,6 @@ sub get_model_camel_type {
 }
 
 sub query_and_validate_environment {
-    my $build_url = $ENV{BUILD_URL} or die 'BUILD_URL not set.';
     my $test_spec = $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
 
 
@@ -149,11 +148,15 @@ sub query_and_validate_environment {
         $test_version = "FLOW-$test_version";
     }
 
-    return ($build_url, $test_spec, $test_version);
+    return ($test_spec, $test_version);
 }
 
 sub job_name {
     return $ENV{JOB_NAME} or die 'JOB_NAME not set.';
+}
+
+sub build_url {
+    return $ENV{BUILD_URL} or die 'BUILD_URL not set.';
 }
 
 sub build_number {
@@ -222,7 +225,6 @@ sub get_timeout {
 
 sub send_timeout_mail {
     my $test_spec = shift;
-    my $build_url = shift;
     my $model = shift;
     my ($to, $cc) = get_to_and_cc($model);
 
@@ -230,8 +232,8 @@ sub send_timeout_mail {
         my $subject = sprintf('%s - Build %d - Timed Out', $test_spec, build_number());
         my $body = join("\n",
             sprintf('Project: %s', job_name()),
-            sprintf('Build: %s', $build_url),
-            sprintf('Console: %sconsole', $build_url),
+            sprintf('Build: %s', build_url()),
+            sprintf('Console: %sconsole', build_url()),
         );
         Library::send_mail(
             from => 'apipe-tester@genome.wustl.edu',
@@ -245,7 +247,6 @@ sub send_timeout_mail {
 
 sub send_fail_mail {
     my $test_spec = shift;
-    my $build_url = shift;
     my $model = shift;
     my ($to, $cc) = get_to_and_cc($model);
 
@@ -253,8 +254,8 @@ sub send_fail_mail {
         my $subject = sprintf('%s - Build %d - Build Failed', $test_spec, build_number());
         my $body = join("\n",
             sprintf('Project: %s', job_name()),
-            sprintf('Build: %s', $build_url),
-            sprintf('Console: %sconsole', $build_url),
+            sprintf('Build: %s', build_url()),
+            sprintf('Console: %sconsole', build_url()),
         );
         Library::send_mail(
             from => 'apipe-tester@genome.wustl.edu',
@@ -268,7 +269,6 @@ sub send_fail_mail {
 
 sub send_diff_mail {
     my $test_spec = shift;
-    my $build_url = shift;
     my $diff_cmd = shift;
     my $model = shift;
     my ($to, $cc) = get_to_and_cc($model);
@@ -277,8 +277,8 @@ sub send_diff_mail {
         my $subject = sprintf('%s - Build %d - Diffs Found', $test_spec, build_number());
         my $body = join("\n",
             sprintf('Project: %s', job_name()),
-            sprintf('Build: %s', $build_url),
-            sprintf('Console: %sconsole', $build_url),
+            sprintf('Build: %s', build_url()),
+            sprintf('Console: %sconsole', build_url()),
             '********************************************************************************',
             $diff_cmd->bless_message,
             '********************************************************************************',
