@@ -1,7 +1,13 @@
 package Revision;
 
+use Memoize;
+
 use strict;
 use warnings;
+
+
+memoize('git_revision');
+
 
 sub git_revision {
     my $package = shift;
