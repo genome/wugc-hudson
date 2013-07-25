@@ -11,12 +11,12 @@ use Users;
 # flush output buffer after every write or print
 local $| = 1;
 
-my ($test_spec, $test_version) = query_and_validate_environment();
+my ($test_version) = query_and_validate_environment();
 
 # set the title of this process
-$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, $test_spec);
+$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, test_spec());
 
-my $model_subname = parse_test_spec($test_spec);
+my $model_subname = parse_test_spec(test_spec());
 
 my $model = get_model($model_subname);
 my $model_name = $model->name;
@@ -68,7 +68,7 @@ while (!grep { $event->event_status eq $_ } ('Succeeded', 'Failed', 'Crashed')) 
     UR::Context->current->reload($event);
     my $elapsed_time = time - $start_time;
     if ($elapsed_time > $timeout) {
-        send_timeout_mail($test_spec, $model);
+        send_timeout_mail($model);
         exit(255);
     }
     sleep($interval);
@@ -78,7 +78,7 @@ $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
 if ($build->status eq 'Succeeded') {
     printf("Build status is %s.\n", $build->status);
 } else {
-    send_fail_mail($test_spec, $model);
+    send_fail_mail($model);
     exit(255);
 }
 
@@ -97,7 +97,7 @@ unless ($diff_cmd->execute) {
 
 my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
 if ($has_diffs) {
-    send_diff_mail($test_spec, $diff_cmd, $model);
+    send_diff_mail($diff_cmd, $model);
     exit(255);
 }
 
@@ -124,19 +124,16 @@ sub get_model_camel_type {
 }
 
 sub query_and_validate_environment {
-    my $test_spec = $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
-
-
     print "\n\n => Environment Info\n";
     print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
     print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
     print "\n";
 
-    if (index($test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
+    if (index(test_spec(), 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
         printf("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n") and exit(255);
     }
 
-    if (index($test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
+    if (index(test_spec(), 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
         printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
     }
 
@@ -148,7 +145,7 @@ sub query_and_validate_environment {
         $test_version = "FLOW-$test_version";
     }
 
-    return ($test_spec, $test_version);
+    return ($test_version);
 }
 
 sub job_name {
@@ -162,6 +159,11 @@ sub build_url {
 sub build_number {
     return $ENV{BUILD_NUMBER} or die 'BUILD_NUMBER not set.';
 }
+
+sub test_spec {
+    return $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
+}
+
 
 sub parse_test_spec {
     my $test_spec = shift;
@@ -224,12 +226,11 @@ sub get_timeout {
 }
 
 sub send_timeout_mail {
-    my $test_spec = shift;
     my $model = shift;
     my ($to, $cc) = get_to_and_cc($model);
 
     unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Timed Out', $test_spec, build_number());
+        my $subject = sprintf('%s - Build %d - Timed Out', test_spec(), build_number());
         my $body = join("\n",
             sprintf('Project: %s', job_name()),
             sprintf('Build: %s', build_url()),
@@ -246,12 +247,11 @@ sub send_timeout_mail {
 }
 
 sub send_fail_mail {
-    my $test_spec = shift;
     my $model = shift;
     my ($to, $cc) = get_to_and_cc($model);
 
     unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Build Failed', $test_spec, build_number());
+        my $subject = sprintf('%s - Build %d - Build Failed', test_spec(), build_number());
         my $body = join("\n",
             sprintf('Project: %s', job_name()),
             sprintf('Build: %s', build_url()),
@@ -268,13 +268,12 @@ sub send_fail_mail {
 }
 
 sub send_diff_mail {
-    my $test_spec = shift;
     my $diff_cmd = shift;
     my $model = shift;
     my ($to, $cc) = get_to_and_cc($model);
 
     unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Diffs Found', $test_spec, build_number());
+        my $subject = sprintf('%s - Build %d - Diffs Found', test_spec(), build_number());
         my $body = join("\n",
             sprintf('Project: %s', job_name()),
             sprintf('Build: %s', build_url()),
