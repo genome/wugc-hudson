@@ -134,6 +134,8 @@ sub validate_and_log_environment {
     if (index(JenkinsData->test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
         printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
     }
+
+    JenkinsData->validate_environment;
 }
 
 sub test_version {

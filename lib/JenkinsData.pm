@@ -20,4 +20,13 @@ sub test_spec {
     return $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
 }
 
+sub validate_environment {
+    my $package = shift;
+
+    $package->job_name;
+    $package->build_url;
+    $package->build_number;
+    $package->test_spec;
+}
+
 1;
