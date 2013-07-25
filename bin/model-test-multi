@@ -64,16 +64,28 @@ sub validate_environment {
     JenkinsData->validate_environment;
 }
 
+sub flow_git_revisions {
+    my $core_rev = $ENV{FLOW_CORE_GIT_REVISION}
+        || die("FLOW_CORE_GIT_REVISION is unset");
+    my $site_rev = $ENV{FLOW_SITE_GIT_REVISION}
+        || die("FLOW_SITE_GIT_REVISION is unset");
+    my $workflow_rev = $ENV{FLOW_WORKFLOW_GIT_REVISION}
+        || die("FLOW_WORKFLOW_GIT_REVISION is unset");
+
+    return sprintf("FLOW-CORE=%s:FLOW-SITE=%s:FLOW-WORKFLOW=%s",
+        $core_rev, $site_rev, $workflow_rev);
+}
+
 sub test_version {
     my $test_version = Revision->test_version();
     if ($ENV{GENOME_QUERY_POSTGRES}) {
         $test_version = "GQP-$test_version";
     }
     if ($ENV{WF_USE_FLOW}) {
-        $test_version = "FLOW-$test_version";
+        $test_version = "$test_version:" . flow_git_revisions();
     }
 
-    return ($test_version);
+    return $test_version;
 }
 
 sub model_subname {
