@@ -17,7 +17,6 @@ validate_and_log_environment();
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, test_spec());
 
 my $model = get_model();
-my $model_name = $model->name;
 
 # Per Model Customizations
 print("Customizing test environment...\n");
@@ -29,7 +28,7 @@ set_genome_software_result_test_name();
 print "\n";
 
 my @statuses = ('Scheduled', 'Running', 'Succeeded');
-my $build = get_build($model_name, @statuses);
+my $build = get_build($model->name, @statuses);
 
 if ($build) {
     printf("Got existing build (%s) for current test version.\n", $build->__display_name__);
@@ -80,7 +79,7 @@ if ($build->status eq 'Succeeded') {
     exit(255);
 }
 
-my $new_build = get_build($model_name, 'Succeeded');
+my $new_build = get_build($model->name, 'Succeeded');
 unless ($new_build) {
     print("Could not get test build!\n") and exit(255);
 }
