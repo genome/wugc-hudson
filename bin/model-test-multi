@@ -11,7 +11,7 @@ use Users;
 # flush output buffer after every write or print
 local $| = 1;
 
-query_and_validate_environment();
+validate_and_log_environment();
 
 # set the title of this process
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, test_spec());
@@ -122,7 +122,7 @@ sub get_model_camel_type {
     return Genome::Utility::Text::camel_case_to_string($type, '_');
 }
 
-sub query_and_validate_environment {
+sub validate_and_log_environment {
     print "\n\n => Environment Info\n";
     print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
     print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
