@@ -24,18 +24,10 @@ print("Customizing test environment...\n");
 
 set_genome_software_result_test_name();
 
-
 # Done with Per Model Customizations
 print "\n";
 
-my @statuses = ('Scheduled', 'Running', 'Succeeded');
-my $build = get_build(@statuses);
-
-if ($build) {
-    printf("Got existing build (%s) for current test version.\n", $build->__display_name__);
-} else {
-    $build = create_build();
-}
+my $build = get_initial_build();
 
 my $event = $build->the_master_event;
 unless ($event) {
@@ -57,6 +49,7 @@ while (!grep { $event->event_status eq $_ } ('Succeeded', 'Failed', 'Crashed')) 
 }
 
 $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
+
 if ($build->status eq 'Succeeded') {
     printf("Build status is %s.\n", $build->status);
 } else {
@@ -83,6 +76,9 @@ if ($has_diffs) {
     exit(255);
 }
 
+
+
+# functions
 sub get_build {
     my @statuses = @_;
 
@@ -266,5 +262,17 @@ sub create_build {
         print("Could not save new build!\n") and exit(255);
     }
     print("Build saved.\n");
+    return $build;
+}
+
+sub get_initial_build {
+    my @statuses = ('Scheduled', 'Running', 'Succeeded');
+    my $build = get_build(@statuses);
+
+    if ($build) {
+        printf("Got existing build (%s) for current test version.\n", $build->__display_name__);
+    } else {
+        $build = create_build();
+    }
     return $build;
 }
