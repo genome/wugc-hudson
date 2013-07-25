@@ -11,7 +11,7 @@ use Users;
 # flush output buffer after every write or print
 local $| = 1;
 
-my ($test_version) = query_and_validate_environment();
+query_and_validate_environment();
 
 # set the title of this process
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, test_spec());
@@ -24,14 +24,14 @@ my $model_name = $model->name;
 # Per Model Customizations
 print("Customizing test environment...\n");
 
-set_genome_software_result_test_name($model_subname, $test_version);
+set_genome_software_result_test_name($model_subname);
 
 
 # Done with Per Model Customizations
 print "\n";
 
 my @statuses = ('Scheduled', 'Running', 'Succeeded');
-my $build = get_build($model_name, $test_version, @statuses);
+my $build = get_build($model_name, @statuses);
 
 if ($build) {
     printf("Got existing build (%s) for current test version.\n", $build->__display_name__);
@@ -39,7 +39,7 @@ if ($build) {
     print("Creating new build....\n");
     $build = Genome::Model::Build->create(
         model_id => $model->id,
-        software_revision => $test_version,
+        software_revision => test_version(),
     );
     unless ($build) {
         print("Could not create new build!\n") and exit(255);
@@ -82,7 +82,7 @@ if ($build->status eq 'Succeeded') {
     exit(255);
 }
 
-my $new_build = get_build($model_name, $test_version, 'Succeeded');
+my $new_build = get_build($model_name, 'Succeeded');
 unless ($new_build) {
     print("Could not get test build!\n") and exit(255);
 }
@@ -103,13 +103,12 @@ if ($has_diffs) {
 
 sub get_build {
     my $model_name = shift;
-    my $test_version = shift;
     my @statuses = @_;
 
     my $build = Genome::Model::Build->get(
         model_name => $model_name,
         run_by => 'apipe-tester',
-        software_revision => $test_version,
+        software_revision => test_version(),
         status => \@statuses,
     );
     return $build;
@@ -136,16 +135,6 @@ sub query_and_validate_environment {
     if (index(test_spec(), 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
         printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
     }
-
-    my $test_version = Revision->test_version();
-    if ($ENV{GENOME_QUERY_POSTGRES}) {
-        $test_version = "GQP-$test_version";
-    }
-    if ($ENV{WF_USE_FLOW}) {
-        $test_version = "FLOW-$test_version";
-    }
-
-    return ($test_version);
 }
 
 sub job_name {
@@ -164,6 +153,17 @@ sub test_spec {
     return $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
 }
 
+sub test_version {
+    my $test_version = Revision->test_version();
+    if ($ENV{GENOME_QUERY_POSTGRES}) {
+        $test_version = "GQP-$test_version";
+    }
+    if ($ENV{WF_USE_FLOW}) {
+        $test_version = "FLOW-$test_version";
+    }
+
+    return ($test_version);
+}
 
 sub parse_test_spec {
     my $test_spec = shift;
@@ -191,11 +191,10 @@ sub should_shortcut {
 
 sub set_genome_software_result_test_name {
     my $model_subname = shift;
-    my $test_version = shift;
 
     if (should_shortcut($model_subname)) {
-        print("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '$test_version'.\n");
-        $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = $test_version;
+        printf("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '%s'.\n", test_version());
+        $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = test_version();
     }
 }
 
