@@ -16,15 +16,13 @@ validate_and_log_environment();
 # set the title of this process
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, test_spec());
 
-my $model_subname = parse_test_spec(test_spec());
-
-my $model = get_model($model_subname);
+my $model = get_model();
 my $model_name = $model->name;
 
 # Per Model Customizations
 print("Customizing test environment...\n");
 
-set_genome_software_result_test_name($model_subname);
+set_genome_software_result_test_name();
 
 
 # Done with Per Model Customizations
@@ -60,7 +58,7 @@ unless ($event) {
     print("Could not get the build's master event!\n") and exit(255);
 }
 
-my $timeout = get_timeout($model_subname);
+my $timeout = get_timeout();
 printf("Monitoring build (%s) until it completes or timeout of %s minutes is reached.\n\n", $build->id, $timeout / 60);
 my $interval = ($timeout > 30 ? 30 : 1);
 my $start_time = time;
@@ -165,13 +163,13 @@ sub test_version {
     return ($test_version);
 }
 
-sub parse_test_spec {
-    my $test_spec = shift;
-
+sub model_subname {
+    my $test_spec = test_spec();
     $test_spec =~ s/^GQP-//;
     my ($perl_version, $model_subname) = $test_spec =~ /(.*?)-(.*)/;
     if ($perl_version ne Revision->perl_version()) {
-        printf("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n", $perl_version, Revision->perl_version()) and exit(255);
+        printf("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n",
+            $perl_version, Revision->perl_version()) and exit(255);
     }
     return $model_subname;
 }
@@ -190,18 +188,14 @@ sub should_shortcut {
 }
 
 sub set_genome_software_result_test_name {
-    my $model_subname = shift;
-
-    if (should_shortcut($model_subname)) {
+    if (should_shortcut(model_subname())) {
         printf("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '%s'.\n", test_version());
         $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = test_version();
     }
 }
 
 sub get_model {
-    my $model_subname = shift;
-
-    my $model_name = sprintf('apipe-test-%s', $model_subname);
+    my $model_name = sprintf('apipe-test-%s', model_subname());
     my $model = Genome::Model->get(name => $model_name);
     if ($model) {
         printf("Found model (%s) with name '%s'.\n\n", $model->id, $model->name);
@@ -217,9 +211,7 @@ my %MODEL_TIMEOUTS = (
 );
 my $DEFAULT_TIMEOUT = 6;
 sub get_timeout {
-    my $model_subname = shift;
-
-    my $timeout_hours = $MODEL_TIMEOUTS{$model_subname} || $DEFAULT_TIMEOUT;
+    my $timeout_hours = $MODEL_TIMEOUTS{model_subname()} || $DEFAULT_TIMEOUT;
     my $timeout_seconds = $timeout_hours * 3600;
     return $timeout_seconds;
 }
