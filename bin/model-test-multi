@@ -32,32 +32,9 @@ wait_for_build($build);
 
 $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
 
-if ($build->status eq 'Succeeded') {
-    printf("Build status is %s.\n", $build->status);
-} else {
-    send_fail_mail();
-    exit(255);
-}
+check_build_failure($build);
 
-my $new_build = get_build('Succeeded');
-unless ($new_build) {
-    print("Could not get test build!\n") and exit(255);
-}
-
-printf('Starting diff (new build = %s)...', $new_build->id);
-my $diff_cmd = Genome::Model::Build::Command::DiffBlessed->create(
-    new_build => $new_build,
-);
-unless ($diff_cmd->execute) {
-    print("Diff command failed to execute!\n") and exit(255);
-}
-
-my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
-if ($has_diffs) {
-    send_diff_mail($diff_cmd);
-    exit(255);
-}
-
+diff_build($build);
 
 
 # functions
@@ -283,4 +260,34 @@ sub wait_for_build {
 
         sleep(30);
     }
+}
+
+sub check_build_failure {
+    my $build = shift;
+
+    if ($build->status eq 'Succeeded') {
+        printf("Build status is %s.\n", $build->status);
+    } else {
+        send_fail_mail();
+        exit(255);
+    }
+}
+
+sub diff_build {
+    my $build = shift;
+
+    printf('Starting diff (new build = %s)...', $build->id);
+    my $diff_cmd = Genome::Model::Build::Command::DiffBlessed->create(
+        new_build => $build,
+    );
+    unless ($diff_cmd->execute) {
+        print("Diff command failed to execute!\n") and exit(255);
+    }
+
+    my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
+    if ($has_diffs) {
+        send_diff_mail($diff_cmd);
+        exit(255);
+    }
+
 }
