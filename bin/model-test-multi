@@ -1,12 +1,14 @@
 #!/usr/bin/perl
 
-use strict;
-use warnings;
-
 use Genome;
 use Revision;
 use Library;
 use Users;
+use JenkinsData;
+
+use strict;
+use warnings;
+
 
 # flush output buffer after every write or print
 local $| = 1;
@@ -14,7 +16,7 @@ local $| = 1;
 validate_and_log_environment();
 
 # set the title of this process
-$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, test_spec());
+$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
 
 my $model = get_model();
 
@@ -125,29 +127,13 @@ sub validate_and_log_environment {
     print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
     print "\n";
 
-    if (index(test_spec(), 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
+    if (index(JenkinsData->test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
         printf("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n") and exit(255);
     }
 
-    if (index(test_spec(), 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
+    if (index(JenkinsData->test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
         printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
     }
-}
-
-sub job_name {
-    return $ENV{JOB_NAME} or die 'JOB_NAME not set.';
-}
-
-sub build_url {
-    return $ENV{BUILD_URL} or die 'BUILD_URL not set.';
-}
-
-sub build_number {
-    return $ENV{BUILD_NUMBER} or die 'BUILD_NUMBER not set.';
-}
-
-sub test_spec {
-    return $ENV{TEST_SPEC} or die 'TEST_SPEC not set.';
 }
 
 sub test_version {
@@ -163,7 +149,7 @@ sub test_version {
 }
 
 sub model_subname {
-    my $test_spec = test_spec();
+    my $test_spec = JenkinsData->test_spec;
     $test_spec =~ s/^GQP-//;
     my ($perl_version, $model_subname) = $test_spec =~ /(.*?)-(.*)/;
     if ($perl_version ne Revision->perl_version()) {
@@ -220,11 +206,11 @@ sub send_timeout_mail {
     my ($to, $cc) = get_to_and_cc($model);
 
     unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Timed Out', test_spec(), build_number());
+        my $subject = sprintf('%s - Build %d - Timed Out', JenkinsData->test_spec, JenkinsData->build_number);
         my $body = join("\n",
-            sprintf('Project: %s', job_name()),
-            sprintf('Build: %s', build_url()),
-            sprintf('Console: %sconsole', build_url()),
+            sprintf('Project: %s', JenkinsData->job_name),
+            sprintf('Build: %s', JenkinsData->build_url),
+            sprintf('Console: %sconsole', JenkinsData->build_url),
         );
         Library::send_mail(
             from => 'apipe-tester@genome.wustl.edu',
@@ -241,11 +227,11 @@ sub send_fail_mail {
     my ($to, $cc) = get_to_and_cc($model);
 
     unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Build Failed', test_spec(), build_number());
+        my $subject = sprintf('%s - Build %d - Build Failed', JenkinsData->test_spec, JenkinsData->build_number);
         my $body = join("\n",
-            sprintf('Project: %s', job_name()),
-            sprintf('Build: %s', build_url()),
-            sprintf('Console: %sconsole', build_url()),
+            sprintf('Project: %s', JenkinsData->job_name),
+            sprintf('Build: %s', JenkinsData->build_url),
+            sprintf('Console: %sconsole', JenkinsData->build_url),
         );
         Library::send_mail(
             from => 'apipe-tester@genome.wustl.edu',
@@ -263,11 +249,11 @@ sub send_diff_mail {
     my ($to, $cc) = get_to_and_cc($model);
 
     unless ($ENV{WF_USE_FLOW}) {
-        my $subject = sprintf('%s - Build %d - Diffs Found', test_spec(), build_number());
+        my $subject = sprintf('%s - Build %d - Diffs Found', JenkinsData->test_spec, JenkinsData->build_number);
         my $body = join("\n",
-            sprintf('Project: %s', job_name()),
-            sprintf('Build: %s', build_url()),
-            sprintf('Console: %sconsole', build_url()),
+            sprintf('Project: %s', JenkinsData->job_name),
+            sprintf('Build: %s', JenkinsData->build_url),
+            sprintf('Console: %sconsole', JenkinsData->build_url),
             '********************************************************************************',
             $diff_cmd->bless_message,
             '********************************************************************************',
