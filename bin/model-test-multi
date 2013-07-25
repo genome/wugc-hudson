@@ -33,23 +33,7 @@ my $build = get_build(@statuses);
 if ($build) {
     printf("Got existing build (%s) for current test version.\n", $build->__display_name__);
 } else {
-    print("Creating new build....\n");
-    $build = Genome::Model::Build->create(
-        model_id => model->id,
-        software_revision => test_version(),
-    );
-    unless ($build) {
-        print("Could not create new build!\n") and exit(255);
-    }
-    print("Starting build...\n");
-    unless ($build->start()) {
-        print("Cound not start new build!\n") and exit(255);
-    }
-    print("Saving build...\n");
-    unless (UR::Context->commit()) {
-        print("Could not save new build!\n") and exit(255);
-    }
-    print("Build saved.\n");
+    $build = create_build();
 }
 
 my $event = $build->the_master_event;
@@ -259,4 +243,25 @@ sub get_to_and_cc {
         @cc = ();
     }
     return \@to, \@cc;
+}
+
+sub create_build {
+    print("Creating new build....\n");
+    my $build = Genome::Model::Build->create(
+        model_id => model->id,
+        software_revision => test_version(),
+    );
+    unless ($build) {
+        print("Could not create new build!\n") and exit(255);
+    }
+    print("Starting build...\n");
+    unless ($build->start()) {
+        print("Cound not start new build!\n") and exit(255);
+    }
+    print("Saving build...\n");
+    unless (UR::Context->commit()) {
+        print("Could not save new build!\n") and exit(255);
+    }
+    print("Build saved.\n");
+    return $build;
 }
