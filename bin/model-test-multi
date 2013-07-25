@@ -38,18 +38,6 @@ diff_build($build);
 
 
 # functions
-sub get_build {
-    my @statuses = @_;
-
-    my $build = Genome::Model::Build->get(
-        model_name => model->name,
-        run_by => 'apipe-tester',
-        software_revision => test_version(),
-        status => \@statuses,
-    );
-    return $build;
-}
-
 sub build_type {
     my $type = model->class;
     $type =~ s/Genome::Model:://;
@@ -225,8 +213,12 @@ sub create_build {
 }
 
 sub get_initial_build {
-    my @statuses = ('Scheduled', 'Running', 'Succeeded');
-    my $build = get_build(@statuses);
+    my $build =  Genome::Model::Build->get(
+        model_name => model->name,
+        run_by => 'apipe-tester',
+        software_revision => test_version(),
+        status => ['Scheduled', 'Running', 'Succeeded'],
+    );
 
     if ($build) {
         printf("Got existing build (%s) for current test version.\n", $build->__display_name__);
