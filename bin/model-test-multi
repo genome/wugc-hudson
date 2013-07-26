@@ -137,6 +137,7 @@ my %MODEL_TIMEOUTS = (
 my $DEFAULT_TIMEOUT = 6;
 sub get_timeout {
     my $timeout_hours = $MODEL_TIMEOUTS{model_subname()} || $DEFAULT_TIMEOUT;
+    printf("timeout_hours:%s, model_subname:%s, default_timeout:%s", $timeout_hours, model_subname(), $DEFAULT_TIMEOUT);
     my $timeout_seconds = $timeout_hours * 3600;
     return $timeout_seconds;
 }
