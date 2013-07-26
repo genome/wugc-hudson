@@ -99,7 +99,7 @@ sub model_subname {
     return $model_subname;
 }
 
-my @MODELS_THAT_MUST_SHORTCUT_BECAUSE_THEY_TAKE_TOO_LONG = (
+our @MODELS_THAT_MUST_SHORTCUT_BECAUSE_THEY_TAKE_TOO_LONG = (
     'reference-alignment',
     'somatic-variation',
     'somatic-short',
@@ -130,11 +130,11 @@ sub model {
     return $model;
 }
 
-my %MODEL_TIMEOUTS = (
+our %MODEL_TIMEOUTS = (
     'somatic-variation' => 36,
     'clinseq-v1' => 12,
 );
-my $DEFAULT_TIMEOUT = 6;
+our $DEFAULT_TIMEOUT = 6;
 sub get_timeout {
     my $timeout_hours = $MODEL_TIMEOUTS{model_subname()} || $DEFAULT_TIMEOUT;
     printf("timeout_hours:%s, model_subname:%s, default_timeout:%s", $timeout_hours, model_subname(), $DEFAULT_TIMEOUT);
