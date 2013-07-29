@@ -100,7 +100,7 @@ sub model_subname {
 }
 
 sub should_shortcut {
-    my @MODELS_THAT_MUST_SHORTCUT_BECAUSE_THEY_TAKE_TOO_LONG = (
+    my @MODELS_THAT_ARE_FAST_AND_DONT_NEED_TO_SHORTCUT = (
         'reference-alignment',
         'somatic-variation',
         'somatic-short',
@@ -109,11 +109,11 @@ sub should_shortcut {
         'somatic-variation-sv-detection',
     );
     my $model_subname = shift;
-    return grep {$_ eq $model_subname} @MODELS_THAT_MUST_SHORTCUT_BECAUSE_THEY_TAKE_TOO_LONG;
+    return !grep {$_ eq $model_subname} @MODELS_THAT_ARE_FAST_AND_DONT_NEED_TO_SHORTCUT;
 }
 
 sub set_genome_software_result_test_name {
-    if (should_shortcut(model_subname())) {
+    unless (should_shortcut(model_subname())) {
         printf("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '%s'.\n", test_version());
         $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = test_version();
     }
