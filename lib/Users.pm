@@ -40,7 +40,6 @@ sub apipe {
         abrummet
         acoffman
         aregier
-        boberkfe
         dmorton
         ebelter
         fdu
@@ -58,7 +57,6 @@ sub apipe {
 
 sub reference_alignment {
     return qw(
-        boberkfe
         fdu
         tmooney
     );

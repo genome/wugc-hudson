@@ -197,7 +197,7 @@ sub get_to_and_cc {
     my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();
     my @cc = Users::apipe();
     if ($ENV{GENOME_QUERY_POSTGRES}) {
-        @to = ('apipe-tester', 'boberkfe');
+        @to = ('apipe-tester');
         @cc = ();
     }
     return \@to, \@cc;
