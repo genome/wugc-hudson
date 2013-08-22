@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo -e "\n=> Setting Up Perl Interpreters..."
+echo -e "\n=> Setting Up Perl Interpreters..." 1>&2
 
 PERL_VERSION="$1"
 
@@ -20,7 +20,7 @@ case $PERL_VERSION in
         # TODO ln -nsf $(readlink bin/genome-perl$PERL_VERSION) bin/perl
         ;;
     *)
-        echo "ERROR: Unrecognized Perl Version: $PERL_VERSION"
+        echo "ERROR: Unrecognized Perl Version: $PERL_VERSION" 1>&2
         exit 2
         ;;
 esac

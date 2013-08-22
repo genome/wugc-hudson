@@ -1,17 +1,17 @@
 #!/bin/bash
 set -o errexit
 
-echo -e "\n=> Preparing Submodules..."
+echo -e "\n=> Preparing Submodules..." 1>&2
 
 git submodule sync 2> /dev/null 1> /dev/null
 
 for submodule in $@; do
-    echo -n "   $submodule..."
+    echo -n "   $submodule..." 1>&2
     set +o errexit
     OUT=$(git submodule update --init $submodule 2>&1)
     set -o errexit
     if [ $? -ne 0 ]; then
-        echo $OUT
+        echo $OUT 1>&2
         exit $?
     fi
     cd $submodule
@@ -21,12 +21,12 @@ for submodule in $@; do
         git stash save --include-untracked --quiet
         NEW_STASH_COUNT=$(git stash list | wc -l)
         if [ $NEW_STASH_COUNT -gt $STASH_COUNT ]; then
-            echo -n ' stashed changes...'
+            echo -n ' stashed changes...' 1>&2
         fi
     fi
 
     git reset --hard HEAD > /dev/null
     git clean -d --force > /dev/null
     cd - > /dev/null
-    echo ' done'
+    echo ' done' 1>&2
 done

@@ -1,6 +1,6 @@
 set -o nounset
 
-echo -e "\n=> Setting Up Test Environment..."
+echo -e "\n=> Setting Up Test Environment..." 1>&2
 
 GIT_BASE_DIR="$1"
 
@@ -30,11 +30,11 @@ export PATH
 set +o nounset
 
 for MODULE in UR Workflow Genome; do
-    if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then echo "$MODULE found in $SNAPSHOT_LIB! Aborting!" && exit 1; fi
+    if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then echo "$MODULE found in $SNAPSHOT_LIB! Aborting!" 1>&2 && exit 1; fi
 done
 
 for BIN in ur workflow genome; do
-    if which $BIN | grep -q "$SNAPSHOT_BIN"; then echo "$BIN found in $SNAPSHOT_BIN! Aborting!" && exit 1; fi
+    if which $BIN | grep -q "$SNAPSHOT_BIN"; then echo "$BIN found in $SNAPSHOT_BIN! Aborting!" 1>&2 && exit 1; fi
 done
 
 hash -r
