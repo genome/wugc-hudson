@@ -30,6 +30,7 @@ bin/apipe_tests         Runs the builds, executed by run_builds.
 bin/changelog           Generates the git changelog.
 bin/diff_builds         Runs the build diff tests.
 bin/email_failures      Parses the JUnit XML and determines who should be contacted (via git) as to who should be contacted.
+bin/genome-sync         Wrapper for the syncrhonize command modules under Site/TGI/Synchronize.
 bin/hotfix              Automatic creation of fix snapshosts given some git repos and commits.
 bin/init                Initialize Genome Hudson.
 bin/promote             Promote snapshot by symlinking into current.
