@@ -3,6 +3,8 @@ set -o errexit
 
 echo -e "\n=> Preparing Submodules..."
 
+git submodule sync
+
 for submodule in $@; do
     echo -n "   $submodule..."
     set +o errexit
