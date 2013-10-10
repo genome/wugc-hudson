@@ -3,7 +3,7 @@ set -o errexit
 
 echo -e "\n=> Preparing Submodules..."
 
-git submodule sync
+git submodule sync 2> /dev/null 1> /dev/null
 
 for submodule in $@; do
     echo -n "   $submodule..."
