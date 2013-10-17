@@ -46,7 +46,7 @@ sub update_submodule {
 
     my $short_revision = (length($revision) > 7 ? substr($revision, 0, 7) : $revision);
 
-    unless (system("git submodule update --init $submodule && cd $submodule && git fetch && git checkout -f $revision") == 0) {
+    unless (system("git submodule sync && git submodule update --init $submodule && cd $submodule && git fetch && git checkout -f $revision") == 0) {
         die "Failed to checkout $submodule to $revision";
     }
     unless (system("git commit $submodule -m 'updated $submodule submodule to $short_revision'") == 0) {
