@@ -116,7 +116,8 @@ sub clin_seq {
     return qw(
         mgriffit
         ogriffit
-        ssmith
+        aramu
+        bainscou
     );
 }
 
