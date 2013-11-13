@@ -6,7 +6,8 @@ use LWP::UserAgent;
 
 my ($submodule, $jenkins_job) = @ARGV;
 my $GIT_BRANCH = $ENV{GIT_BRANCH} || die 'GIT_BRANCH not set!';
-my $GIT_UPSTREAM_BRANCH = "origin/$GIT_BRANCH";
+my $GIT_LOCAL_BRANCH = qx(git rev-parse --abbrev-ref HEAD);
+chomp $GIT_LOCAL_BRANCH;
 
 my $current_submodule_revision = current_submodule_revision($submodule);
 unless ($current_submodule_revision) {
@@ -28,13 +29,13 @@ if ($current_submodule_revision ne $last_stable_revision) {
 unless (system("git fetch") == 0) {
     die "Failed to fetch";
 }
-unless (system("git rebase $GIT_UPSTREAM_BRANCH") == 0) {
-    die "Failed to rebase on $GIT_UPSTREAM_BRANCH";
+unless (system("git rebase $GIT_BRANCH") == 0) {
+    die "Failed to rebase on $GIT_BRANCH";
 }
-my @log = qx(git log -p $GIT_UPSTREAM_BRANCH..HEAD);
+my @log = qx(git log -p $GIT_BRANCH..HEAD);
 if (@log) {
     print @log;
-    unless (system("git push origin $GIT_BRANCH") == 0) {
+    unless (system("git push origin $GIT_LOCAL_BRANCH") == 0) {
         die "Failed to push changes";
     }
 } else {
