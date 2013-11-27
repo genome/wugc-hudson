@@ -144,7 +144,7 @@ sub create_snapshot_dir {
     my $cmd = "cd $snapshot_dir/lib/perl/Genome && genome-perl -S ur test use";
     my $exit_code = system($cmd);
     unless ($exit_code == 0) {
-        die "Error: failed to use all classes!";
+        warn "Error: failed to use all classes!";
     }
 
     return 1;
