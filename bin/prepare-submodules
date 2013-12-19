@@ -9,10 +9,11 @@ for submodule in $@; do
     echo -n "   $submodule..." 1>&2
     set +o errexit
     OUT=$(git submodule update --init $submodule 2>&1)
+    GIT_EXIT=$?
     set -o errexit
-    if [ $? -ne 0 ]; then
+    if [ $GIT_EXIT -ne 0 ]; then
         echo $OUT 1>&2
-        exit $?
+        exit $GIT_EXIT
     fi
     cd $submodule
 
