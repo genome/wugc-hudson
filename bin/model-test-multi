@@ -54,11 +54,11 @@ sub log_environment {
 
 sub validate_environment {
     if (index(JenkinsData->test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
-        printf("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n") and exit(255);
+        fail("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n");
     }
 
     if (index(JenkinsData->test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
-        printf("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n") and exit(255);
+        fail("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n");
     }
 
     JenkinsData->validate_environment;
@@ -93,8 +93,8 @@ sub model_subname {
     $test_spec =~ s/^GQP-//;
     my ($perl_version, $model_subname) = $test_spec =~ /(.*?)-(.*)/;
     if ($perl_version ne Revision->perl_version()) {
-        printf("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n",
-            $perl_version, Revision->perl_version()) and exit(255);
+        fail("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n",
+            $perl_version, Revision->perl_version());
     }
     return $model_subname;
 }
@@ -126,7 +126,7 @@ sub model {
     if ($model) {
         printf("Found model (%s) with name '%s'.\n\n", $model->id, $model->name);
     } else {
-        printf("Could not get test model by name (%S)!\n\n", $model_name) and exit(255);
+        fail("Could not get test model by name (%S)!\n\n", $model_name);
     }
     return $model;
 }
@@ -212,15 +212,15 @@ sub create_build {
         software_revision => test_version(),
     );
     unless ($build) {
-        print("Could not create new build!\n") and exit(255);
+        fail("Could not create new build!\n");
     }
     print("Starting build...\n");
     unless ($build->start()) {
-        print("Cound not start new build!\n") and exit(255);
+        fail("Cound not start new build!\n");
     }
     print("Saving build...\n");
     unless (UR::Context->commit()) {
-        print("Could not save new build!\n") and exit(255);
+        fail("Could not save new build!\n");
     }
     print("Build saved.\n");
     return $build;
@@ -250,7 +250,7 @@ sub wait_for_build {
 
     my $event = $build->the_master_event;
     unless ($event) {
-        print("Could not get the build's master event!\n") and exit(255);
+        fail("Could not get the build's master event!\n");
     }
 
     my $timeout = get_timeout();
@@ -293,7 +293,7 @@ sub diff_build {
         new_build => $build,
     );
     unless ($diff_cmd->execute) {
-        print("Diff command failed to execute!\n") and exit(255);
+        fail("Diff command failed to execute!\n");
     }
 
     my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
@@ -309,5 +309,17 @@ sub build_view_and_exit {
     my $bv_command = Genome::Model::Build::Command::View->create(
         build => $build);
     $bv_command->execute;
+    exit(255);
+}
+
+sub fail {
+    if (scalar(@_) == 1) {
+        print @_;
+    } elsif (scalar(@_) > 1) {
+        printf @_;
+    } else {
+        print "Failed to execute test model\n";
+    }
+
     exit(255);
 }
