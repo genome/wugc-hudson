@@ -267,7 +267,7 @@ sub wait_for_build {
             printf("Build (%s) timed out after %s minutes",
                 $build->id, $timeout / 60);
             send_timeout_mail();
-            exit(255);
+            build_view_and_exit($build);
         }
 
         sleep(30);
@@ -281,7 +281,7 @@ sub check_build_failure {
         printf("Build status is %s.\n", $build->status);
     } else {
         send_fail_mail();
-        exit(255);
+        build_view_and_exit($build);
     }
 }
 
@@ -299,7 +299,15 @@ sub diff_build {
     my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
     if ($has_diffs) {
         send_diff_mail($diff_cmd);
-        exit(255);
+        build_view_and_exit($build);
     }
 
+}
+
+sub build_view_and_exit {
+    my $build = shift;
+    my $bv_command = Genome::Model::Build::Command::View->create(
+        build => $build);
+    $bv_command->execute;
+    exit(255);
 }
