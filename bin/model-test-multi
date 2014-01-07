@@ -102,6 +102,7 @@ sub model_subname {
 sub should_shortcut {
     my @MODELS_THAT_ARE_FAST_AND_DONT_NEED_TO_SHORTCUT = (
         'reference-alignment',
+        'rnaseq',
         'somatic-variation',
         'somatic-short',
         'somatic-validation',
