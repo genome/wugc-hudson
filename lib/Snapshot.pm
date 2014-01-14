@@ -141,7 +141,7 @@ sub create_snapshot_dir {
     }
 
     # Something to do with generating InlineConfig*. Figure out a better/faster way to generate it.
-    my $cmd = qq(cd $snapshot_dir/lib/perl/Genome && genome-perl -Mabove=Genome -MGenome::Model::Command::Services::WebApp::Core);
+    my $cmd = qq(cd $snapshot_dir/lib/perl/Genome && genome-perl -Mabove=Genome -MGenome::Model::Command::Services::WebApp::Core -e 1);
     my $exit_code = system($cmd);
     unless ($exit_code == 0) {
         die "Error: failed to use all classes!";
