@@ -86,6 +86,13 @@ sub create {
 
     $self->update_tab_completion;
 
+    unless (system(qw(chown -R :info), $tmp_snapshot_dir) == 0) {
+        die q(Failed to change group owner to 'info');
+    }
+    unless (system(qw(chmod -R g-w,o-rwx), $tmp_snapshot_dir) == 0) {
+        die q(Failed to remove permissions.);
+    }
+
     $self->{snapshot_dir} = $snapshot_dir;
     print "Moving to final location...";
     unless (move($tmp_snapshot_dir, $snapshot_dir)) {
