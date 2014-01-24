@@ -5,7 +5,9 @@ use warnings;
 
 use Genome;
 
-my $SQL = q(select distinct(s1.subject_id) from MG.GENOME_SUBJECT_ATTRIBUTE s1 join MG.GENOME_SUBJECT_ATTRIBUTE s2 on s1.subject_id = s2.subject_id and s1.attribute_label = 'source_id' and s2.attribute_label = 'source_id' and s1.rowid != s2.rowid);
+my $table_name = Genome::SubjectAttribute->__meta__->table_name;
+
+my $SQL = qq(select distinct(s1.subject_id) from $table_name as s1 join $table_name as s2 on s1.subject_id = s2.subject_id and s1.attribute_label = 'source_id' and s2.attribute_label = 'source_id' and s1.ctid != s2.ctid);
 
 my $ds = Genome::DataSource::GMSchema->get();
 my $db = $ds->get_default_dbh();
