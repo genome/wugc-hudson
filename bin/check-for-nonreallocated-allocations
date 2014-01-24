@@ -1,0 +1,66 @@
+#!/usr/bin/env genome-perl
+
+use strict;
+use warnings;
+
+use DateTime::Format::Strptime;
+use Genome;
+
+print "\nLOG_START\n";
+
+my $dt_template = UR::Context->date_template;
+my $dt_parser = DateTime::Format::Strptime->new(
+    pattern => $dt_template,
+    time_zone => 'America/Chicago',
+);
+my $now = UR::Context->now();
+my $now_dt = $dt_parser->parse_datetime($now);
+unless ($now_dt) {
+    die "failed to parse datetime: $now";
+}
+
+my $error_template = "%s: (ERROR): %s\n";
+
+my @to_reallocate;
+my $exit = 0;
+my $ai = Genome::Disk::Allocation->create_iterator(
+    reallocation_time      => undef,
+    disk_group_name        => ['info_apipe_ref', 'info_genome_models'],
+    'owner_class_name !=' => 'Genome::Sys::User',
+);
+while (my $a = $ai->next) {
+    next if $a->is_archived;
+
+    my $creation_time = $a->creation_time;
+    unless ($creation_time) {
+        $creation_time = '1969-01-01 00:00:00';
+    }
+
+    my $creation_dt = $dt_parser->parse_datetime($creation_time);
+    unless ($creation_dt) {
+        printf($error_template, $a->id, 'could not parse creation_time: ', $creation_time);
+        next;
+    }
+
+    my $duration_dt = $now_dt->delta_days($creation_dt);
+    unless ($duration_dt) {
+        printf($error_template, $a->id, 'duration was not defined');
+        next;
+    }
+
+    next unless $duration_dt->delta_days >= 30;
+
+    $exit++;
+    push @to_reallocate, $a;
+    printf("%s: %s - %s = %d days\n", $a->id, $now, $creation_time, $duration_dt->delta_days);
+}
+
+for my $a (@to_reallocate) {
+    if ($a->reallocate()) {
+        $exit--;
+    }
+}
+
+print "LOG_END\n\n";
+
+exit ($exit ? 1 : 0);
