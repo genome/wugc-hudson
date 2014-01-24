@@ -10,8 +10,8 @@ my $SQL = q(select distinct(s1.subject_id) from MG.GENOME_SUBJECT_ATTRIBUTE s1 j
 my $ds = Genome::DataSource::GMSchema->get();
 my $db = $ds->get_default_dbh();
 my $st = $db->prepare($SQL);
-$st->execute();
-my $data = $st->fetchall_arrayref();
+$st->execute() or die $st->errstr;
+my $data = $st->fetchall_arrayref() or die $st->errstr;
 $st->finish();
 
 my @data = @$data;
