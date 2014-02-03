@@ -14,7 +14,7 @@ use warnings;
 local $| = 1;
 
 log_environment();
-validate_environment();
+JenkinsData->validate_environment;
 
 # set the title of this process
 $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
@@ -52,18 +52,6 @@ sub log_environment {
     print "\n";
 }
 
-sub validate_environment {
-    if (index(JenkinsData->test_spec, 'GQP-') == 0 && !$ENV{GENOME_QUERY_POSTGRES}) {
-        fail("TEST_SPEC starts with GQP but GENOME_QUERY_POSTGRES is not enabled!\n");
-    }
-
-    if (index(JenkinsData->test_spec, 'GQP-') == -1 && $ENV{GENOME_QUERY_POSTGRES}) {
-        fail("TEST_SPEC does not start with GQP but GENOME_QUERY_POSTGRES is enabled!\n");
-    }
-
-    JenkinsData->validate_environment;
-}
-
 sub flow_git_revisions {
     my $core_rev = $ENV{FLOW_CORE_GIT_REVISION}
         || die("FLOW_CORE_GIT_REVISION is unset");
@@ -78,9 +66,6 @@ sub flow_git_revisions {
 
 sub test_version {
     my $test_version = Revision->test_version();
-    if ($ENV{GENOME_QUERY_POSTGRES}) {
-        $test_version = "GQP-$test_version";
-    }
     if ($ENV{WF_USE_FLOW}) {
         $test_version = "$test_version:" . flow_git_revisions();
     }
@@ -90,7 +75,6 @@ sub test_version {
 
 sub model_subname {
     my $test_spec = JenkinsData->test_spec;
-    $test_spec =~ s/^GQP-//;
     my ($perl_version, $model_subname) = $test_spec =~ /(.*?)-(.*)/;
     if ($perl_version ne Revision->perl_version()) {
         fail("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n",
@@ -198,10 +182,6 @@ sub get_to_and_cc {
     my $build_type = build_type();
     my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();
     my @cc = Users::apipe();
-    if ($ENV{GENOME_QUERY_POSTGRES}) {
-        @to = ('apipe-tester');
-        @cc = ();
-    }
     return \@to, \@cc;
 }
 
