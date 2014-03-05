@@ -152,7 +152,8 @@ sub build_deb_package {
     my @sfiles = glob("/var/cache/pbuilder/result/${source}_*.changes");
     die "More than one package present: @sfiles" if (@sfiles != 1);
 
-    ok(run("dput lucid-genome-development $sfiles[0]") and print "deployed $sfiles[0]\n", "deployed deb");
+    #ok(run("dput lucid-genome-development $sfiles[0]") and print "deployed $sfiles[0]\n", "deployed deb");
+    diag "skipping dput $sfiles[0]";
 
     return 1;
 }
