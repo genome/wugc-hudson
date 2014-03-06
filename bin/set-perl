@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o nounset
+
 echo -e "\n=> Setting Up Perl Interpreters..." 1>&2
 
 PERL_VERSION="$1"
