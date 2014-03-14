@@ -3,13 +3,33 @@
 set -o errexit
 set -o nounset
 
-echo -en "\n=> Rebuilding Meta DB..." 1>&2
-find "$WORKSPACE" -iname '*sqlite3-dump' -or -iname '*sqlite3n-dump' | while read DB_TXT; do
+function regen_db {
+    local DB_TXT="$1"
     echo -n '.' 1>&2
     DB_BIN=${DB_TXT/-dump/}
     if [[ "$DB_BIN" -ot "$DB_TXT" ]]; then
         rm -f "$DB_BIN"
         sqlite3 "$DB_BIN" < "$DB_TXT"
     fi
-done
+}
+
+echo -en "\n=> Rebuilding Meta DB..." 1>&2
+
+if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+then
+    # ls-files is fast but then we have to also query submodules
+    # foreach defines $name which serves to prefix the submodule path
+    ( git ls-files \
+        && git submodule foreach "git ls-files | sed \"s|^|\$name/|\"" ) \
+    | grep -P '\.sqlite3n?-dump$' \
+    | while read DB_TXT
+    do
+        regen_db "$DB_TXT"
+    done
+else
+    find "$WORKSPACE" -iname '*sqlite3-dump' -or -iname '*sqlite3n-dump' | while read DB_TXT; do
+        regen_db "$DB_TXT"
+    done
+fi
+
 echo ' done' 1>&2
