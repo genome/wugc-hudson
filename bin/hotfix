@@ -124,6 +124,10 @@ for my $argv (@ARGV) {
     my $range = "$git_hash^..$git_hash";
     my @files = grep { $_ !~ /\.t$/ } $git_repo->run('diff', '--name-only', $range);
     chomp @files;
+    unless (@files) {
+        print "ERROR: no files in commit: $git_hash\n";
+        exit;
+    }
 
     my ($patch_file) = $git_repo->run('format-patch', '--output-directory', $new_path, $range, '--', @files);
     unless (-f $patch_file) {
