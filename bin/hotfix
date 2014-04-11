@@ -18,6 +18,8 @@ BEGIN {
 require Defaults;
 require Snapshot;
 
+use File::Spec qw();
+
 my $help = '';
 unless(Getopt::Long::GetOptions('help' => \$help)) {
     exit;
@@ -122,17 +124,29 @@ for my $argv (@ARGV) {
         $git_repo_name = 'unknown';
     }
 
-    my @git_data = `cd $git_repo && git show --oneline $git_hash`;
-	my $hotfix_msg = `cd $git_repo && git show --oneline --name-only $git_hash`;
-    my $git_msg = shift @git_data;
+    my $range = "$git_hash^..$git_hash";
+    my @files = grep { $_ !~ /\.t$/ } qx(cd $git_repo && git diff --name-only $range);
+    chomp @files;
+    my $files = join(' ', @files);
+
+    my $patch_file = File::Spec->join($new_path, "$git_hash.patch");
+    qx(cd $git_repo && git format-patch --stdout $range -- $files > $patch_file);
+    unless ($? == 0) {
+        print "ERROR: failed to create patch for commit: $git_hash\n";
+        exit;
+    }
+    unless (-f $patch_file) {
+        print "ERROR: patch file does not exist: $patch_file\n";
+        exit;
+    }
+    unless (-s $patch_file) {
+        print "ERROR: patch file has no size: $patch_file\n";
+        exit;
+    }
+
+    my $hotfix_msg = `cd $git_repo && git show --oneline --name-only $git_hash`;
+    my $git_msg = (split(/\n/, $hotfix_msg))[0];
     print "Generating patch for $git_msg and applying to $new_path...\n";
-
-    my @git_patch = grep { $_ !~ /^diff\ --git/ } @git_data;
-    @git_patch = grep { $_ !~ /index\ [a-z0-9]+\.\.[a-z0-9]+/ } @git_patch;
-
-	my $patch_file = "$new_path/$git_hash.patch";
-    my $patch_fh = IO::File->new(">$patch_file");
-    print $patch_fh join('', @git_patch);
 
     $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
     $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
