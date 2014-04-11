@@ -93,13 +93,7 @@ unless(system("cp -a $old_path $new_path") == 0) {
     exit;
 }
 
-print "\n\nWhat was the reason for this hotfix? (make this readable by public)\n";
-my $hotfix_reason;
-chomp($hotfix_reason = <STDIN>);
-my $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
-my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
-print $hotfixes_fh "Fix $fix_version: $hotfix_reason\n";
-
+my @hotfixes_footer;
 for my $argv (@ARGV) {
     my $git_hash;
 
@@ -148,9 +142,8 @@ for my $argv (@ARGV) {
     my $git_msg = (split(/\n/, $hotfix_msg))[0];
     print "Generating patch for $git_msg and applying to $new_path...\n";
 
-    $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
-    $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
-    print $hotfixes_fh "fix$fix_version: $git_repo_name $hotfix_msg\n";
+    my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
+    push @hotfixes_footer, "fix$fix_version: $git_repo_name $hotfix_msg\n";
 
     # fix patch path since we move UR and Workflow's lib -> lib/perl
     if ( $git_repo_name !~ /genome/ ) {
@@ -163,5 +156,12 @@ for my $argv (@ARGV) {
         exit;
     }
 }
+
+print "\n\nWhat was the reason for this hotfix? (make this readable by public)\n";
+my $hotfix_reason;
+chomp($hotfix_reason = <STDIN>);
+my $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
+my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
+print $hotfixes_fh "Fix $fix_version: $hotfix_reason\n";
 
 print "Successfully created hotfix at $new_path\n";
