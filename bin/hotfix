@@ -8,7 +8,7 @@ require Getopt::Long;
 
 BEGIN {
     require Cwd;
-	require File::Basename;
+    require File::Basename;
     my $lib_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../lib/');
     unless (grep { $lib_dir eq Cwd::abs_path($_) } @INC) {
         push @INC, $lib_dir;
@@ -24,8 +24,8 @@ unless(Getopt::Long::GetOptions('help' => \$help)) {
 }
 
 if ( @ARGV < 3 || $help) {
-	print "Usage: $0 pipeline ~/git/genome sdf123a 9843aac ~/git/ur 5s2gg2a\n";
-	exit;
+    print "Usage: $0 pipeline ~/git/genome sdf123a 9843aac ~/git/ur 5s2gg2a\n";
+    exit;
 }
 
 unless (getpwuid($<) eq 'apipe-tester') {
@@ -39,9 +39,9 @@ my $old_path;
 if ( $version =~ /pipeline/ ) {
     $old_path = readlink(Defaults::CURRENT_PIPELINE());
 } elsif ( $version =~ /user/ ) {
-	$old_path = readlink(Defaults::CURRENT_USER());
+    $old_path = readlink(Defaults::CURRENT_USER());
 } elsif ( $version =~ /web/ ) {
-	$old_path = readlink(Defaults::CURRENT_WEB());
+    $old_path = readlink(Defaults::CURRENT_WEB());
 } else {
     $old_path = Snapshot::find_snapshot($version);
 }
@@ -138,10 +138,10 @@ for my $argv (@ARGV) {
     my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
     print $hotfixes_fh "fix$fix_version: $git_repo_name $hotfix_msg\n";
 
-	# fix patch path since we move UR and Workflow's lib -> lib/perl
-	if ( $git_repo_name !~ /genome/ ) {
+    # fix patch path since we move UR and Workflow's lib -> lib/perl
+    if ( $git_repo_name !~ /genome/ ) {
         system("sed -r -e 's/(---|\\+\\+\\+)\\ (a|b)\\/lib\\//\\1\\ \\2\\/lib\\/perl\\//' -i $patch_file");
-	}
+    }
 
     unless(system("patch -p 1 -d $new_path -i $patch_file") == 0) {
         print "ERROR: Failed to patch $new_path!\n";
