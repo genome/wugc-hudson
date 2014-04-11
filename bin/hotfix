@@ -134,8 +134,8 @@ for my $argv (@ARGV) {
     my $patch_fh = IO::File->new(">$patch_file");
     print $patch_fh join('', @git_patch);
 
-    my $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
-    my $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
+    $hotfixes_fh = IO::File->new(">>$new_path/hotfixes");
+    $fix_version = $new_path; $fix_version =~ s/.*genome-\d+-fix//;
     print $hotfixes_fh "fix$fix_version: $git_repo_name $hotfix_msg\n";
 
     # fix patch path since we move UR and Workflow's lib -> lib/perl
