@@ -19,6 +19,7 @@ require Defaults;
 require Snapshot;
 
 use File::Spec qw();
+use Git::Repository qw();
 
 my $help = '';
 unless(Getopt::Long::GetOptions('help' => \$help)) {
@@ -62,6 +63,7 @@ unless (@ARGV) {
     exit;
 }
 
+$git_repo = Git::Repository->new(work_tree => $git_repo);
 
 my $custom_path = Defaults::CUSTOM_PATH();
 my $new_path = "$custom_path/$old_name";
@@ -98,7 +100,7 @@ for my $argv (@ARGV) {
     my $git_hash;
 
     if ( -d $argv ) {
-        $git_repo = $argv;
+        $git_repo = Git::Repository->new(work_tree => $argv);
         next;
     }
     else {
@@ -106,7 +108,8 @@ for my $argv (@ARGV) {
     }
 
     my $git_repo_name;
-    my $git_remote = `cd $git_repo && git remote -v | grep origin | head -n 1`;
+    my @remotes = $git_repo->run('remote', '-v');
+    my $git_remote = (grep { /origin/ } @remotes)[-1];
     if ($git_remote) {
         chomp $git_remote;
         my @git_remote = split('/', $git_remote);
@@ -119,16 +122,10 @@ for my $argv (@ARGV) {
     }
 
     my $range = "$git_hash^..$git_hash";
-    my @files = grep { $_ !~ /\.t$/ } qx(cd $git_repo && git diff --name-only $range);
+    my @files = grep { $_ !~ /\.t$/ } $git_repo->run('diff', '--name-only', $range);
     chomp @files;
-    my $files = join(' ', @files);
 
-    my $patch_file = File::Spec->join($new_path, "$git_hash.patch");
-    qx(cd $git_repo && git format-patch --stdout $range -- $files > $patch_file);
-    unless ($? == 0) {
-        print "ERROR: failed to create patch for commit: $git_hash\n";
-        exit;
-    }
+    my ($patch_file) = $git_repo->run('format-patch', '--output-directory', $new_path, $range, '--', @files);
     unless (-f $patch_file) {
         print "ERROR: patch file does not exist: $patch_file\n";
         exit;
@@ -138,7 +135,7 @@ for my $argv (@ARGV) {
         exit;
     }
 
-    my $hotfix_msg = `cd $git_repo && git show --oneline --name-only $git_hash`;
+    my $hotfix_msg = $git_repo->run('show', '--oneline', '--name-only', $git_hash);
     my $git_msg = (split(/\n/, $hotfix_msg))[0];
     print "Generating patch for $git_msg and applying to $new_path...\n";
 
