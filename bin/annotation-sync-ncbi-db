@@ -32,13 +32,12 @@ LOCK=$RSYNC_BASE_PATH'/lock'
 function lock {
     echo "Acquiring lock: $LOCK"
     if [ -e $LOCK ]; then
-        echo "Lock exists! Cannot continue!"
-        exit
+        failure_do_not_unlock "Lock exists! Cannot continue!"
     fi
     # lock
     touch $LOCK
     if [ ! -e $LOCK ]; then
-        echo_error_and_exit "Failed to acquire lock!"
+        failure_do_not_unlock "Failed to acquire lock!"
     fi
     echo "Lock acquired."
 }
@@ -49,12 +48,27 @@ function unlock {
 }
 ##
 
-## ECHO ERROR AND EXIT ##
-function echo_error_and_exit {
+## EXIT FUNCTIONS ##
+function failure {
     echo $1
-    rm $LOCK
+    echo "Rsync $NTNR FAILURE!"
     unlock
     exit 1
+}
+
+function failure_do_not_unlock {
+    echo $1
+    echo "Rsync $NTNR FAILURE!"
+    exit 1
+}
+
+function success {
+    if [ ! -z "$1" ]; then
+        echo $1
+    fi
+    echo "Rsync $NTNR SUCCESS!"
+    unlock
+    exit
 }
 ##
 
@@ -65,10 +79,10 @@ lock
 echo "Rsync NCBI $NTNR to $RSYNC_DB_PATH via bsub...";
 echo rsync -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$NTNR.gz $RSYNC_DB_PATH
 if [ $? != 0 ]; then
-    echo_error_and_exit "Rysnc of NCBI $NTNR to TGI FAILED!."
+    failure "Rysnc of NCBI $NTNR to TGI FAILED!."
 fi
 if [ ! -s $RSYNC_DB_PATH ]; then
-    echo_error_and_exit "Rsync succeded, but synced database does not exist!"
+    failure "Rsync succeded, but synced database does not exist!"
 fi
 echo "Rsync OK."
 
@@ -79,10 +93,7 @@ echo "Check rsynced db path vs. final path..."
 echo "Rsync path size: $RSYNC_DB_PATH_SIZE"
 echo "Final path size: $FINAL_DB_PATH_SIZE"
 if [ $RSYNC_DB_PATH_SIZE == $FINAL_DB_PATH_SIZE ]; then
-    echo "Rsync path and final path are the same size! Skipping copy and move!"
-    echo "Rsync $NTNR SUCCESS!"
-    unlock
-    exit
+    success "Rsync path and final path are the same size! Skipping copy and move!"
 fi
 
 # COPY NT/NR TO TEMP PATH
@@ -92,10 +103,10 @@ echo "  to $TMP_DB_PATH"
 rm -f $TMP_DB_PATH
 cp $RSYNC_DB_PATH $TMP_DB_PATH
 if [ $! != 0 ]; then
-    echo_error_and_exit "Copy failed!"
+    failure "Copy failed!"
 fi
 if [ ! -s "$TMP_DB_PATH" ]; then
-    echo_error_and_exit "Copy of rsyn'd $NTNR to temp successfully completed but temp path does not exist!"
+    failure "Copy of rsyn'd $NTNR to temp successfully completed but temp path does not exist!"
 fi
 echo "Copy OK."
 
@@ -105,18 +116,15 @@ echo "Move $TMP_DB_PATH"
 echo " to  $FINAL_DB_PATH"
 rm -f $FINAL_DB_PATH && mv $TMP_DB_PATH $FINAL_DB_PATH
 if [ $? != 0 ]; then
-    echo_error_and_exit "Move of temp $NTNR path to final path FAILED!"
+    failure "Move of temp $NTNR path to final path FAILED!"
 fi
 if [ ! -s "$FINAL_DB_PATH" ]; then
-    echo_error_and_exit "Move of temp $NTNR path to final path succeeded, but final $NTNR path ($FINAL_DB_PATH) does not exist!"
+    failure "Move of temp $NTNR path to final path succeeded, but final $NTNR path ($FINAL_DB_PATH) does not exist!"
 fi
 if [ -s "$TMP_DB_PATH" ]; then
-    echo_error_and_exit "Move of temp $NTNR path to final path succeeded, but temp $NTNR path ($TMP_DB_PATH) still exists!"
+    failure "Move of temp $NTNR path to final path succeeded, but temp $NTNR path ($TMP_DB_PATH) still exists!"
 fi
 echo "Move OK."
 
-# UNLOCK
-unlock
-
-echo "Rsync $NTNR SUCCESS!"
+success
 
