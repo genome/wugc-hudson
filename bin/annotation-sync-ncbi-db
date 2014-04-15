@@ -66,6 +66,9 @@ echo rsync -r -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$N
 if [ $? != 0 ]; then
     echo_error_and_exit "Rysnc of NCBI $NTNR to TGI FAILED!."
 fi
+if [ ! -s $RSYNC_DB_PATH ]; then
+    echo_error_and_exit "Rsync succeded, but synced database does not exist!"
+fi
 echo "Rsync OK."
 
 # BSUB COPY NT/NR TO TEMP PATH
