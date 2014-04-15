@@ -24,7 +24,7 @@ echo "Database: $NTNR"
 BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt'
 RSYNC_BASE_PATH=$BASE_PATH'/.'$NTNR
 RSYNC_DB_PATH=$RSYNC_BASE_PATH'/'$NTNR'.gz'
-TMP_DB_PATH=$RSYNC_BASE_PATH'/__'$NTNR'__.gz'
+TMP_DB_PATH=$RSYNC_BASE_PATH'/__'$NTNR'__.gz' # for copy/move
 FINAL_DB_PATH=$BASE_PATH'/'$NTNR'.gz'
 
 ## LOCKING ##
@@ -32,7 +32,8 @@ LOCK=$RSYNC_BASE_PATH'/lock'
 function lock {
     echo "Acquiring lock: $LOCK"
     if [ -e $LOCK ]; then
-        echo_error_and_exit "Lock exists! Cannot continue!"
+        echo "Lock exists! Cannot continue!"
+        exit
     fi
     # lock
     touch $LOCK
@@ -62,7 +63,7 @@ lock
 
 # RSYNC
 echo "Rsync NCBI $NTNR to $RSYNC_DB_PATH via bsub...";
-echo rsync -r -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$NTNR.gz $RSYNC_DB_PATH
+echo rsync -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$NTNR.gz $RSYNC_DB_PATH
 if [ $? != 0 ]; then
     echo_error_and_exit "Rysnc of NCBI $NTNR to TGI FAILED!."
 fi
@@ -71,7 +72,19 @@ if [ ! -s $RSYNC_DB_PATH ]; then
 fi
 echo "Rsync OK."
 
-# BSUB COPY NT/NR TO TEMP PATH
+# CHECK IF FILE IS THE SAME SIZE [RSYNC USES THIS, COULD USE CHECK SUMS]
+RSYNC_DB_PATH_SIZE=$(stat -c %s $RSYNC_DB_PATH)
+FINAL_DB_PATH_SIZE=$(stat -c %s $FINAL_DB_PATH)
+echo "Check rsynced db path vs. final path..."
+echo "Rsync path size: $RSYNC_DB_PATH_SIZE"
+echo "Final path size: $FINAL_DB_PATH_SIZE"
+if [ $RSYNC_DB_PATH_SIZE == $FINAL_DB_PATH_SIZE ]; then
+    echo "Rsync path and final path are the same size! Skipping copy and move!"
+    echo "Rsync $NTNR SUCCESS!"
+    exit
+fi
+
+# COPY NT/NR TO TEMP PATH
 echo "Copy rsync'd $NTNR to tmp file via bsub..."
 echo "Copy $RSYNC_DB_PATH"
 echo "  to $TMP_DB_PATH"
