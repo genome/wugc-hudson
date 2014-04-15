@@ -1,0 +1,107 @@
+#!/bin/bash -l
+
+# be noisy to debug
+#set -x
+
+echo "Rsync NCBI DB for Annotation group...";
+
+# GET DB
+function echo_error_and_usage_then_exit { # should not be locked
+    echo $1
+    echo "Usage: $0 nt/nr"
+    exit 1
+}
+NTNR=$1
+if [ -z "$NTNR" ]; then
+    echo_error_and_usage_then_exit "No database to sync!"
+fi
+if [ "$NTNR" != 'nt' -a "$NTNR" != 'nr' ]; then
+    echo_error_and_usage_then_exit "Invalid database ($NTNR) to sync!" 
+fi
+echo "Database: $NTNR"
+
+# SET PATHS
+BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt/test'
+#BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt'
+RSYNC_BASE_PATH=$BASE_PATH'/.'$NTNR
+RSYNC_DB_PATH=$RSYNC_BASE_PATH'/'$NTNR'.gz'
+TMP_DB_PATH=$RSYNC_BASE_PATH'/__'$NTNR'__.gz'
+FINAL_DB_PATH=$BASE_PATH'/'$NTNR'.gz'
+
+## LOCKING ##
+LOCK=$RSYNC_BASE_PATH'/lock'
+function lock {
+    echo "Acquiring lock: $LOCK"
+    if [ -e $LOCK ]; then
+        echo_error_and_exit "Lock exists! Cannot continue!"
+    fi
+    # lock
+    touch $LOCK
+    if [ ! -e $LOCK ]; then
+        echo_error_and_exit "Failed to acquire lock!"
+    fi
+    echo "Lock acquired."
+}
+
+function unlock {
+    rm -f $LOCK
+    echo "Lock removed."
+}
+##
+
+## ECHO ERROR AND EXIT ##
+function echo_error_and_exit {
+    echo $1
+    rm $LOCK
+    unlock
+    exit 1
+}
+##
+
+# LOCK
+lock
+
+# RSYNC
+echo "Rsync NCBI $NTNR to $RSYNC_DB_PATH via bsub...";
+cp $RSYNC_BASE_PATH/source_$NTNR.gz $RSYNC_DB_PATH
+#rsync -r -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/nt.gz $RSYNC_DB_PATH
+if [ $? != 0 ]; then
+    echo_error_and_exit "Rysnc of NCBI $NTNR to TGI FAILED!."
+fi
+echo "Rsync OK."
+
+# BSUB COPY NT/NR TO TEMP PATH
+echo "Copy rsync'd $NTNR to tmp file via bsub..."
+echo "Copy $RSYNC_DB_PATH"
+echo "  to $TMP_DB_PATH"
+rm -f $TMP_DB_PATH
+cp $RSYNC_DB_PATH $TMP_DB_PATH
+if [ $! != 0 ]; then
+    echo_error_and_exit "Copy failed!"
+fi
+if [ ! -s "$TMP_DB_PATH" ]; then
+    echo_error_and_exit "Copy of rsyn'd $NTNR to temp successfully completed but temp path does not exist!"
+fi
+echo "Copy OK."
+
+# MOVE NT/NR TO FINAL PATH
+echo "Remove old final path and move temp path to final path..."
+echo "Move $TMP_DB_PATH"
+echo " to  $FINAL_DB_PATH"
+rm -f $FINAL_DB_PATH && mv $TMP_DB_PATH $FINAL_DB_PATH
+if [ $? != 0 ]; then
+    echo_error_and_exit "Move of temp $NTNR path to final path FAILED!"
+fi
+if [ ! -s "$FINAL_DB_PATH" ]; then
+    echo_error_and_exit "Move of temp $NTNR path to final path succeeded, but final $NTNR path ($FINAL_DB_PATH) does not exist!"
+fi
+if [ -s "$TMP_DB_PATH" ]; then
+    echo_error_and_exit "Move of temp $NTNR path to final path succeeded, but temp $NTNR path ($TMP_DB_PATH) still exists!"
+fi
+echo "Move OK."
+
+# UNLOCK
+unlock
+
+echo "Rsync $NTNR SUCCESS!"
+
