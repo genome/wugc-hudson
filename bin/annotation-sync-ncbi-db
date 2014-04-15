@@ -81,6 +81,7 @@ echo "Final path size: $FINAL_DB_PATH_SIZE"
 if [ $RSYNC_DB_PATH_SIZE == $FINAL_DB_PATH_SIZE ]; then
     echo "Rsync path and final path are the same size! Skipping copy and move!"
     echo "Rsync $NTNR SUCCESS!"
+    unlock
     exit
 fi
 
