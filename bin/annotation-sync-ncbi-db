@@ -21,8 +21,12 @@ fi
 echo "Database: $NTNR"
 
 # SET PATHS
+<<<<<<< HEAD
 BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt/test'
 #BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt'
+=======
+BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt'
+>>>>>>> Shell script to run annotation ncbi sync
 RSYNC_BASE_PATH=$BASE_PATH'/.'$NTNR
 RSYNC_DB_PATH=$RSYNC_BASE_PATH'/'$NTNR'.gz'
 TMP_DB_PATH=$RSYNC_BASE_PATH'/__'$NTNR'__.gz'
@@ -63,8 +67,12 @@ lock
 
 # RSYNC
 echo "Rsync NCBI $NTNR to $RSYNC_DB_PATH via bsub...";
+<<<<<<< HEAD
 cp $RSYNC_BASE_PATH/source_$NTNR.gz $RSYNC_DB_PATH
 #rsync -r -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/nt.gz $RSYNC_DB_PATH
+=======
+echo rsync -r -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$NTNR.gz $RSYNC_DB_PATH
+>>>>>>> Shell script to run annotation ncbi sync
 if [ $? != 0 ]; then
     echo_error_and_exit "Rysnc of NCBI $NTNR to TGI FAILED!."
 fi
