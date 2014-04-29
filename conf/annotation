@@ -1,0 +1,48 @@
+#!/bin/bash -l
+
+# PATHS
+export NTNR_BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt'
+
+# NT NR PATHS
+if [ ! -z $NTNR ]; then
+    export NTNR_WORKSPACE_BASE_PATH=$NTNR_BASE_PATH'/.'$NTNR
+    export NTNR_WORKSPACE_DB_PATH=$NTNR_WORKSPACE_BASE_PATH'/'$NTNR'.gz'
+    export NTNR_WORKSPACE_DB_SIZE_PATH=$NTNR_WORKSPACE_BASE_PATH'/'$NTNR'.gz.size'
+    export NTNR_WORKSPACE_TMP_DB_PATH=$NTNR_WORKSPACE_BASE_PATH'/__'$NTNR'__.gz' # for copy/move
+    export NTNR_FINAL_DB_PATH=$NTNR_BASE_PATH'/'$NTNR'.gz'
+fi
+
+# LOCKS
+export NTNR_SYNC_LOCK=$NTNR_WORKSPACE_BASE_PATH'/lock'
+function lock {
+    if [ -z $1 ]; then
+        echo 'No lock given to unlock!'
+        exit 1;
+        
+    fi
+    LOCK=$1
+
+    echo "Acquiring lock: $LOCK"
+    if [ -e $LOCK ]; then
+        failure_do_not_unlock "Lock exists! Cannot continue!"
+    fi
+    # lock
+    touch $LOCK
+    if [ ! -e $LOCK ]; then
+        failure_do_not_unlock "Failed to acquire lock!"
+    fi
+    echo "Lock acquired."
+}
+
+function unlock {
+    if [ -z $1 ]; then
+        echo 'No lock given to unlock!'
+        exit 1;
+    fi
+
+    rm -f $LOCK
+    echo "Lock removed."
+}
+##
+
+
