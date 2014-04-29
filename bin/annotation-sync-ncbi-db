@@ -6,7 +6,7 @@
 echo "Rsync NCBI DB for Annotation group...";
 
 # GET DB
-function echo_error_and_usage_then_exit { # should not be locked
+function echo_error_and_usage_then_exit { # do not unlock
     echo $1
     echo "Usage: $0 nt/nr"
     exit 1
@@ -20,39 +20,14 @@ if [ "$NTNR" != 'nt' -a "$NTNR" != 'nr' ]; then
 fi
 echo "Database: $NTNR"
 
-# SET PATHS
-BASE_PATH='/gscmnt/gc2103/info/annotation/genbank_nrnt'
-RSYNC_BASE_PATH=$BASE_PATH'/.'$NTNR
-RSYNC_DB_PATH=$RSYNC_BASE_PATH'/'$NTNR'.gz'
-TMP_DB_PATH=$RSYNC_BASE_PATH'/__'$NTNR'__.gz' # for copy/move
-FINAL_DB_PATH=$BASE_PATH'/'$NTNR'.gz'
-
-## LOCKING ##
-LOCK=$RSYNC_BASE_PATH'/lock'
-function lock {
-    echo "Acquiring lock: $LOCK"
-    if [ -e $LOCK ]; then
-        failure_do_not_unlock "Lock exists! Cannot continue!"
-    fi
-    # lock
-    touch $LOCK
-    if [ ! -e $LOCK ]; then
-        failure_do_not_unlock "Failed to acquire lock!"
-    fi
-    echo "Lock acquired."
-}
-
-function unlock {
-    rm -f $LOCK
-    echo "Lock removed."
-}
-##
+# SOURCE CONFIGURATION
+source ../conf/annotation
 
 ## EXIT FUNCTIONS ##
 function failure {
     echo $1
     echo "Rsync $NTNR FAILURE!"
-    unlock
+    unlock $NTNR_SYNC_LOCK
     exit 1
 }
 
@@ -67,62 +42,64 @@ function success {
         echo $1
     fi
     echo "Rsync $NTNR SUCCESS!"
-    unlock
+    unlock $NTNR_SYNC_LOCK
     exit
 }
 ##
 
 # LOCK
-lock
+lock $NTNR_SYNC_LOCK
 
 # RSYNC
-echo "Rsync NCBI $NTNR to $RSYNC_DB_PATH via bsub...";
-echo rsync -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$NTNR.gz $RSYNC_DB_PATH
+echo "Rsync NCBI $NTNR to $NTNR_WORKSPACE_DB_PATH via bsub...";
+echo rsync -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$NTNR.gz $NTNR_WORKSPACE_DB_PATH
 if [ $? != 0 ]; then
     failure "Rysnc of NCBI $NTNR to TGI FAILED!."
 fi
-if [ ! -s $RSYNC_DB_PATH ]; then
+if [ ! -s $NTNR_WORKSPACE_DB_PATH ]; then
     failure "Rsync succeded, but synced database does not exist!"
 fi
 echo "Rsync OK."
 
 # CHECK IF FILE IS THE SAME SIZE [RSYNC USES THIS, COULD USE CHECK SUMS]
-RSYNC_DB_PATH_SIZE=$(stat -c %s $RSYNC_DB_PATH)
-FINAL_DB_PATH_SIZE=$(stat -c %s $FINAL_DB_PATH)
+NTNR_WORKSPACE_DB_SIZE=$(stat -c %s $NTNR_WORKSPACE_DB_PATH)
+NTNR_FINAL_DB_SIZE=$(stat -c %s $NTNR_FINAL_DB_PATH)
 echo "Check rsynced db path vs. final path..."
-echo "Rsync path size: $RSYNC_DB_PATH_SIZE"
-echo "Final path size: $FINAL_DB_PATH_SIZE"
-if [ $RSYNC_DB_PATH_SIZE == $FINAL_DB_PATH_SIZE ]; then
+echo "Rsync path size: $NTNR_WORKSPACE_DB_SIZE"
+echo "Final path size: $NTNR_FINAL_DB_SIZE"
+echo $NTNR_WORKSPACE_DB_SIZE_PATH
+echo $NTNR_WORKSPACE_DB_SIZE > $NTNR_WORKSPACE_DB_SIZE_PATH
+if [ $NTNR_WORKSPACE_DB_SIZE == $NTNR_FINAL_DB_SIZE ]; then
     success "Rsync path and final path are the same size! Skipping copy and move!"
 fi
 
 # COPY NT/NR TO TEMP PATH
 echo "Copy rsync'd $NTNR to tmp file via bsub..."
-echo "Copy $RSYNC_DB_PATH"
-echo "  to $TMP_DB_PATH"
-rm -f $TMP_DB_PATH
-cp $RSYNC_DB_PATH $TMP_DB_PATH
+echo "Copy $NTNR_WORKSPACE_DB_PATH"
+echo "  to $NTNR_WORKSPACE_TMP_DB_PATH"
+rm -f $NTNR_WORKSPACE_TMP_DB_PATH
+cp $NTNR_WORKSPACE_DB_PATH $NTNR_WORKSPACE_TMP_DB_PATH
 if [ $! != 0 ]; then
     failure "Copy failed!"
 fi
-if [ ! -s "$TMP_DB_PATH" ]; then
+if [ ! -s "$NTNR_WORKSPACE_TMP_DB_PATH" ]; then
     failure "Copy of rsyn'd $NTNR to temp successfully completed but temp path does not exist!"
 fi
 echo "Copy OK."
 
 # MOVE NT/NR TO FINAL PATH
 echo "Remove old final path and move temp path to final path..."
-echo "Move $TMP_DB_PATH"
-echo " to  $FINAL_DB_PATH"
-rm -f $FINAL_DB_PATH && mv $TMP_DB_PATH $FINAL_DB_PATH
+echo "Move $NTNR_WORKSPACE_TMP_DB_PATH"
+echo " to  $NTNR_FINAL_DB_PATH"
+rm -f $NTNR_FINAL_DB_PATH && mv $NTNR_WORKSPACE_TMP_DB_PATH $NTNR_FINAL_DB_PATH
 if [ $? != 0 ]; then
     failure "Move of temp $NTNR path to final path FAILED!"
 fi
-if [ ! -s "$FINAL_DB_PATH" ]; then
-    failure "Move of temp $NTNR path to final path succeeded, but final $NTNR path ($FINAL_DB_PATH) does not exist!"
+if [ ! -s "$NTNR_FINAL_DB_PATH" ]; then
+    failure "Move of temp $NTNR path to final path succeeded, but final $NTNR path ($NTNR_FINAL_DB_PATH) does not exist!"
 fi
-if [ -s "$TMP_DB_PATH" ]; then
-    failure "Move of temp $NTNR path to final path succeeded, but temp $NTNR path ($TMP_DB_PATH) still exists!"
+if [ -s "$NTNR_WORKSPACE_TMP_DB_PATH" ]; then
+    failure "Move of temp $NTNR path to final path succeeded, but temp $NTNR path ($NTNR_WORKSPACE_TMP_DB_PATH) still exists!"
 fi
 echo "Move OK."
 
