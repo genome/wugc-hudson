@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 function set_lock {
-    if [ -z $1 ]; then
+    if [ -z $1 ] || [ "$1" = '/lock' ]; then
         echo 'No lock to given to set!'
         exit 1
     fi
