@@ -3,7 +3,7 @@
 function set_lock {
     if [ -z $1 ]; then
         echo 'No lock to given to set!'
-        exit 1;
+        exit 1
     fi
     export LOCK=$1
 }
@@ -15,24 +15,26 @@ function lock {
 
     if [ -z $LOCK ]; then
         echo 'No lock set to lock!'
-        exit 1;
+        exit 1
     fi
 
     echo "Acquiring lock: $LOCK"
     if [ -e $LOCK ]; then
-        failure_do_not_unlock "Lock exists! Cannot continue!"
+        echo "Lock exists! Cannot continue!"
+        exit 1
     fi
 
     touch $LOCK
     if [ ! -e $LOCK ]; then
-        failure_do_not_unlock "Failed to acquire lock!"
+        echo "Failed to acquire lock!"
+        exit 1
     fi
 }
 
 function unlock {
     if [ -z $LOCK ]; then
         echo 'No lock set to unlock!'
-        exit 1;
+        exit 1
     fi
 
     echo "Removing lock: $LOCK"
@@ -42,12 +44,12 @@ function unlock {
 function locked {
     if [ -z $LOCK ]; then
         echo 'No lock set to check!'
-        exit 1;
+        exit 1
     fi
 
     if [ -e $LOCK ]; then
-        return 1;
+        return 1
     fi
-    return 0;
+    return 0
 }
 
