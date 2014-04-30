@@ -1,5 +1,12 @@
 #!/bin/bash -l
 
+function was_help_requested {
+    if [ ! -z $1 ] && [ "$1" = '-h' ] ; then
+        echo $USAGE
+        exit
+    fi
+}
+
 function exit_failure {
     if [ ! -z "$1" ]; then
         echo $1
