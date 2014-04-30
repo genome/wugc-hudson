@@ -1,32 +1,41 @@
 #!/bin/bash -l
 
 function lock {
-    if [ -z $1 ]; then
-        echo 'No lock given to unlock!'
+    if [ -z $LOCK ]; then
+        echo 'NO LOCK set!'
         exit 1;
-        
     fi
-    LOCK=$1
 
     echo "Acquiring lock: $LOCK"
     if [ -e $LOCK ]; then
         failure_do_not_unlock "Lock exists! Cannot continue!"
     fi
-    # lock
+
     touch $LOCK
     if [ ! -e $LOCK ]; then
         failure_do_not_unlock "Failed to acquire lock!"
     fi
-    echo "Lock acquired."
 }
 
 function unlock {
-    if [ -z $1 ]; then
-        echo 'No lock given to unlock!'
+    if [ -z $LOCK ]; then
+        echo 'No LOCK setunlock!'
         exit 1;
     fi
 
+    echo "Removing lock: $LOCK"
     rm -f $LOCK
-    echo "Lock removed."
+}
+
+function locked {
+    if [ -z $LOCK ]; then
+        echo 'No LOCK setunlock!'
+        exit 1;
+    fi
+
+    if [ -e $LOCK ]; then
+        return 1;
+    fi
+    return 0;
 }
 
