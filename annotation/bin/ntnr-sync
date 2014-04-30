@@ -10,15 +10,11 @@ export USAGE="Usage: $0 nt/nr"
 
 # VARIABLES
 . ../conf/ntnr-variables
-
-# LOCKING FUNCTIONS
 source ../conf/locking
-
-# EXITING FUNCTIONS
 source ../conf/exiting
 
 # LOCK
-lock
+lock $WORKSPACE_BASE_PATH'/lock'
 
 # RSYNC
 echo "Rsync NCBI $DB to $WORKSPACE_DB_PATH via bsub...";
@@ -37,11 +33,10 @@ FINAL_DB_SIZE=$(stat -c %s $FINAL_DB_PATH)
 echo "Check rsynced db path vs. final path..."
 echo "Rsync path size: $WORKSPACE_DB_SIZE"
 echo "Final path size: $FINAL_DB_SIZE"
-echo $WORKSPACE_DB_SIZE_PATH
-echo $WORKSPACE_DB_SIZE > $WORKSPACE_DB_SIZE_PATH
 if [ $WORKSPACE_DB_SIZE == $FINAL_DB_SIZE ]; then
     exit_success "Rsync path and final path are the same size! Skipping copy and move!"
 fi
+echo $WORKSPACE_DB_SIZE > $WORKSPACE_DB_SIZE_PATH
 
 # COPY NT/NR TO TEMP PATH
 echo "Copy rsync'd $DB to tmp file via bsub..."
