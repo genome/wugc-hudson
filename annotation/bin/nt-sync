@@ -1,3 +1,3 @@
 #!/bin/bash -l
 
-./ntnr-sync nt
+/gsc/scripts/opt/genome/annotation/bin/ntnr-sync nt
