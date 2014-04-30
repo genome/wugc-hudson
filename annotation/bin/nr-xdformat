@@ -1,0 +1,36 @@
+#!/bin/bash -l
+
+# be noisy to debug
+#set -x
+
+echo "XD format NR for Annotation group...";
+
+export DB='nr'
+export USAGE="Usage: $0"
+
+# SETUP
+. ../conf/exiting
+was_help_requested $1
+. ../conf/locking
+. ../conf/ntnr-variables
+
+lock $WORKSPACE_XDFORMAT_PATH'/lock'
+
+CURRENT_VERSION=$(stat -c%Y $FINAL_DB_PATH)
+PREVIOUS_VERSION=$(cat $WORKSPACE_XDFORMAT_VERSION_PATH)
+if [ $CURRENT_VERSION -eq $PREVIOUS_VERSION ]; then
+  exit_success "Database $DB has not been modified since last run of xdformat, skipping!"
+fi
+
+echo "Run xdformat:"
+CMD="/gsc/scripts/bin/xdformat -O5 -p -I -C X $FINAL_DB_PATH"
+echo "$CMD"
+eval $CMD
+if [ $? -ne 0 ]; then
+    exit_failure "Failed to run xdformat!"
+else
+    # SAVE THE VERSION XDFORMAT'D VIA THE LAST TIME MODIFIED FOR THE DB
+    stat -c%Y $FINAL_DB_PATH > $WORKSPACE_XDFORMAT_VERSION_PATH
+    exit_success
+fi
+
