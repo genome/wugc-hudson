@@ -14,29 +14,8 @@ export USAGE="Usage: $0 nt/nr"
 # LOCKING FUNCTIONS
 source ../conf/locking
 
-## EXIT FUNCTIONS ##
-function failure {
-    echo $1
-    echo "Rsync $DB FAILURE!"
-    unlock
-    exit 1
-}
-
-function failure_do_not_unlock {
-    echo $1
-    echo "Rsync $DB FAILURE!"
-    exit 1
-}
-
-function success {
-    if [ ! -z "$1" ]; then
-        echo $1
-    fi
-    echo "Rsync $DB SUCCESS!"
-    unlock
-    exit
-}
-##
+# EXITING FUNCTIONS
+source ../conf/exiting
 
 # LOCK
 lock
@@ -45,10 +24,10 @@ lock
 echo "Rsync NCBI $DB to $WORKSPACE_DB_PATH via bsub...";
 echo rsync -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$DB.gz $WORKSPACE_DB_PATH
 if [ $? != 0 ]; then
-    failure "Rysnc of NCBI $DB to TGI FAILED!."
+    exit_failure "Rysnc of NCBI $DB to TGI FAILED!."
 fi
 if [ ! -s $WORKSPACE_DB_PATH ]; then
-    failure "Rsync succeded, but synced database does not exist!"
+    exit_failure "Rsync succeded, but synced database does not exist!"
 fi
 echo "Rsync OK."
 
@@ -61,7 +40,7 @@ echo "Final path size: $FINAL_DB_SIZE"
 echo $WORKSPACE_DB_SIZE_PATH
 echo $WORKSPACE_DB_SIZE > $WORKSPACE_DB_SIZE_PATH
 if [ $WORKSPACE_DB_SIZE == $FINAL_DB_SIZE ]; then
-    success "Rsync path and final path are the same size! Skipping copy and move!"
+    exit_success "Rsync path and final path are the same size! Skipping copy and move!"
 fi
 
 # COPY NT/NR TO TEMP PATH
@@ -71,10 +50,10 @@ echo "  to $WORKSPACE_TMP_DB_PATH"
 rm -f $WORKSPACE_TMP_DB_PATH
 cp $WORKSPACE_DB_PATH $WORKSPACE_TMP_DB_PATH
 if [ $! != 0 ]; then
-    failure "Copy failed!"
+    exit_failure "Copy failed!"
 fi
 if [ ! -s "$WORKSPACE_TMP_DB_PATH" ]; then
-    failure "Copy of rsyn'd $DB to temp successfully completed but temp path does not exist!"
+    exit_failure "Copy of rsyn'd $DB to temp successfully completed but temp path does not exist!"
 fi
 echo "Copy OK."
 
@@ -84,15 +63,15 @@ echo "Move $WORKSPACE_TMP_DB_PATH"
 echo " to  $FINAL_DB_PATH"
 rm -f $FINAL_DB_PATH && mv $WORKSPACE_TMP_DB_PATH $FINAL_DB_PATH
 if [ $? != 0 ]; then
-    failure "Move of temp $DB path to final path FAILED!"
+    exit_failure "Move of temp $DB path to final path FAILED!"
 fi
 if [ ! -s "$FINAL_DB_PATH" ]; then
-    failure "Move of temp $DB path to final path succeeded, but final $DB path ($FINAL_DB_PATH) does not exist!"
+    exit_failure "Move of temp $DB path to final path succeeded, but final $DB path ($FINAL_DB_PATH) does not exist!"
 fi
 if [ -s "$WORKSPACE_TMP_DB_PATH" ]; then
-    failure "Move of temp $DB path to final path succeeded, but temp $DB path ($WORKSPACE_TMP_DB_PATH) still exists!"
+    exit_failure "Move of temp $DB path to final path succeeded, but temp $DB path ($WORKSPACE_TMP_DB_PATH) still exists!"
 fi
 echo "Move OK."
 
-success
+exit_success
 
