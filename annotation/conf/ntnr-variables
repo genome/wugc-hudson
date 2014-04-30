@@ -21,6 +21,4 @@ export WORKSPACE_DB_SIZE_PATH=$WORKSPACE_BASE_PATH'/'$DB'.gz.size'
 export WORKSPACE_TMP_DB_PATH=$WORKSPACE_BASE_PATH'/__'$DB'__.gz' # for copy/move
 export FINAL_DB_PATH=$BASE_PATH'/'$DB'.gz'
 
-# LOCKS
-export LOCK=$WORKSPACE_BASE_PATH'/lock'
 
