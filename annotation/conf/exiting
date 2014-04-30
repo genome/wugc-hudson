@@ -1,0 +1,20 @@
+#!/bin/bash -l
+
+function exit_failure {
+    if [ ! -z "$1" ]; then
+        echo $1
+    fi
+    echo "FAILURE!"
+    unlock
+    exit 1
+}
+
+function exit_success {
+    if [ ! -z "$1" ]; then
+        echo $1
+    fi
+    echo "SUCCESS!"
+    unlock
+    exit
+}
+
