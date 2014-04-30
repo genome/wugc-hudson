@@ -3,15 +3,19 @@
 # be noisy to debug
 #set -x
 
-echo "Rsync NCBI DB for Annotation group...";
+# FUNCTIONS
+. ../conf/exiting
+. ../conf/locking
 
+echo "Rsync NCBI DB for Annotation group...";
 export DB=$1
 export USAGE="Usage: $0 nt/nr"
 
+# Check HELP
+was_help_requested $DB
+
 # VARIABLES
 . ../conf/ntnr-variables
-source ../conf/locking
-source ../conf/exiting
 
 # LOCK
 lock $WORKSPACE_BASE_PATH'/lock'
