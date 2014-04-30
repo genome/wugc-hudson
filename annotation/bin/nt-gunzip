@@ -1,0 +1,36 @@
+#!/bin/bash -l
+
+# be noisy to debug
+#set -x
+
+echo "Gunzip NT database...";
+
+export DB='nt'
+export USAGE="Usage: $0"
+
+# SETUP
+. ../conf/exiting
+was_help_requested $1
+. ../conf/locking
+. ../conf/ntnr-variables
+
+lock $WORKSPACE_GUNZIP_PATH'/lock'
+
+CURRENT_VERSION=$(stat -c%Y $FINAL_DB_PATH)
+PREVIOUS_VERSION=$(cat $WORKSPACE_GUNZIP_VERSION_PATH)
+if [ $CURRENT_VERSION -eq $PREVIOUS_VERSION ]; then
+    exit_success "Database $DB has not been modified since last run of gunzip, skipping!"
+fi
+
+echo "Run gunzip:"
+CMD="gunzip -c $FINAL_DB_PATH > $DB_PATH_UNZIPPED"
+echo "$CMD"
+eval $CMD
+if [ $? -ne 0 ]; then
+    exit_failure "Failed to run gunzip!"
+else
+    # SAVE THE VERSION GUNZIP'D VIA THE LAST TIME MODIFIED FOR THE DB
+    stat -c%Y $FINAL_DB_PATH > $WORKSPACE_GUNZIP_VERSION_PATH
+    exit_success
+fi
+
