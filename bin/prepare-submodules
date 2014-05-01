@@ -15,27 +15,35 @@ __quiet_git() {
     )
 }
 
-echo -e "\n=> Preparing Submodules..." 1>&2
+__stderr() {
+    echo "$@" 1>&2
+}
+
+__stderr -e "\n=> Preparing Submodules..."
 
 __quiet_git submodule sync "$@"
 
-for submodule in $@; do
-    echo -n "   $submodule..." 1>&2
-    set +o errexit
-    __quiet_git submodule update --init $submodule
-    cd $submodule
+for submodule in "$@"; do
+    __stderr -n "   $submodule: "
+    if git submodule status $submodule | grep -q ^-
+    then
+        __quiet_git submodule update --init $submodule
+        __stderr "OK"
+    else
+        (
+            EXPECTED_HEAD=$(git ls-tree HEAD $submodule | awk '{print $3}')
+            cd $submodule
+            HEAD=$(git rev-parse HEAD)
 
-    if [ "$(git rev-parse --abbrev-ref HEAD)" != "HEAD" ]; then
-        STASH_COUNT=$(git stash list | wc -l)
-        git stash save --include-untracked --quiet
-        NEW_STASH_COUNT=$(git stash list | wc -l)
-        if [ $NEW_STASH_COUNT -gt $STASH_COUNT ]; then
-            echo -n ' stashed changes...' 1>&2
-        fi
+            if ! git status --porcelain | grep -q . \
+                && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
+            then
+                cd - 1> /dev/null
+                __quiet_git submodule update --init $submodule
+                __stderr "OK"
+            else
+                __stderr "WARNING: Not updating '$submodule' submodule because it has local changes!"
+            fi
+        )
     fi
-
-    git reset --hard HEAD > /dev/null
-    git clean -d --force > /dev/null
-    cd - > /dev/null
-    echo ' done' 1>&2
 done
