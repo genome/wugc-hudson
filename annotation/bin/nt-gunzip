@@ -1,27 +1,27 @@
 #!/bin/bash -l
 
-# be noisy to debug
-#set -x
-
-echo "Gunzip NT database...";
-
+# SET DB AND USAGE
 export DB='nt'
 export USAGE="Usage: $0"
 
-# SETUP
-. ../conf/exiting
-was_help_requested $1
-. ../conf/locking
-. ../conf/ntnr-variables
+# INIT
+SCRIPT_BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+. $SCRIPT_BIN/../conf/ntnr-init
+if [ $? -ne 0 ]; then exit; fi
 
+echo "Gunzip NT database...";
+
+# LOCK
 lock $WORKSPACE_GUNZIP_PATH'/lock'
 
+# CHECK IF GUNZIP IS NEEDED
 CURRENT_VERSION=$(stat -c%Y $FINAL_DB_PATH)
 PREVIOUS_VERSION=$(cat $WORKSPACE_GUNZIP_VERSION_PATH)
 if [ $CURRENT_VERSION -eq $PREVIOUS_VERSION ]; then
     exit_success "Database $DB has not been modified since last run of gunzip, skipping!"
 fi
 
+# RUN GUNZIP
 echo "Run gunzip:"
 CMD="gunzip -c $FINAL_DB_PATH > $DB_PATH_UNZIPPED"
 echo "$CMD"

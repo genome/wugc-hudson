@@ -1,21 +1,15 @@
 #!/bin/bash -l
 
-# be noisy to debug
-#set -x
-
-# FUNCTIONS
-. ../conf/exiting
-. ../conf/locking
-
-echo "Rsync NCBI DB for Annotation group...";
+# SET DB AND USAGE
 export DB=$1
 export USAGE="Usage: $0 nt/nr"
 
-# Check HELP
-was_help_requested $DB
+# INIT
+SCRIPT_BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+. $SCRIPT_BIN/../conf/ntnr-init
+if [ $? -ne 0 ]; then exit; fi
 
-# VARIABLES
-. ../conf/ntnr-variables
+echo "Rsync NCBI DB for Annotation group...";
 
 # LOCK
 lock $WORKSPACE_BASE_PATH'/lock'
@@ -32,6 +26,7 @@ fi
 echo "Rsync OK."
 
 # CHECK IF FILE IS THE SAME SIZE [RSYNC USES THIS, COULD USE CHECK SUMS]
+echo stat -c %s $WORKSPACE_DB_PATH
 WORKSPACE_DB_SIZE=$(stat -c %s $WORKSPACE_DB_PATH)
 FINAL_DB_SIZE=$(stat -c %s $FINAL_DB_PATH)
 echo "Check rsynced db path vs. final path..."

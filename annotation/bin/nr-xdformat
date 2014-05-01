@@ -1,27 +1,27 @@
 #!/bin/bash -l
 
-# be noisy to debug
-#set -x
-
-echo "XD format NR for Annotation group...";
-
+# SET DB AND USAGE
 export DB='nr'
 export USAGE="Usage: $0"
 
-# SETUP
-. ../conf/exiting
-was_help_requested $1
-. ../conf/locking
-. ../conf/ntnr-variables
+# INIT
+SCRIPT_BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+. $SCRIPT_BIN/../conf/ntnr-init
+if [ $? -ne 0 ]; then exit; fi
 
+echo "XD format NR for Annotation group...";
+
+# LOCK
 lock $WORKSPACE_XDFORMAT_PATH'/lock'
 
+# CHECK IF XDFORMAT IS NEEDED
 CURRENT_VERSION=$(stat -c%Y $FINAL_DB_PATH)
 PREVIOUS_VERSION=$(cat $WORKSPACE_XDFORMAT_VERSION_PATH)
 if [ $CURRENT_VERSION -eq $PREVIOUS_VERSION ]; then
   exit_success "Database $DB has not been modified since last run of xdformat, skipping!"
 fi
 
+# RUN XDFORMAT
 echo "Run xdformat:"
 CMD="/gsc/scripts/bin/xdformat -O5 -p -I -C X $FINAL_DB_PATH"
 echo "$CMD"

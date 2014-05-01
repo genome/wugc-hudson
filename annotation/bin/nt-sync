@@ -1,3 +1,4 @@
 #!/bin/bash -l
 
-/gsc/scripts/opt/genome/annotation/bin/ntnr-sync nt
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+$SCRIPT_DIR/ntnr-sync nt
