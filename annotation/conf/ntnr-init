@@ -1,5 +1,16 @@
 #!/bin/bash -l
 
+# be noisy to debug
+#set -x
+
+# SETUP
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+. $SCRIPT_DIR/exiting
+if [ $? -ne 0 ]; then exit; fi
+was_help_requested $1
+. $SCRIPT_DIR/locking
+if [ $? -ne 0 ]; then exit; fi
+
 # CHECK DB
 if [ -z $DB ]; then
     echo "No database given!"
@@ -26,3 +37,5 @@ export WORKSPACE_XDFORMAT_VERSION_PATH=$WORKSPACE_BASE_PATH'/xdformat/version'
 export FINAL_DB_PATH=$BASE_PATH'/'$DB'.gz'
 export DB_PATH_UNZIPPED=$BASE_PATH'/'$DB
 
+# LOCK TODO lock automatically, need to figure out what the lock is
+#lock 
