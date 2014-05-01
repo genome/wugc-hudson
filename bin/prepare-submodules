@@ -42,7 +42,13 @@ for submodule in "$@"; do
                 __quiet_git submodule update --init $submodule
                 __stderr "OK"
             else
-                __stderr "WARNING: Not updating '$submodule' submodule because it has local changes!"
+                if test -n "$JENKINS_HOME"
+                then
+                    __stderr "ERROR: Not updating '$submodule' submodule because it has local changes!"
+                    exit 1;
+                else
+                    __stderr "WARNING: Not updating '$submodule' submodule because it has local changes!"
+                fi
             fi
         )
     fi
