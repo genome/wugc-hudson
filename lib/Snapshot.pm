@@ -114,7 +114,7 @@ sub create_snapshot_dir {
     }
 
     for my $dir ('.', @submodules) {
-        for my $subdir ('bin', 'sbin', 'lib', 'etc') {
+        for my $subdir ('bin', 'sbin', 'lib', 'etc', 'libexec') {
             next unless (-d "$dir/$subdir");
             unless ( system("rsync -rltoD --exclude .git --exclude *.t $dir/$subdir/ $snapshot_dir/$subdir/") == 0 ) {
                 die "Error: failed to rsync $dir/$subdir/.\n";
