@@ -1,20 +1,28 @@
 #!/bin/bash
+
 set -o errexit
+
+__quiet_git() {
+    (
+        set +o errexit
+        OUT=$(git "$@" 2>&1)
+        GIT_EXIT=$?
+        if test $GIT_EXIT -ne 0
+        then
+            echo $OUT 1>&2
+            exit $GIT_EXIT
+        fi
+    )
+}
 
 echo -e "\n=> Preparing Submodules..." 1>&2
 
-git submodule sync 2> /dev/null 1> /dev/null
+__quiet_git submodule sync
 
 for submodule in $@; do
     echo -n "   $submodule..." 1>&2
     set +o errexit
-    OUT=$(git submodule update --init $submodule 2>&1)
-    GIT_EXIT=$?
-    set -o errexit
-    if [ $GIT_EXIT -ne 0 ]; then
-        echo $OUT 1>&2
-        exit $GIT_EXIT
-    fi
+    __quiet_git submodule update --init $submodule
     cd $submodule
 
     if [ "$(git rev-parse --abbrev-ref HEAD)" != "HEAD" ]; then
