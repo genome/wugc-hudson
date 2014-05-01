@@ -155,7 +155,7 @@ sub post_create_cleanup {
     my $snapshot_dir = $self->{snapshot_dir};
 
     my @paths = glob("$snapshot_dir/lib/*");
-    @paths = grep { $_ !~ /\/lib\/(?:perl|java)/ } @paths;
+    @paths = grep { $_ !~ /\/lib\/(?:perl|java|bash)/ } @paths;
     for my $path (@paths) {
         (my $new_path = $path) =~ s/$snapshot_dir\/lib\//$snapshot_dir\/lib\/perl\//;
         unless ( system("mv $path $new_path") == 0 ) {
