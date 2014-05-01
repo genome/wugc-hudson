@@ -35,6 +35,8 @@ for submodule in "$@"; do
             cd $submodule
             HEAD=$(git rev-parse HEAD)
 
+            __quiet_git fetch --all
+
             if ! git status --porcelain | grep -q . \
                 && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
             then
