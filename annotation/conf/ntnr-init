@@ -34,9 +34,9 @@ export RSYNC_PATH=$WORKSPACE_PATH'/rsync'
 export RSYNC_DB_PATH=$RSYNC_PATH'/'$DB'.gz'
 export RSYNC_TMP_DB_PATH=$RSYNC_PATH'/__'$DB'__.gz' # for copy/move
 export GUNZIP_PATH=$WORKSPACE_PATH'/gunzip'
-export GUNZIP_VERSION_PATH=$GUNZIP_VERSION_PATH'/gunzip/version'
+export GUNZIP_VERSION_PATH=$GUNZIP_PATH'/version'
 export XDFORMAT_PATH=$WORKSPACE_PATH'/xdformat'
-export XDFORMAT_VERSION_PATH=$XDFORMAT_PATH'/xdformat/version'
+export XDFORMAT_VERSION_PATH=$XDFORMAT_PATH'/version'
 
 # LOCK TODO lock automatically, need to figure out what the lock is
 #lock 
