@@ -12,58 +12,59 @@ if [ $? -ne 0 ]; then exit; fi
 echo "Rsync NCBI DB for Annotation group...";
 
 # LOCK
-lock $WORKSPACE_BASE_PATH'/lock'
+lock $RSYNC_PATH'/lock'
 
 # RSYNC
-echo "Rsync NCBI $DB to $WORKSPACE_DB_PATH via bsub...";
-echo rsync -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$DB.gz $WORKSPACE_DB_PATH
+echo "Rsync NCBI $DB to $RSYNC_DB_PATH via bsub...";
+echo rsync -v --timeout=7200 rsync://rsync.ncbi.nlm.nih.gov/blast/db/FASTA/$DB.gz $RSYNC_DB_PATH
 if [ $? != 0 ]; then
     exit_failure "Rysnc of NCBI $DB to TGI FAILED!."
 fi
-if [ ! -s $WORKSPACE_DB_PATH ]; then
+if [ ! -s $RSYNC_DB_PATH ]; then
     exit_failure "Rsync succeded, but synced database does not exist!"
 fi
 echo "Rsync OK."
 
 # CHECK IF FILE IS THE SAME SIZE [RSYNC USES THIS, COULD USE CHECK SUMS]
-echo stat -c %s $WORKSPACE_DB_PATH
-WORKSPACE_DB_SIZE=$(stat -c %s $WORKSPACE_DB_PATH)
+echo stat -c %s $RSYNC_DB_PATH
+RSYNC_DB_SIZE=$(stat -c %s $RSYNC_DB_PATH)
 FINAL_DB_SIZE=$(stat -c %s $FINAL_DB_PATH)
 echo "Check rsynced db path vs. final path..."
-echo "Rsync path size: $WORKSPACE_DB_SIZE"
+echo "Rsync path size: $RSYNC_DB_SIZE"
 echo "Final path size: $FINAL_DB_SIZE"
-if [ $WORKSPACE_DB_SIZE == $FINAL_DB_SIZE ]; then
+if [ $RSYNC_DB_SIZE == $FINAL_DB_SIZE ]; then
     exit_success "Rsync path and final path are the same size! Skipping copy and move!"
 fi
-echo $WORKSPACE_DB_SIZE > $WORKSPACE_DB_SIZE_PATH
+exit
+echo $RSYNC_DB_SIZE > $RSYNC_DB_SIZE_PATH
 
 # COPY NT/NR TO TEMP PATH
 echo "Copy rsync'd $DB to tmp file via bsub..."
-echo "Copy $WORKSPACE_DB_PATH"
-echo "  to $WORKSPACE_TMP_DB_PATH"
-rm -f $WORKSPACE_TMP_DB_PATH
-cp $WORKSPACE_DB_PATH $WORKSPACE_TMP_DB_PATH
+echo "Copy $RSYNC_DB_PATH"
+echo "  to $RSYNC_TMP_DB_PATH"
+rm -f $RSYNC_TMP_DB_PATH
+cp $RSYNC_DB_PATH $RSYNC_TMP_DB_PATH
 if [ $! != 0 ]; then
     exit_failure "Copy failed!"
 fi
-if [ ! -s "$WORKSPACE_TMP_DB_PATH" ]; then
+if [ ! -s "$RSYNC_TMP_DB_PATH" ]; then
     exit_failure "Copy of rsyn'd $DB to temp successfully completed but temp path does not exist!"
 fi
 echo "Copy OK."
 
 # MOVE NT/NR TO FINAL PATH
 echo "Remove old final path and move temp path to final path..."
-echo "Move $WORKSPACE_TMP_DB_PATH"
+echo "Move $RSYNC_TMP_DB_PATH"
 echo " to  $FINAL_DB_PATH"
-rm -f $FINAL_DB_PATH && mv $WORKSPACE_TMP_DB_PATH $FINAL_DB_PATH
+rm -f $FINAL_DB_PATH && mv $RSYNC_TMP_DB_PATH $FINAL_DB_PATH
 if [ $? != 0 ]; then
     exit_failure "Move of temp $DB path to final path FAILED!"
 fi
 if [ ! -s "$FINAL_DB_PATH" ]; then
     exit_failure "Move of temp $DB path to final path succeeded, but final $DB path ($FINAL_DB_PATH) does not exist!"
 fi
-if [ -s "$WORKSPACE_TMP_DB_PATH" ]; then
-    exit_failure "Move of temp $DB path to final path succeeded, but temp $DB path ($WORKSPACE_TMP_DB_PATH) still exists!"
+if [ -s "$RSYNC_TMP_DB_PATH" ]; then
+    exit_failure "Move of temp $DB path to final path succeeded, but temp $DB path ($RSYNC_TMP_DB_PATH) still exists!"
 fi
 echo "Move OK."
 
