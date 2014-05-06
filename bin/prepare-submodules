@@ -58,4 +58,7 @@ main() {
     done
 }
 
-main "$@"
+(
+    cd "$(git rev-parse --show-cdup)"
+    main "$@"
+)
