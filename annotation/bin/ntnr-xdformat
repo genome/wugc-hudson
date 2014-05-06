@@ -9,7 +9,7 @@ SCRIPT_BIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $SCRIPT_BIN/../conf/ntnr-init
 if [ $? -ne 0 ]; then exit; fi
 
-echo "XD format NR for Annotation group...";
+echo "XD format $DB for Annotation group...";
 
 # LOCK
 lock $XDFORMAT_PATH'/lock'
