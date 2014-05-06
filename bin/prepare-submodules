@@ -36,7 +36,10 @@ main() {
                 cd $submodule
                 HEAD=$(git rev-parse HEAD)
 
-                __quiet_git fetch --all
+                if ! git cat-file -e $EXPECTED_HEAD
+                then
+                    __quiet_git fetch --all
+                fi
 
                 if ! git status --porcelain | grep -q . \
                     && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
