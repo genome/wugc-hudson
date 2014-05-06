@@ -19,39 +19,43 @@ __stderr() {
     echo "$@" 1>&2
 }
 
-__stderr -e "\n=> Preparing Submodules..."
+main() {
+    __stderr -e "\n=> Preparing Submodules..."
 
-__quiet_git submodule sync "$@"
+    __quiet_git submodule sync "$@"
 
-for submodule in "$@"; do
-    __stderr -n "   $submodule: "
-    if git submodule status $submodule | grep -q ^-
-    then
-        __quiet_git submodule update --init $submodule
-        __stderr "OK"
-    else
-        (
-            EXPECTED_HEAD=$(git ls-tree HEAD $submodule | awk '{print $3}')
-            cd $submodule
-            HEAD=$(git rev-parse HEAD)
+    for submodule in "$@"; do
+        __stderr -n "   $submodule: "
+        if git submodule status $submodule | grep -q ^-
+        then
+            __quiet_git submodule update --init $submodule
+            __stderr "OK"
+        else
+            (
+                EXPECTED_HEAD=$(git ls-tree HEAD $submodule | awk '{print $3}')
+                cd $submodule
+                HEAD=$(git rev-parse HEAD)
 
-            __quiet_git fetch --all
+                __quiet_git fetch --all
 
-            if ! git status --porcelain | grep -q . \
-                && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
-            then
-                cd - 1> /dev/null
-                __quiet_git submodule update --init $submodule
-                __stderr "OK"
-            else
-                if test -n "$JENKINS_HOME"
+                if ! git status --porcelain | grep -q . \
+                    && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
                 then
-                    __stderr "ERROR: Not updating '$submodule' submodule because it has local changes!"
-                    exit 1;
+                    cd - 1> /dev/null
+                    __quiet_git submodule update --init $submodule
+                    __stderr "OK"
                 else
-                    __stderr "WARNING: Not updating '$submodule' submodule because it has local changes!"
+                    if test -n "$JENKINS_HOME"
+                    then
+                        __stderr "ERROR: Not updating '$submodule' submodule because it has local changes!"
+                        exit 1;
+                    else
+                        __stderr "WARNING: Not updating '$submodule' submodule because it has local changes!"
+                    fi
                 fi
-            fi
-        )
-    fi
-done
+            )
+        fi
+    done
+}
+
+main "$@"
