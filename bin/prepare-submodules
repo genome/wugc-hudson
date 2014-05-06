@@ -5,11 +5,11 @@ set -o errexit
 __quiet_git() {
     (
         set +o errexit
-        OUT=$(git "$@" 2>&1)
+        OUT="$(git "$@" 2>&1)"
         GIT_EXIT=$?
         if test $GIT_EXIT -ne 0
         then
-            echo $OUT 1>&2
+            echo -e "$OUT" 1>&2
             exit $GIT_EXIT
         fi
     )
