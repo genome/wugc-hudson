@@ -22,10 +22,14 @@ if [ $CURRENT_VERSION -eq $PREVIOUS_VERSION ]; then
 fi
 
 # RUN XDFORMAT
-echo "Run xdformat:"
-#CMD="/gsc/scripts/bin/xdformat -O5 -p -I -C X $FINAL_DB_PATH"
+echo "RUNNING xdformat:"
+if [ "$DB" == "nr" ]; then
+    CMD="/gsc/scripts/bin/xdformat -O5 -p -I -C X $FINAL_DB_PATH"
+else
+    CMD="/gsc/scripts/bin/xdformat -n $FINAL_DB_PATH -I"
+fi
 echo "$CMD"
-eval $CMD
+#eval $CMD
 if [ $? -ne 0 ]; then
     exit_failure "Failed to run xdformat!"
 else
