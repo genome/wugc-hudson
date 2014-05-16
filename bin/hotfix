@@ -121,7 +121,7 @@ for my $argv (@ARGV) {
         $git_repo_name = 'unknown';
     }
 
-    my $range = "$git_hash^..$git_hash";
+    my $range = ($git_hash =~ /\.\./) ? $git_hash : "$git_hash^..$git_hash";
     my @files = grep { $_ !~ /\.t$/ } $git_repo->run('diff', '--name-only', $range);
     chomp @files;
     unless (@files) {
