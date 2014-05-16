@@ -129,13 +129,9 @@ for my $argv (@ARGV) {
         exit(1);
     }
 
-    my ($patch_file) = $git_repo->run('format-patch', '--output-directory', $new_path, $range, '--', @files);
-    unless (-f $patch_file) {
-        print "ERROR: patch file does not exist: $patch_file\n";
-        exit(1);
-    }
-    unless (-s $patch_file) {
-        print "ERROR: patch file has no size: $patch_file\n";
+    my @patch_files = $git_repo->run('format-patch', '--output-directory', $new_path, $range, '--', @files);
+    unless (@patch_files) {
+        print "ERROR: no patches to apply for $git_hash\n";
         exit(1);
     }
 
@@ -148,13 +144,15 @@ for my $argv (@ARGV) {
 
     # fix patch path since we move UR and Workflow's lib -> lib/perl
     if ( $git_repo_name !~ /genome/ ) {
-        system("sed -r -e 's/(---|\\+\\+\\+)\\ (a|b)\\/lib\\//\\1\\ \\2\\/lib\\/perl\\//' -i $patch_file");
+        system('sed', '-r', '-e', 's/(---|\\+\\+\\+)\\ (a|b)\\/lib\\//\\1\\ \\2\\/lib\\/perl\\//', '-i', @patch_files);
     }
 
-    unless(system("patch -p 1 -d $new_path -i $patch_file") == 0) {
-        print "ERROR: Failed to patch $new_path!\n";
-        print "You may want to remove $new_path.\n";
-        exit(1);
+    for my $patch_file (@patch_files) {
+        unless(system("patch -p 1 -d $new_path -i $patch_file") == 0) {
+            print "ERROR: Failed to patch $new_path!\n";
+            print "You may want to remove $new_path.\n";
+            exit(1);
+        }
     }
 }
 
