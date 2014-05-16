@@ -145,6 +145,10 @@ for my $argv (@ARGV) {
     # fix patch path since we move UR and Workflow's lib -> lib/perl
     if ( $git_repo_name !~ /genome/ ) {
         system('sed', '-r', '-e', 's/(---|\\+\\+\\+)\\ (a|b)\\/lib\\//\\1\\ \\2\\/lib\\/perl\\//', '-i', @patch_files);
+        unless ($? == 0) {
+            print "ERROR: failed to transform patches.\n";
+            exit(1);
+        }
     }
 
     for my $patch_file (@patch_files) {
