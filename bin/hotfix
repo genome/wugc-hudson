@@ -33,7 +33,7 @@ if ( @ARGV < 3 || $help) {
 
 unless (getpwuid($<) eq 'apipe-tester') {
     print "ERROR: please create hotfix snapshots as apipe-tester.\n";
-    exit;
+    exit(1);
 }
 
 
@@ -56,11 +56,11 @@ $old_name =~ s/.*\///;
 my $git_repo = shift @ARGV;
 unless (-d $git_repo) {
     print "ERROR: please specify a git repo as second argument. '$git_repo' is not a directory.\n";
-    exit;
+    exit(1);
 }
 unless (@ARGV) {
     print "ERROR: please specify git hashes as third+ arguments\n";
-    exit;
+    exit(1);
 }
 
 $git_repo = Git::Repository->new(work_tree => $git_repo);
@@ -78,12 +78,12 @@ elsif ($old_name =~ /genome-\d+-fix(\d+)/) {
 
 unless ( -d $old_path ) {
     print "ERROR: old_path does not exists: $old_path\n";
-    exit;
+    exit(1);
 }
 
 if ( -d $new_path ) {
     print "ERROR: new_path already exists: $new_path\n";
-    exit;
+    exit(1);
 }
 
 print "Old: $old_path\nNew: $new_path\n";
@@ -92,7 +92,7 @@ print "Copying $old_path to $new_path...\n";
 unless(system("cp -a $old_path $new_path") == 0) {
     print "ERROR: Failed to 'cp -a $old_path $new_path'\n";
     print "You may want to remove $new_path.\n";
-    exit;
+    exit(1);
 }
 
 my @hotfixes_footer;
@@ -126,17 +126,17 @@ for my $argv (@ARGV) {
     chomp @files;
     unless (@files) {
         print "ERROR: no files in commit: $git_hash\n";
-        exit;
+        exit(1);
     }
 
     my ($patch_file) = $git_repo->run('format-patch', '--output-directory', $new_path, $range, '--', @files);
     unless (-f $patch_file) {
         print "ERROR: patch file does not exist: $patch_file\n";
-        exit;
+        exit(1);
     }
     unless (-s $patch_file) {
         print "ERROR: patch file has no size: $patch_file\n";
-        exit;
+        exit(1);
     }
 
     my $hotfix_msg = $git_repo->run('show', '--oneline', '--name-only', $git_hash);
@@ -154,7 +154,7 @@ for my $argv (@ARGV) {
     unless(system("patch -p 1 -d $new_path -i $patch_file") == 0) {
         print "ERROR: Failed to patch $new_path!\n";
         print "You may want to remove $new_path.\n";
-        exit;
+        exit(1);
     }
 }
 
