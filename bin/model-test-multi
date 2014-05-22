@@ -52,25 +52,8 @@ sub log_environment {
     print "\n";
 }
 
-sub flow_git_revisions {
-    my $core_rev = $ENV{FLOW_CORE_GIT_REVISION}
-        || die("FLOW_CORE_GIT_REVISION is unset");
-    my $site_rev = $ENV{FLOW_SITE_GIT_REVISION}
-        || die("FLOW_SITE_GIT_REVISION is unset");
-    my $workflow_rev = $ENV{FLOW_WORKFLOW_GIT_REVISION}
-        || die("FLOW_WORKFLOW_GIT_REVISION is unset");
-
-    return sprintf("FLOW-CORE=%s:FLOW-SITE=%s:FLOW-WORKFLOW=%s",
-        $core_rev, $site_rev, $workflow_rev);
-}
-
 sub test_version {
-    my $test_version = Revision->test_version();
-    if ($ENV{WF_USE_FLOW}) {
-        $test_version = "$test_version:" . flow_git_revisions();
-    }
-
-    return $test_version;
+    return Revision->test_version();
 }
 
 sub model_subname {
@@ -149,17 +132,15 @@ sub send_mail_with_topic {
     my $topic = shift;
     my @extra_body = @_;
 
-    unless ($ENV{WF_USE_FLOW}) {
-        my ($to, $cc) = get_to_and_cc();
+    my ($to, $cc) = get_to_and_cc();
 
-        Library::send_mail(
-            from => 'apipe-tester@genome.wustl.edu',
-            to => Library::users_to_addresses(@$to),
-            cc => Library::users_to_addresses(@$cc),
-            subject => mail_subject($topic),
-            body => mail_body(@extra_body),
-        );
-    }
+    Library::send_mail(
+        from => 'apipe-tester@genome.wustl.edu',
+        to => Library::users_to_addresses(@$to),
+        cc => Library::users_to_addresses(@$cc),
+        subject => mail_subject($topic),
+        body => mail_body(@extra_body),
+    );
 }
 
 sub mail_subject {
