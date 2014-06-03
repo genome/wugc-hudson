@@ -32,15 +32,6 @@ unless (system("git fetch") == 0) {
 unless (system("git rebase $GIT_BRANCH") == 0) {
     die "Failed to rebase on $GIT_BRANCH";
 }
-my @log = qx(git log -p $GIT_BRANCH..HEAD);
-if (@log) {
-    print @log;
-    unless (system("git push origin $GIT_LOCAL_BRANCH") == 0) {
-        die "Failed to push changes";
-    }
-} else {
-    print "No changes to push.\n";
-}
 
 sub update_submodule {
     my $submodule = shift || die;
