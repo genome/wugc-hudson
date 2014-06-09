@@ -31,6 +31,15 @@ for my $bjob (@bjobs) {
     }
 
     my $elapsed_seconds = $now - $submit_time;
+
+    # Time::Piece accounts for time zone in difference but provides no means for
+    # us to tell it that $submit_time is in local time zone (strptime ignored
+    # timezone).  You could reach into object to turn on the "is_local" bit but
+    # that could change.
+    if ($now->tzoffset != $submit_time->tzoffset && $submit_time->tzoffset == 0) {
+        $elapsed_seconds += $now->tzoffset;
+    }
+
     if ($elapsed_seconds >= $max_seconds) {
         $table->add($job_id, $elapsed_seconds, $status, $job_queue, $job_name);
     }
