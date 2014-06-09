@@ -16,7 +16,7 @@ chomp @bjobs;
 my $dt_pattern = '%y/%m/%d-%H:%M:%S';
 my $now = Time::Piece->localtime();
 
-my $table = Text::Table->new('Job ID', 'Age', 'Queue', 'Job Name');
+my $table = Text::Table->new('ID', 'Age', 'Queue', 'Name');
 my @found;
 for my $bjob (@bjobs) {
     my ($status, $submit_time, $job_id, $job_queue, $job_name) = split(/\t/, $bjob);
