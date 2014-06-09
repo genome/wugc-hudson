@@ -17,7 +17,7 @@ my $dt2 = $dt_format->parse_datetime($time2);
 my $delta = $dt1->delta_ms($dt2);
 
 if ($delta->hours > 24 || $delta->days || $delta->months || $delta->weeks) {
-    print "ERROR: This is not accurate for times spanning days.\n";
+    print STDERR "ERROR: This is not accurate for times spanning days.\n";
     exit 1;
 }
 
