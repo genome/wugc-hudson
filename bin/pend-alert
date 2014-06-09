@@ -5,10 +5,15 @@ use warnings;
 
 use Data::Dumper;
 use IPC::System::Simple qw(capture);
+use Scalar::Util qw(looks_like_number);
 use Time::Piece qw();
 use Text::Table qw();
 
 my $max_seconds = shift @ARGV;
+unless (looks_like_number($max_seconds)) {
+    print STDERR "not a number: $max_seconds\n";
+    exit 1;
+}
 
 my @bjobs = capture('bjobsw', '-nsTjqJ', @ARGV);
 chomp @bjobs;
