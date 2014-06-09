@@ -4,8 +4,9 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use DateTime;
 use IPC::System::Simple qw(capture);
+use Time::Piece qw();
+use Text::Table qw();
 
 my $max_seconds = shift @ARGV;
 
@@ -13,23 +14,32 @@ my @bjobs = capture('bjobsw', '-nsTjqJ', @ARGV);
 chomp @bjobs;
 
 my $dt_pattern = '%y/%m/%d-%H:%M:%S';
-my $now = DateTime->now(time_zone => 'America/Chicago');
+my $now = Time::Piece->localtime();
 
+my $table = Text::Table->new('Job ID', 'Age', 'Queue', 'Job Name');
 my @found;
 for my $bjob (@bjobs) {
     my ($status, $submit_time, $job_id, $job_queue, $job_name) = split(/\t/, $bjob);
     next if $status eq 'RUN';
     next if $submit_time eq '-';
-    my $elapsed_seconds = capture('delta_s', $dt_pattern, '14/' . $submit_time, $now->strftime($dt_pattern));
-    chomp $elapsed_seconds;
+
+    # LSF doesn't show year
+    $submit_time = $now->yy . '/' . $submit_time;
+    $submit_time = Time::Piece->strptime($submit_time, $dt_pattern);
+    if ($submit_time > $now) {
+        $submit_time->add_years(-1);
+    }
+
+    my $elapsed_seconds = $now - $submit_time;
     if ($elapsed_seconds >= $max_seconds) {
-        push @found, join("\t", $job_id, $job_queue, $job_name);
+        $table->add($job_id, $elapsed_seconds, $job_queue, $job_name);
     }
 }
 
-if (@found) {
-    print join("\n", "Found non-running jobs older than $max_seconds seconds:", @found), "\n";
-    print "\n\nPlease check on these jobs and see if they can be expedited.  For example, if they are in the alignment-pd queue you might try moving them to the apipe queue.\n";
+if ($table->body_height) {
+    print join("\n", "Found non-running jobs older than $max_seconds seconds."), "\n\n";
+    print $table;
+    print "\nPlease check on these jobs and see if they can be expedited.  For example, if they are in the alignment-pd queue you might try moving them to the apipe queue.\n";
     exit 1;
 } elsif (@bjobs) {
     print "No non-running jobs older than $max_seconds seconds.\n";
