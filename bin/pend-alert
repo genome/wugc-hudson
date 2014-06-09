@@ -16,7 +16,7 @@ chomp @bjobs;
 my $dt_pattern = '%y/%m/%d-%H:%M:%S';
 my $now = Time::Piece->localtime();
 
-my $table = Text::Table->new('ID', 'Age', 'Queue', 'Name');
+my $table = Text::Table->new('ID', 'Age', 'Status', 'Queue', 'Name');
 my @found;
 for my $bjob (@bjobs) {
     my ($status, $submit_time, $job_id, $job_queue, $job_name) = split(/\t/, $bjob);
@@ -32,7 +32,7 @@ for my $bjob (@bjobs) {
 
     my $elapsed_seconds = $now - $submit_time;
     if ($elapsed_seconds >= $max_seconds) {
-        $table->add($job_id, $elapsed_seconds, $job_queue, $job_name);
+        $table->add($job_id, $elapsed_seconds, $status, $job_queue, $job_name);
     }
 }
 
