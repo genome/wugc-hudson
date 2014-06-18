@@ -35,7 +35,6 @@ echo "Final path size: $FINAL_DB_SIZE"
 if [ $RSYNC_DB_SIZE == $FINAL_DB_SIZE ]; then
     exit_success "Rsync path and final path are the same size! Skipping copy and move!"
 fi
-echo $RSYNC_DB_SIZE > $RSYNC_DB_SIZE_PATH
 
 # COPY NT/NR TO TEMP PATH
 echo "Copy rsync'd $DB to tmp file via bsub..."
