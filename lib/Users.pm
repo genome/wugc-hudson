@@ -11,6 +11,7 @@ sub apipe_ignore {
     return qw(
         adukes
         ccarey
+        cfederer
         coliver
         eclark
         edemello
