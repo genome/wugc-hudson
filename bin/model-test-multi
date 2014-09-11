@@ -53,7 +53,8 @@ sub log_environment {
 }
 
 sub test_version {
-    return Revision->test_version();
+    my $prefix = $ENV{TEST_VERSION_PREFIX} || '';
+    return $prefix . Revision->test_version();
 }
 
 sub model_subname {
