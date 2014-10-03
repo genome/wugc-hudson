@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ -z "$PARENT_WORKSPACE" ]; then
+  echo "PARENT_WORKSPACE is not defined. Aborting!"
+  exit 255
+fi
+
+if [ ! -d "$PARENT_WORKSPACE" ]; then
+  echo "PARENT_WORKSPACE is not a directory. Aborting!"
+  exit 255
+fi
+
+if [ -z "$TEST_SPEC" ]; then
+    echo "TEST_SPEC is not defined. Aborting!"
+    exit 255
+fi
+
+if [ "${TEST_SPEC:0:1}" == "#" ]; then
+    echo "TEST_SPEC ($TEST_SPEC) is commented out. Skipping."
+    exit
+fi
+
+if [ "${TEST_SPEC:0:1}" == "!" ]; then
+    echo "TEST_SPEC ($TEST_SPEC) is blocked out. Aborting!"
+    exit 255
+fi
