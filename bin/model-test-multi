@@ -204,7 +204,7 @@ sub get_initial_build {
 
     my $build =  Genome::Model::Build->get(
         model_name => model()->name,
-        run_by => 'apipe-tester',
+        run_by => Genome::Sys->username,
         software_revision => test_version(),
         status => ['Scheduled', 'Running', 'Succeeded'],
     );
