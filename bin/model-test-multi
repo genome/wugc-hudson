@@ -163,10 +163,14 @@ sub mail_body {
 
 
 sub get_to_and_cc {
-    my $build_type = build_type();
-    my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();
-    my @cc = Users::apipe();
-    return \@to, \@cc;
+    if (Genome::Sys->username eq 'apipe-tester') {
+        my $build_type = build_type();
+        my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();
+        my @cc = Users::apipe();
+        return \@to, \@cc;
+    } else {
+        return [ Genome::Sys->current_user->email ], [];
+    }
 }
 
 sub create_build {
