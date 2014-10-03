@@ -5,6 +5,7 @@ use Revision;
 use Library;
 use Users;
 use JenkinsData;
+use Memoize qw(memoize);
 
 use strict;
 use warnings;
@@ -88,6 +89,7 @@ sub set_genome_software_result_test_name {
     }
 }
 
+memoize('model');
 sub model {
     my $model_name = sprintf('apipe-test-%s', model_subname());
     my $model = Genome::Model->get(name => $model_name);
