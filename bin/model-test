@@ -15,10 +15,10 @@ then
     if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
         export WORKSPACE="$(git rev-parse --show-toplevel)"
+    else
+        echo "ERROR: must either set WORKSPACE or run from a Genome repo" 1>&2
+        exit 1
     fi
-else
-    echo "ERROR: must either set WORKSPACE or run from a Genome repo" 1>&2
-    exit 1
 fi
 
 if test -z "$WF_USE_FLOW"
