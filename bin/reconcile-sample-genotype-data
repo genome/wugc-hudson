@@ -1,0 +1,17 @@
+#!/bin/bash -l
+
+set -x
+
+export UR_COMMAND_DUMP_STATUS_MESSAGES=1
+export UR_DBI_MONITOR_SQL=1
+
+bsub -Is -q apipe-ci -R "select[mem>1000] rusage[mem=1000]" -M 1000000 genome-perl -e "use Genome; Genome::Site::TGI::ReconcileSampleGenotypeData->execute" && touch /gsc/var/tmp/reconcile_samplegenotype_data
+EXIT_CODE=$?
+
+if [ $EXIT_CODE == 0 ]; then
+    echo 'Reconcile Sample Genotype Data SUCCESS'
+else
+    echo 'Reconcile Sample Genotype Data FAILURE'
+fi
+
+exit $EXIT_CODE
