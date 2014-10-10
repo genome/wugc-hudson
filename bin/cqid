@@ -1,0 +1,16 @@
+#!/bin/bash -l
+
+# be noisy
+set -x
+
+export UR_NO_REQUIRE_USER_VERIFY=1
+bsub -Is -q apipe-ci -R "select[mem>16000] rusage[mem=16000]" -M 16000000 genome config configure-queued-instrument-data "$@"
+CQID_EXIT_CODE=$?
+
+if [ $CQID_EXIT_CODE == 0 ]; then
+    echo 'CQID SUCCESS'
+else
+    echo 'CQID FAILURE'
+fi
+
+exit $CQID_EXIT_CODE
