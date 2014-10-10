@@ -1,0 +1,16 @@
+#!/bin/bash -l
+
+# be noisy
+set -x
+
+# The genome-sync command is ONLY in the apipe-ci bin here: /gsc/scripts/opt/genome/bin
+bsub -Is -q apipe-ci -R "select[mem>16000] rusage[mem=16000]" -M 16000000 /gsc/scripts/opt/genome/bin/genome-sync sync-lims-and-genome --expunge
+SYNC_EXIT_CODE=$?
+
+if [ $SYNC_EXIT_CODE == 0 ]; then
+    echo 'Sync LIMS AND Genome SUCCESS'
+else
+    echo 'Sync LIMS AND Genome FAILURE'
+fi
+
+exit $SYNC_EXIT_CODE
