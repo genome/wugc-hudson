@@ -21,6 +21,6 @@ then
     do
         EMAIL="${EMAIL}  $JOB\n"
     done
-    echo -e "$EMAIL" | mail -s "Critical apipe-ci Jobs Disabled" nnutter@genome.wustl.edu
+    echo -e "$EMAIL" | mail -s "Critical apipe-ci Jobs Disabled" jeldred@genome.wustl.edu
 fi
 
