@@ -1,0 +1,4 @@
+#!/bin/bash -l
+
+set -o pipefail
+/usr/local/bin/apipe-cron genome model services list-build-queue --max 50 | xargs --max-args=1 --max-procs=2 --no-run-if-empty /usr/local/bin/apipe-cron /usr/local/bin/sudo-genome-build-start --force --unstartable-ok
