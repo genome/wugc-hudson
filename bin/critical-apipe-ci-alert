@@ -1,0 +1,26 @@
+#!/bin/bash -l
+
+JOBS=(
+    "CQID"
+    "Reconcile%20Misc%20Updates"
+    "Copy%20New%20Entities%20and%20Remove%20Expunged%20Instrument%20Data"
+    "Sync%20LIMS%20and%20Genome"
+)
+for JOB in "${JOBS[@]}"
+do
+    if ! curl --silent --insecure --location "https://apipe-ci.gsc.wustl.edu/view/All/job/${JOB}/api/xml?xpath=freeStyleProject/buildable" | grep -q true
+    then
+        FAILED=("${FAILED[@]}" "$JOB")
+    fi
+done
+
+if test "${#FAILED[@]}" -gt 0
+then
+    EMAIL="Disabled Jobs:\n"
+    for JOB in "${FAILED[@]}"
+    do
+        EMAIL="${EMAIL}  $JOB\n"
+    done
+    echo -e "$EMAIL" | mail -s "Critical apipe-ci Jobs Disabled" nnutter@genome.wustl.edu
+fi
+
