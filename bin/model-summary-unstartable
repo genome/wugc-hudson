@@ -1,0 +1,3 @@
+#!/bin/bash -l
+
+bsub -Is -q apipe-ci genome model admin model-summary --auto --hide-statuses Running,Scheduled,Requested 'builds.status=Unstartable,builds.run_by=apipe-builder,subclass_name!=Genome::Model::ImportedReferenceSequence'
