@@ -1,28 +1,43 @@
 #!/bin/bash
 
 set -o nounset
+set -o errexit
 
 echo -e "\n=> Symlinking Perl Interpreter..." 1>&2
 
 PERL_VERSION="$1"
 
-[[ -d $WORKSPACE/bin ]] || mkdir $WORKSPACE/bin
-
-[[ -f "genome-perl$PERL_VERSION" ]] && ln -nsf genome-perl$PERL_VERSION $WORKSPACE/bin/genome-perl
+if ! test -d "$WORKSPACE/bin"
+then
+    mkdir "$WORKSPACE/bin"
+fi
 
 case $PERL_VERSION in
     5.8)
-        ln -nsf /gsc/bin/perl $WORKSPACE/bin/perl
-        ln -nsf /gsc/bin/prove $WORKSPACE/bin/prove
-        # TODO ln -nsf $(readlink bin/genome-perl$PERL_VERSION) bin/perl
+        PERL=/gsc/bin/perl
+        PROVE=/gsc/bin/prove
         ;;
     5.10)
-        ln -nsf /usr/bin/perl $WORKSPACE/bin/perl
-        ln -nsf /usr/bin/prove $WORKSPACE/bin/prove
-        # TODO ln -nsf $(readlink bin/genome-perl$PERL_VERSION) bin/perl
+        PERL=/usr/bin/perl
+        PROVE=/usr/bin/prove
         ;;
     *)
         echo "ERROR: Unrecognized Perl Version: $PERL_VERSION" 1>&2
         exit 2
         ;;
 esac
+
+if test -f "$WORKSPACE/bin/genome-perl$PERL_VERSION" -a "genome-perl$PERL_VERSION" != "$(readlink "$WORKSPACE/bin/genome-perl")"
+then
+    ( set -o xtrace; ln -nsf "$WORKSPACE/bin/genome-perl"{$PERL_VERSION,} )
+fi
+
+if test "$PERL" != "$(readlink "$WORKSPACE/bin/perl")"
+then
+    ( set -o xtrace; ln -nsf "$PERL" "$WORKSPACE/bin/perl" )
+fi
+
+if test "$PROVE" != "$(readlink "$WORKSPACE/bin/prove")"
+then
+    ( set -o xtrace; ln -nsf "$PROVE" "$WORKSPACE/bin/prove" )
+fi
