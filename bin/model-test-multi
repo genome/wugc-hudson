@@ -139,8 +139,8 @@ sub send_mail_with_topic {
 
     Library::send_mail(
         from => 'apipe-tester@genome.wustl.edu',
-        to => Library::users_to_addresses(@$to),
-        cc => Library::users_to_addresses(@$cc),
+        to => $to,
+        cc => $cc,
         subject => mail_subject($topic),
         body => mail_body(@extra_body),
     );
@@ -167,9 +167,9 @@ sub get_to_and_cc {
         my $build_type = build_type();
         my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();
         my @cc = Users::apipe();
-        return \@to, \@cc;
+        return Library::users_to_addresses(@to), Library::users_to_addresses(@cc);
     } else {
-        return [ Genome::Sys->current_user->email ], [];
+        return Genome::Sys->current_user->email;
     }
 }
 
