@@ -165,11 +165,34 @@ sub mail_body {
 sub get_to_and_cc {
     if (Genome::Sys->username eq 'apipe-tester') {
         my $build_type = build_type();
-        my @to = (Users->can($build_type)) ? Users->$build_type : Users::apipe();
-        my @cc = Users::apipe();
-        return Library::users_to_addresses(@to), Library::users_to_addresses(@cc);
+        my $to_default = Library::users_to_addresses(
+            Users->can($build_type)
+            ? Users->$build_type
+            : Users::apipe()
+        );
+        my $cc_default = Library::users_to_addresses(Users::apipe());
+
+        my $to = email_env('MODEL_TEST_TO', $to_default);
+        my $cc = email_env('MODEL_TEST_CC', $cc_default);
+        return $to, $cc;
     } else {
         return Genome::Sys->current_user->email;
+    }
+}
+
+sub email_env {
+    my $key = shift;
+    my $default = shift;
+    if (exists $ENV{$key}) {
+        if ($ENV{$key}) {
+            return $ENV{$key};
+        }
+        else {
+            return;
+        }
+    }
+    else {
+        return $default;
     }
 }
 
