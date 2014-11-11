@@ -10,6 +10,7 @@ require File::Slurp;
 require Mail::Sender;
 require Getopt::Long;
 require Cwd;
+use IPC::System::Simple qw(run);
 
 BEGIN {
     require Cwd;
@@ -215,7 +216,7 @@ sub create_changes_summary {
         system("touch $git_changelog_lock_file");
     }
 
-    system("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
+    run("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
 
     # create CHANGE_SUMMARY
     unlink("$snapshot_path/CHANGE_SUMMARY");
