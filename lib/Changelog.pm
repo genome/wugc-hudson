@@ -11,19 +11,15 @@ use Git::Repository::Log::Iterator qw();
 sub formatted_log_message {
     my ($log) = @_;
 
+    my @body = map { _strip_changelog($_) }
+               grep { /^CHANGELOG/ }
+               split(/\n/, $log->body);
+
     my @msg;
     if ($log->subject =~ /^CHANGELOG/) {
-        push @msg,
-            _strip_changelog($log->subject),
-            _strip_changelog($log->body);
-    } elsif ($log->body =~ /^CHANGELOG/) {
-        push @msg, _strip_changelog($log->body);
-    }
-
-    for my $text ($log->subject, $log->body) {
-        if ($text =~ /^CHANGELOG/) {
-            push @msg, _strip_changelog($text);
-        }
+        push @msg, _strip_changelog($log->subject), $log->body;
+    } elsif (@body) {
+        push @msg, @body;
     }
 
     return sprintf("%s\n-- %s (%s)\n\n",
@@ -61,7 +57,7 @@ sub next {
 
 sub _has_changelog {
     my ($log) = @_;
-    return (grep { /^CHANGELOG/ } ($log->subject, $log->body))
+    return (grep { /^CHANGELOG/ } ($log->subject, split(/\n/, $log->body)))
         ? 1 : 0;
 }
 

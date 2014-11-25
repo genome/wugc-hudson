@@ -20,6 +20,8 @@ my @cases = (
      qr(^this is five body)],
     [qq(this is six subject\n\nCHANGELOG: this is six body),
      qr(^this is six body)],
+    [qq(this is seven subject\n\nthis is unrelevant line\n\nCHANGELOG:  This is seven changelog.),
+     qr(^This is seven changelog\.)],
 );
 plan tests => scalar(@cases);
 
