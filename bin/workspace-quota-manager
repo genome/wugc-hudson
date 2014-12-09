@@ -3,9 +3,10 @@
 use Genome;
 use Library;
 
-my $a = Genome::Disk::Allocation->get(allocation_path => 'model_data/apipe-ci/workspace');
+my $allocation_path = shift @ARGV;
+my $a = Genome::Disk::Allocation->get(allocation_path => $allocation);
 unless ($a) {
-    print("ERROR: Unable to get allocation!\n") and exit 255;
+    print("ERROR: Unable to get allocation: $allocation\n") and exit 255;
 }
 
 my $kb_requested = $a->kilobytes_requested;
