@@ -1,12 +1,15 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+
 use Genome;
 use Library;
 
 my $allocation_path = shift @ARGV;
-my $a = Genome::Disk::Allocation->get(allocation_path => $allocation);
+my $a = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
 unless ($a) {
-    print("ERROR: Unable to get allocation: $allocation\n") and exit 255;
+    print("ERROR: Unable to get allocation: $allocation_path\n") and exit 255;
 }
 
 my $kb_requested = $a->kilobytes_requested;
@@ -45,6 +48,7 @@ if ($percent_used > 95.0) {
     my $tx = UR::Context::Transaction->begin();
     my $rv = eval { $a->reallocate(kilobytes_requested => $new_kb_requested) };
     my $error_message = $@;
+    my @body;
     if ($rv) {
         $tx->commit();
         $subject = 'Automatically Resized Jenkins Workspace';
