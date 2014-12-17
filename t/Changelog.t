@@ -22,6 +22,8 @@ my @cases = (
      qr(^this is six body)],
     [qq(this is seven subject\n\nthis is unrelevant line\n\nCHANGELOG:  This is seven changelog.),
      qr(^This is seven changelog\.)],
+    [qq(Remove ModelGroups from AnPs\n\nCHANGELOG: As of this commit, Analysis Projects no longer have\nan associated Model Group. The canonical source of Analysis Project),
+     qr(^As of this commit, Analysis Projects no longer have\nan associated Model Group. The canonical source of Analysis Project)],
 );
 plan tests => scalar(@cases);
 

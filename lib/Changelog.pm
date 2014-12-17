@@ -16,10 +16,12 @@ sub formatted_log_message {
         return _signed_changelog($log->author_name, $log->commit, $changelog);
     }
 
-    my @body = map { _strip_changelog($_) }
-               grep { /^CHANGELOG/ }
-               split(/\n/, $log->body);
-    return _signed_changelog($log->author_name, $log->commit, @body);
+    my @paragraphs =
+        map { _strip_changelog($_) }
+        grep { /^CHANGELOG/ }
+        split(/\n\n/, $log->body);
+    chomp @paragraphs;
+    return _signed_changelog($log->author_name, $log->commit, @paragraphs);
 }
 
 sub _signed_changelog {
