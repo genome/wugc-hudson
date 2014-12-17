@@ -22,8 +22,13 @@ sub formatted_log_message {
         push @msg, @body;
     }
 
+    return _signed_changelog($log->author_name, $log->commit, @msg);
+}
+
+sub _signed_changelog {
+    my ($author_name, $commit, @msg) = @_;
     return sprintf("%s\n-- %s (%s)\n\n",
-        join("\n", @msg), $log->author_name, substr($log->commit, 0, 7),
+        join("\n", @msg), $author_name, substr($commit, 0, 7),
     );
 }
 
