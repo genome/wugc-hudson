@@ -3,7 +3,7 @@ TESTDBSERVER_DB_USER="genome"
 TESTDBSERVER_DB_PASS="mypassword"
 export TESTDBSERVER_URL="https://apipe-test-db.gsc.wustl.edu"
 
-eval "$(test-db database create --bash --owner genome --based-on snapshot-3549)"
+eval "$(test-db database create --bash --owner $TESTDBSERVER_DB_USER --based-on snapshot-3549)"
 if test -z "$TESTDBSERVER_DB_NAME"
 then
     echo "Failed to create test database."
