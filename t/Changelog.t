@@ -22,6 +22,10 @@ my @cases = (
      qr(^this is six body)],
     [qq(this is seven subject\n\nthis is unrelevant line\n\nCHANGELOG:  This is seven changelog.),
      qr(^This is seven changelog\.)],
+    [qq(Remove ModelGroups from AnPs\n\nCHANGELOG: As of this commit, Analysis Projects no longer have\nan associated Model Group. The canonical source of Analysis Project),
+     qr(^As of this commit, Analysis Projects no longer have\nan associated Model Group. The canonical source of Analysis Project)],
+    [qq(SUBJECT\n\nBODY1\n\nCHANGELOG: LINE ONE\nLINE TWO\n\nSOME OTHER PARAGRAPH\n\nCHANGELOG: LINE ONE\nLINE TWO\n),
+     qr(^LINE ONE\nLINE TWO\n--[^\n]*\n\nLINE ONE\nLINE TWO\n--[^\n]*\n)],
 );
 plan tests => scalar(@cases);
 
