@@ -49,7 +49,7 @@ sub update_submodule {
 
 sub last_stable_revision {
     my $project = shift || die;
-    my $url_f = 'https://apipe-ci.gsc.wustl.edu/view/Genome%%20Submodules/job/%s/lastStableBuild/api/xml?xpath=/freeStyleBuild/action/lastBuiltRevision/SHA1';
+    my $url_f = 'https://apipe-ci.gsc.wustl.edu/view/All/job/%s/lastStableBuild/api/xml?xpath=/freeStyleBuild/action/lastBuiltRevision/SHA1';
     my $url = sprintf($url_f, $project);
 
     my $ua = LWP::UserAgent->new(ssl_opts => { verify_hostname => 0 });
