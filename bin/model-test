@@ -34,4 +34,4 @@ export GENOMECI_BASEDIR='/gsc/scripts/opt/genome'
 export PERL5LIB="$GENOMECI_BASEDIR/lib:$PERL5LIB"
 
 "$GENOMECI_BASEDIR"/bin/set-perl $PERL_VERSION
-genome-env "$GENOMECI_BASEDIR"/bin/model-test-multi
+"$GENOMECI_BASEDIR"/bin/model-test-multi
