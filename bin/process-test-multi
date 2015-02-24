@@ -1,0 +1,262 @@
+#!/usr/bin/perl
+
+use Genome;
+use Revision;
+use Library;
+use Users;
+use JenkinsData;
+use Memoize qw(memoize);
+
+use strict;
+use warnings;
+
+
+# flush output buffer after every write or print
+local $| = 1;
+
+log_environment();
+JenkinsData->validate_environment;
+
+# set the title of this process
+$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
+
+# Per Process Customizations
+print("Customizing test environment...\n");
+
+set_genome_software_result_test_name();
+
+# Done with Per Process Customizations
+print "\n";
+
+my $process = create_process();
+wait_for_process($process);
+
+$process = UR::Context->current->reload('Genome::Process', id => $process->id);
+
+check_process_failure($process);
+
+diff_process($process);
+
+
+# functions
+sub log_environment {
+    print "\n\n => Environment Info\n";
+    print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
+    print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
+    print "\n";
+}
+
+sub test_version {
+    my $prefix = $ENV{TEST_VERSION_PREFIX} || '';
+    return $prefix . Revision->test_version();
+}
+
+sub process_subname {
+    my $test_spec = JenkinsData->test_spec;
+    my ($perl_version, $process_subname) = $test_spec =~ /(.*?)-(.*)/;
+    if ($perl_version ne Revision->perl_version()) {
+        fail("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n",
+            $perl_version, Revision->perl_version());
+    }
+    return $process_subname;
+}
+
+sub set_genome_software_result_test_name {
+    printf("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '%s'.\n", test_version());
+    $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = test_version();
+}
+
+sub get_timeout {
+    my $DEFAULT_TIMEOUT = 6;
+    my $timeout_seconds = $DEFAULT_TIMEOUT * 3600;
+
+    return $timeout_seconds;
+}
+
+sub send_timeout_mail {
+    send_mail_with_topic('Timed Out');
+}
+
+sub send_fail_mail {
+    send_mail_with_topic('Build Failed');
+}
+
+sub send_diff_mail {
+    my $diff_cmd = shift;
+
+    send_mail_with_topic('Diffs Found',
+        '********************************************************************************',
+        $diff_cmd->bless_message,
+        '********************************************************************************',
+        $diff_cmd->diffs_message);
+}
+
+sub send_mail_with_topic {
+    my $topic = shift;
+    my @extra_body = @_;
+
+    my ($to, $cc) = get_to_and_cc();
+
+    Library::send_mail(
+        from => 'apipe-tester@genome.wustl.edu',
+        to => $to,
+        cc => $cc,
+        subject => mail_subject($topic),
+        body => mail_body(@extra_body),
+    );
+}
+
+sub mail_subject {
+    my $topic = shift;
+    return sprintf('%s - Build %d - %s', JenkinsData->test_spec,
+        JenkinsData->build_number, $topic);
+}
+
+sub mail_body {
+    return join("\n",
+        sprintf('Project: %s', JenkinsData->job_name),
+        sprintf('Build: %s', JenkinsData->build_url),
+        sprintf('Console: %sconsole', JenkinsData->build_url),
+        @_,
+    );
+}
+
+
+sub get_to_and_cc {
+    if (Genome::Sys->username eq 'apipe-tester') {
+        my $to_default = Library::users_to_addresses(Users::apipe());
+        my $cc_default = Library::users_to_addresses(Users::apipe());
+
+        my $to = email_env('MODEL_TEST_TO', $to_default);
+        my $cc = email_env('MODEL_TEST_CC', $cc_default);
+        return $to, $cc;
+    } else {
+        return Genome::Sys->current_user->email;
+    }
+}
+
+sub email_env {
+    my $key = shift;
+    my $default = shift;
+    if (exists $ENV{$key}) {
+        if ($ENV{$key}) {
+            return $ENV{$key};
+        }
+        else {
+            return;
+        }
+    }
+    else {
+        return $default;
+    }
+}
+
+sub get_initial_process {
+    if ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) {
+        printf("GENOME_SOFTWARE_RESULT_TEST_NAME before getting process is %s\n",
+            $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME});
+    } else {
+        print "GENOME_SOFTWARE_RESULT_TEST_NAME is not set\n";
+    }
+
+    my %yaml_params = %{parse_yaml()};
+    my $command_class = $yaml_params{'command_class'};
+    my $process_type = $yaml_params{'command_class'};
+
+    my $command = $command_class->create($yaml_params->command_params);
+    my $process = $process_type->get(
+        $command->process_params,
+        run_by => Genome::Sys->username,
+        software_revision => test_version(),
+        status => ['New', 'Running', 'Succeeded'],
+    );
+
+    if ($process) {
+        printf("Got existing process (%s) for current test version.\n", $process->__display_name__);
+    } else {
+        $process = $command->execute;
+    }
+    return $process;
+}
+
+sub parse_yaml {
+    return Genome::Process:Test::IntergrationTests::process_yaml(process_name());
+}
+
+sub process_name {
+    return 'trio_main';
+}
+
+sub wait_for_process {
+    my $process = shift;
+
+    my $timeout = get_timeout();
+    printf("Monitoring process (%s) until it completes or timeout "
+        . "of %s minutes is reached.\n\n", $process->id, $timeout / 60);
+
+    my $start_time = time;
+    while (!grep { $process->status eq $_ } ('Succeeded', 'Crashed')) {
+        UR::Context->current->reload($process);
+
+        my $elapsed_time = time - $start_time;
+        if ($elapsed_time > $timeout) {
+            printf("Process (%s) timed out after %s minutes",
+                $process->id, $timeout / 60);
+            send_timeout_mail();
+            process_view_and_exit($process);
+        }
+
+        sleep(30);
+    }
+}
+
+sub check_process_failure {
+    my $process = shift;
+
+    if ($process->status eq 'Succeeded') {
+        printf("Build status is %s.\n", $process->status);
+    } else {
+        send_fail_mail();
+        process_view_and_exit($process);
+    }
+}
+
+sub diff_process {
+    my $process = shift;
+
+    printf('Starting diff (new process = %s)...', $process->id);
+    my $diff_cmd = Genome::Process::Command::DiffBlessed->create(
+        new_process => $process,
+        process_name => process_name(),
+    );
+    unless ($diff_cmd->execute) {
+        fail("Diff command failed to execute!\n");
+    }
+
+    my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
+    if ($has_diffs) {
+        send_diff_mail($diff_cmd);
+        exit(255);
+    }
+
+}
+
+sub process_view_and_exit {
+    my $process = shift;
+    my $pv_command = Genome::Process::Command::View->create(
+        process => $process);
+    $pv_command->execute;
+    exit(255);
+}
+
+sub fail {
+    if (scalar(@_) == 1) {
+        print @_;
+    } elsif (scalar(@_) > 1) {
+        printf @_;
+    } else {
+        print "Failed to execute test process\n";
+    }
+
+    exit(255);
+}
