@@ -12,32 +12,7 @@ then
     mkdir "$WORKSPACE/bin"
 fi
 
-case $PERL_VERSION in
-    5.8)
-        PERL=/gsc/bin/perl
-        PROVE=/gsc/bin/prove
-        ;;
-    5.10)
-        PERL=/usr/bin/perl
-        PROVE=/usr/bin/prove
-        ;;
-    *)
-        echo "ERROR: Unrecognized Perl Version: $PERL_VERSION" 1>&2
-        exit 2
-        ;;
-esac
-
 if test -f "$WORKSPACE/bin/genome-perl$PERL_VERSION" -a "genome-perl$PERL_VERSION" != "$(readlink "$WORKSPACE/bin/genome-perl")"
 then
     ( set -o xtrace; ln -nsf "$WORKSPACE/bin/genome-perl"{$PERL_VERSION,} )
-fi
-
-if test "$PERL" != "$(readlink "$WORKSPACE/bin/perl")"
-then
-    ( set -o xtrace; ln -nsf "$PERL" "$WORKSPACE/bin/perl" )
-fi
-
-if test "$PROVE" != "$(readlink "$WORKSPACE/bin/prove")"
-then
-    ( set -o xtrace; ln -nsf "$PROVE" "$WORKSPACE/bin/prove" )
 fi
