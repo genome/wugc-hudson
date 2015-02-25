@@ -176,17 +176,8 @@ sub get_initial_process {
         }
     }
     my $command = $command_class->create(%command_inputs);
-    my $process = $process_type->get(
-        $command->process_params,
-        software_revision => test_version(),
-        status => ['New', 'Running', 'Succeeded'],
-    );
-
-    if ($process) {
-        printf("Got existing process (%s) for current test version.\n", $process->__display_name__);
-    } else {
-        $process = $command->execute;
-    }
+    $process = $command->execute;
+    UR::Context->commit;
     return $process;
 }
 
