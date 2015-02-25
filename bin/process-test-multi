@@ -178,7 +178,6 @@ sub get_initial_process {
     my $command = $command_class->create(%command_inputs);
     my $process = $process_type->get(
         $command->process_params,
-        run_by => Genome::Sys->username,
         software_revision => test_version(),
         status => ['New', 'Running', 'Succeeded'],
     );
