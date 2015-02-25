@@ -164,7 +164,18 @@ sub get_initial_process {
     my $command_class = $yaml_params{'command_class'};
     my $process_type = $yaml_params{'command_class'};
 
-    my $command = $command_class->create($yaml_params->command_params);
+    my %command_inputs;
+    while (my ($property_name, $property_id) = each %{$yaml_params{command_object_inputs}}) {
+        my $property = $command_class->__meta__->properties(property_name => $property_name);
+        my $type = $property->data_type;
+        if ($property->is_many) {
+            $command_inputs{$property_name} = [map {$type->get($_)} @$property_id];
+        }
+        else {
+            $command_inputs{$property_name} = $type->get($property_id);
+        }
+    }
+    my $command = $command_class->create(%command_inputs);
     my $process = $process_type->get(
         $command->process_params,
         run_by => Genome::Sys->username,
