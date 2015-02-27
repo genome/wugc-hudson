@@ -104,9 +104,8 @@ sub model {
 sub get_timeout {
     my %MODEL_TIMEOUTS = (
         'somatic-variation' => 36,
-        'clinseq-v1' => 12,
     );
-    my $DEFAULT_TIMEOUT = 6;
+    my $DEFAULT_TIMEOUT = 18;
     my $timeout_hours = $MODEL_TIMEOUTS{model_subname()} || $DEFAULT_TIMEOUT;
     my $timeout_seconds = $timeout_hours * 3600;
 
