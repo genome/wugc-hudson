@@ -13,7 +13,7 @@ push @files, qx[find $base_dir/lib -type f -name '*.pm'];
 map { chomp $_ } @files;
 
 for my $file (@files) {
-	my $exit = system("perl -c $file");
+	my $exit = system("$^X -c $file");
 	ok($exit == 0, "$file compiled");
 }
 done_testing();
