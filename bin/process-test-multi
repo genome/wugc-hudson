@@ -6,6 +6,7 @@ use Library;
 use Users;
 use JenkinsData;
 use Memoize qw(memoize);
+use Genome::Process::Test::IntegrationTests;
 
 use strict;
 use warnings;
@@ -28,7 +29,7 @@ set_genome_software_result_test_name();
 # Done with Per Process Customizations
 print "\n";
 
-my $process = create_process();
+my $process = get_initial_process();
 wait_for_process($process);
 
 $process = UR::Context->current->reload('Genome::Process', id => $process->id);
@@ -163,24 +164,25 @@ sub get_initial_process {
     my $command_class = $yaml_params{'command_class'};
     my $process_type = $yaml_params{'command_class'};
 
-    my $command = $command_class->create($yaml_params->command_params);
-    my $process = $process_type->get(
-        $command->process_params,
-        run_by => Genome::Sys->username,
-        software_revision => test_version(),
-        status => ['New', 'Running', 'Succeeded'],
-    );
-
-    if ($process) {
-        printf("Got existing process (%s) for current test version.\n", $process->__display_name__);
-    } else {
-        $process = $command->execute;
+    my %command_inputs;
+    while (my ($property_name, $property_id) = each %{$yaml_params{command_object_inputs}}) {
+        my $property = $command_class->__meta__->properties(property_name => $property_name);
+        my $type = $property->data_type;
+        if ($property->is_many) {
+            $command_inputs{$property_name} = [map {$type->get($_)} @$property_id];
+        }
+        else {
+            $command_inputs{$property_name} = $type->get($property_id);
+        }
     }
+    my $command = $command_class->create(%command_inputs);
+    $process = $command->execute;
+    UR::Context->commit;
     return $process;
 }
 
 sub parse_yaml {
-    return Genome::Process:Test::IntergrationTests::process_yaml(process_name());
+    return Genome::Process::Test::IntegrationTests::process_yaml(process_name());
 }
 
 sub process_name {
