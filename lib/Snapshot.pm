@@ -190,10 +190,10 @@ sub update_tab_completion {
     my $self = shift;
     my $snapshot_dir = $self->{snapshot_dir};
 
-    system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Command");
-    system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Genome\:\:Model\:\:Tools");
-    system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec UR\:\:Namespace\:\:Command");
-    system("cd $snapshot_dir/lib/perl && ur update tab-completion-spec Workflow\:\:Command");
+    system("cd $snapshot_dir/lib/perl && genome-perl -S ur update tab-completion-spec Genome\:\:Command");
+    system("cd $snapshot_dir/lib/perl && genome-perl -S ur update tab-completion-spec Genome\:\:Model\:\:Tools");
+    system("cd $snapshot_dir/lib/perl && genome-perl -S ur update tab-completion-spec UR\:\:Namespace\:\:Command");
+    system("cd $snapshot_dir/lib/perl && genome-perl -S ur update tab-completion-spec Workflow\:\:Command");
 
     return 1;
 }
