@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+
+export TEST_SPEC="$1"
+if test -z "$TEST_SPEC"
+then
+    echo "ERROR: must pass test spec, e.g. 5.10-reference-alignment, as argument" 1>&2
+    exit 1
+fi
+
+if test -z "$WORKSPACE"
+then
+    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    then
+        export WORKSPACE="$(git rev-parse --show-toplevel)"
+    else
+        echo "ERROR: must either set WORKSPACE or run from a Genome repo" 1>&2
+        exit 1
+    fi
+fi
+
+if test -z "$WF_USE_FLOW"
+then
+    export WF_USE_FLOW=1
+fi
+
+set -o nounset
+
+export PERL_VERSION="${TEST_SPEC/-*}"
+export GENOME_TESTING=1
+export GENOMECI_BASEDIR='/gsc/scripts/opt/genome'
+export PERL5LIB="$GENOMECI_BASEDIR/lib:$PERL5LIB"
+
+"$GENOMECI_BASEDIR"/bin/set-perl $PERL_VERSION
