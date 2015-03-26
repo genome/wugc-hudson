@@ -1,5 +1,3 @@
 #!/bin/bash
-export GENOMECI_BASEDIR='/gsc/scripts/opt/genome'
-"$GENOMECI_BASEDIR"/bin/model-process-common
 "$GENOMECI_BASEDIR"/bin/model-process-common $1
 "$GENOMECI_BASEDIR"/bin/model-test-multi
