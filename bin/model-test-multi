@@ -84,7 +84,7 @@ sub create_build {
     print("Creating new build....\n");
     my $build = Genome::Model::Build->create(
         model_id => model()->id,
-        software_revision => test_version(),
+        software_revision => Library::test_version(),
     );
     unless ($build) {
         fail("Could not create new build!\n");
@@ -112,7 +112,7 @@ sub get_initial_build {
     my $build =  Genome::Model::Build->get(
         model_name => model()->name,
         run_by => Genome::Sys->username,
-        software_revision => test_version(),
+        software_revision => Library::test_version(),
         status => ['Scheduled', 'Running', 'Succeeded'],
     );
 
