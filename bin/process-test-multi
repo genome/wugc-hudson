@@ -47,16 +47,6 @@ sub get_timeout {
     return $timeout_seconds;
 }
 
-sub process_subname {
-    my $test_spec = JenkinsData->test_spec;
-    my ($perl_version, $process_subname) = $test_spec =~ /(.*?)-(.*)/;
-    if ($perl_version ne Revision->perl_version()) {
-        fail("Perl version specified by TEST_SPEC (%s) does not match running version (%S)!\n",
-            $perl_version, Revision->perl_version());
-    }
-    return $process_subname;
-}
-
 sub get_initial_process {
     if ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) {
         printf("GENOME_SOFTWARE_RESULT_TEST_NAME before getting process is %s\n",
