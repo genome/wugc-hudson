@@ -30,7 +30,6 @@ set -o nounset
 
 export PERL_VERSION="${TEST_SPEC/-*}"
 export GENOME_TESTING=1
-export GENOMECI_BASEDIR='/gsc/scripts/opt/genome'
 export PERL5LIB="$GENOMECI_BASEDIR/lib:$PERL5LIB"
 
 "$GENOMECI_BASEDIR"/bin/set-perl $PERL_VERSION
