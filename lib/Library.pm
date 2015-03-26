@@ -153,4 +153,18 @@ sub send_mail {
     $msg->send();
 }
 
+sub setup_model_process_test {
+    log_environment();
+    JenkinsData->validate_environment;
+
+# set the title of this process
+    $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
+
+    print("Customizing test environment...\n");
+
+    set_genome_software_result_test_name();
+
+    print "\n";
+}
+
 1;

@@ -4,7 +4,6 @@ use Genome;
 use Revision;
 use Library;
 use Users;
-use JenkinsData;
 use Memoize qw(memoize);
 use Genome::Process::Test::IntegrationTests;
 
@@ -14,20 +13,7 @@ use warnings;
 
 # flush output buffer after every write or print
 local $| = 1;
-
-log_environment();
-JenkinsData->validate_environment;
-
-# set the title of this process
-$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
-
-# Per Process Customizations
-print("Customizing test environment...\n");
-
-set_genome_software_result_test_name();
-
-# Done with Per Process Customizations
-print "\n";
+Library::setup_model_process_test();
 
 my $process = get_initial_process();
 wait_for_process($process);
