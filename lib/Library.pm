@@ -15,6 +15,13 @@ BEGIN {
 require Defaults;
 
 
+sub log_environment {
+    print "\n\n => Environment Info\n";
+    print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
+    print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
+    print "\n";
+}
+
 # Shamelessly stolen from Genome/Utility/Text.pm
 sub model_class_name_to_string {
     my $type = shift;

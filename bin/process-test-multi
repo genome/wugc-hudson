@@ -40,13 +40,6 @@ diff_process($process);
 
 
 # functions
-sub log_environment {
-    print "\n\n => Environment Info\n";
-    print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
-    print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
-    print "\n";
-}
-
 sub test_version {
     my $prefix = $ENV{TEST_VERSION_PREFIX} || '';
     return $prefix . Revision->test_version();
