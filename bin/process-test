@@ -1,3 +1,2 @@
 #!/bin/bash
-"$GENOMECI_BASEDIR"/bin/model-process-common $1
-"$GENOMECI_BASEDIR"/bin/process-test-multi
+"$GENOMECI_BASEDIR"/bin/model-process-common $1 process
