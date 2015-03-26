@@ -32,7 +32,7 @@ print "\n";
 my $process = get_initial_process();
 wait_for_process($process);
 
-$process = UR::Context->current->reload('Genome::Process', id => $process->id);
+UR::Context->current->reload($process);
 
 check_process_failure($process);
 
