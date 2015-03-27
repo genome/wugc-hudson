@@ -14,6 +14,7 @@ use warnings;
 # flush output buffer after every write or print
 local $| = 1;
 Library::setup_model_process_test();
+Library::set_genome_software_result_test_name();
 
 my $process = get_initial_process();
 wait_for_process($process);
