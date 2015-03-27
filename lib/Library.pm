@@ -26,8 +26,10 @@ sub log_environment {
 }
 
 sub set_genome_software_result_test_name {
+    print("Customizing test environment...\n");
     printf("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '%s'.\n", test_version());
     $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = test_version();
+    print "\n";
 }
 
 sub test_version {
@@ -160,11 +162,6 @@ sub setup_model_process_test {
 # set the title of this process
     $0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
 
-    print("Customizing test environment...\n");
-
-    set_genome_software_result_test_name();
-
-    print "\n";
 }
 
 1;

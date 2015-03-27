@@ -28,6 +28,12 @@ fi
 
 set -o nounset
 
+if test -z "$GENOMECI_BASEDIR"
+then
+    echo "ERROR: must set GENOMECI_BASEDIR" 1>&2
+    exit 1
+fi
+
 export PERL_VERSION="${TEST_SPEC/-*}"
 export GENOME_TESTING=1
 export PERL5LIB="$GENOMECI_BASEDIR/lib:$PERL5LIB"
