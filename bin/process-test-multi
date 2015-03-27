@@ -85,7 +85,7 @@ sub wait_for_process {
         if ($elapsed_time > $timeout) {
             printf("Process (%s) timed out after %s minutes",
                 $process->id, $timeout / 60);
-            send_timeout_mail();
+            Library::send_timeout_mail();
             process_view_and_exit($process);
         }
 
@@ -99,7 +99,7 @@ sub check_process_failure {
     if ($process->status eq 'Succeeded') {
         printf("Build status is %s.\n", $process->status);
     } else {
-        send_fail_mail();
+        Library::send_fail_mail();
         process_view_and_exit($process);
     }
 }
@@ -118,7 +118,7 @@ sub diff_process {
 
     my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
     if ($has_diffs) {
-        send_diff_mail($diff_cmd);
+        Library::send_diff_mail($diff_cmd);
         exit(255);
     }
 

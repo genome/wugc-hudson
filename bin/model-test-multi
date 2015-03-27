@@ -145,7 +145,7 @@ sub wait_for_build {
         if ($elapsed_time > $timeout) {
             printf("Build (%s) timed out after %s minutes",
                 $build->id, $timeout / 60);
-            send_timeout_mail();
+            Library::send_timeout_mail();
             build_view_and_exit($build);
         }
 
@@ -159,7 +159,7 @@ sub check_build_failure {
     if ($build->status eq 'Succeeded') {
         printf("Build status is %s.\n", $build->status);
     } else {
-        send_fail_mail();
+        Library::send_fail_mail();
         build_view_and_exit($build);
     }
 }
@@ -177,7 +177,7 @@ sub diff_build {
 
     my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
     if ($has_diffs) {
-        send_diff_mail($diff_cmd);
+        Library::send_diff_mail($diff_cmd);
         exit(255);
     }
 
