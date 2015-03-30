@@ -42,12 +42,12 @@ sub get_initial_process {
         print "GENOME_SOFTWARE_RESULT_TEST_NAME is not set\n";
     }
 
-    my %yaml_params = %{parse_yaml()};
-    my $command_class = $yaml_params{'command_class'};
-    my $process_type = $yaml_params{'process_type'};
+    my %test_configuration = %{test_configuration()};
+    my $command_class = $test_configuration{'command_class'};
+    my $process_type = $test_configuration{'process_type'};
 
     my %command_inputs;
-    while (my ($property_name, $property_id) = each %{$yaml_params{command_object_inputs}}) {
+    while (my ($property_name, $property_id) = each %{$test_configuration{command_object_inputs}}) {
         my $property = $command_class->__meta__->properties(property_name => $property_name);
         my $type = $property->data_type;
         if ($property->is_many) {
@@ -63,8 +63,8 @@ sub get_initial_process {
     return $process;
 }
 
-sub parse_yaml {
-    return Genome::Process::Test::IntegrationTests::process_yaml(process_name());
+sub test_configuration {
+    return Genome::Process::Test::IntegrationTests:get_process_test_configuration(process_name());
 }
 
 sub process_name {
