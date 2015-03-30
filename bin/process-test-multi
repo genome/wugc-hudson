@@ -44,7 +44,7 @@ sub get_initial_process {
 
     my %yaml_params = %{parse_yaml()};
     my $command_class = $yaml_params{'command_class'};
-    my $process_type = $yaml_params{'command_class'};
+    my $process_type = $yaml_params{'process_type'};
 
     my %command_inputs;
     while (my ($property_name, $property_id) = each %{$yaml_params{command_object_inputs}}) {
