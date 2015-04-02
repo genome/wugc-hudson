@@ -64,7 +64,7 @@ sub get_initial_process {
 }
 
 sub test_configuration {
-    return Genome::Process::Test::IntegrationTests:get_process_test_configuration(process_name());
+    return Genome::Process::Test::IntegrationTests::get_process_test_configuration(process_name());
 }
 
 sub process_name {
