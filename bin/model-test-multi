@@ -13,20 +13,12 @@ use warnings;
 
 # flush output buffer after every write or print
 local $| = 1;
+Library::setup_model_process_test();
 
-log_environment();
-JenkinsData->validate_environment;
 
-# set the title of this process
-$0 = sprintf("%s %s # TEST_SPEC = %s", $^X, __FILE__, JenkinsData->test_spec);
-
-# Per Model Customizations
-print("Customizing test environment...\n");
-
-set_genome_software_result_test_name();
-
-# Done with Per Model Customizations
-print "\n";
+unless (should_shortcut(model_subname())) {
+    Library::set_genome_software_result_test_name();
+}
 
 my $build = get_initial_build();
 wait_for_build($build);
@@ -44,18 +36,6 @@ sub build_type {
     $type =~ s/Genome::Model:://;
     $type =~ s/:://g;
     return Genome::Utility::Text::camel_case_to_string($type, '_');
-}
-
-sub log_environment {
-    print "\n\n => Environment Info\n";
-    print join("\n\t", "PATHs:", split(':', $ENV{PATH})), "\n";
-    print join("\n\t", "PERL5LIBs:", split(':', $ENV{PERL5LIB})), "\n";
-    print "\n";
-}
-
-sub test_version {
-    my $prefix = $ENV{TEST_VERSION_PREFIX} || '';
-    return $prefix . Revision->test_version();
 }
 
 sub model_subname {
@@ -82,13 +62,6 @@ sub should_shortcut {
     return !grep {$_ eq $model_subname} @MODELS_THAT_ARE_FAST_AND_DONT_NEED_TO_SHORTCUT;
 }
 
-sub set_genome_software_result_test_name {
-    unless (should_shortcut(model_subname())) {
-        printf("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '%s'.\n", test_version());
-        $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = test_version();
-    }
-}
-
 memoize('model');
 sub model {
     my $model_name = sprintf('apipe-test-%s', model_subname());
@@ -112,94 +85,11 @@ sub get_timeout {
     return $timeout_seconds;
 }
 
-sub send_timeout_mail {
-    send_mail_with_topic('Timed Out');
-}
-
-sub send_fail_mail {
-    send_mail_with_topic('Build Failed');
-}
-
-sub send_diff_mail {
-    my $diff_cmd = shift;
-
-    send_mail_with_topic('Diffs Found',
-        '********************************************************************************',
-        $diff_cmd->bless_message,
-        '********************************************************************************',
-        $diff_cmd->diffs_message);
-}
-
-sub send_mail_with_topic {
-    my $topic = shift;
-    my @extra_body = @_;
-
-    my ($to, $cc) = get_to_and_cc();
-
-    Library::send_mail(
-        from => 'apipe-tester@genome.wustl.edu',
-        to => $to,
-        cc => $cc,
-        subject => mail_subject($topic),
-        body => mail_body(@extra_body),
-    );
-}
-
-sub mail_subject {
-    my $topic = shift;
-    return sprintf('%s - Build %d - %s', JenkinsData->test_spec,
-        JenkinsData->build_number, $topic);
-}
-
-sub mail_body {
-    return join("\n",
-        sprintf('Project: %s', JenkinsData->job_name),
-        sprintf('Build: %s', JenkinsData->build_url),
-        sprintf('Console: %sconsole', JenkinsData->build_url),
-        @_,
-    );
-}
-
-
-sub get_to_and_cc {
-    if (Genome::Sys->username eq 'apipe-tester') {
-        my $build_type = build_type();
-        my $to_default = Library::users_to_addresses(
-            Users->can($build_type)
-            ? Users->$build_type
-            : Users::apipe()
-        );
-        my $cc_default = Library::users_to_addresses(Users::apipe());
-
-        my $to = email_env('MODEL_TEST_TO', $to_default);
-        my $cc = email_env('MODEL_TEST_CC', $cc_default);
-        return $to, $cc;
-    } else {
-        return Genome::Sys->current_user->email;
-    }
-}
-
-sub email_env {
-    my $key = shift;
-    my $default = shift;
-    if (exists $ENV{$key}) {
-        if ($ENV{$key}) {
-            return $ENV{$key};
-        }
-        else {
-            return;
-        }
-    }
-    else {
-        return $default;
-    }
-}
-
 sub create_build {
     print("Creating new build....\n");
     my $build = Genome::Model::Build->create(
         model_id => model()->id,
-        software_revision => test_version(),
+        software_revision => Library::test_version(),
     );
     unless ($build) {
         fail("Could not create new build!\n");
@@ -227,7 +117,7 @@ sub get_initial_build {
     my $build =  Genome::Model::Build->get(
         model_name => model()->name,
         run_by => Genome::Sys->username,
-        software_revision => test_version(),
+        software_revision => Library::test_version(),
         status => ['Scheduled', 'Running', 'Succeeded'],
     );
 
@@ -260,7 +150,7 @@ sub wait_for_build {
         if ($elapsed_time > $timeout) {
             printf("Build (%s) timed out after %s minutes",
                 $build->id, $timeout / 60);
-            send_timeout_mail();
+            Library::send_timeout_mail();
             build_view_and_exit($build);
         }
 
@@ -274,7 +164,7 @@ sub check_build_failure {
     if ($build->status eq 'Succeeded') {
         printf("Build status is %s.\n", $build->status);
     } else {
-        send_fail_mail();
+        Library::send_fail_mail();
         build_view_and_exit($build);
     }
 }
@@ -292,7 +182,7 @@ sub diff_build {
 
     my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
     if ($has_diffs) {
-        send_diff_mail($diff_cmd);
+        Library::send_diff_mail($diff_cmd);
         exit(255);
     }
 
