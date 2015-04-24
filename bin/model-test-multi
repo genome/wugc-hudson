@@ -20,6 +20,13 @@ unless (should_shortcut(model_subname())) {
     Library::set_genome_software_result_test_name();
 }
 
+if (Genome::Sys->username eq 'apipe-tester' && !$ENV{MODEL_TEST_TO}) {
+    my $build_type = build_type();
+    if (Users->can($build_type)) {
+        $ENV{MODEL_TEST_TO} = Library::users_to_addresses(Users->$build_type);
+    }
+}
+
 my $build = get_initial_build();
 wait_for_build($build);
 
