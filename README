@@ -1,3 +1,7 @@
+AUTO DEPLOY
+===========
+This repo is automatically deployed after push to origin/master via Jenkins job 'Deploy wugc-hudson.'
+
 SYMLINKS
 ========
 current/pipeline        The default snapshot for the cron/pipeline. (Must pass the test suite, build tests and build diffs.)
