@@ -6,6 +6,7 @@ current/web             The default snapshot for the web interface.
 
 SUB-DIRECTORIES
 ===============
+annotation/bin          Annotation cron scripts.
 snapshots/custom        Snapshots which have been custom built, e.g. hotfixes or one-offs.
 snapshots/old           Snapshots which have been superseded and have no running builds.
 snapshots               Snapshots which have passed all tests go into this base directory.
