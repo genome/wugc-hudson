@@ -24,7 +24,7 @@ fi
 # RUN XDFORMAT
 echo "RUNNING xdformat:"
 if [ "$DB" == "nr" ]; then
-    CMD="/gsc/scripts/bin/xdformat -O5 -p -I -C X $FINAL_DB_PATH"
+    CMD="/gsc/scripts/bin/xdformat -O5 -p -C X $FINAL_DB_PATH"
 else
     CMD="/gsc/scripts/bin/xdformat -n $FINAL_DB_PATH -I"
 fi
