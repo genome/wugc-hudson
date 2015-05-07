@@ -117,10 +117,11 @@ sub gene_prediction_eukaryotic {
 
 sub clin_seq {
     return qw(
+        aramu
+        awagner
+        bainscou
         mgriffit
         ogriffit
-        aramu
-        bainscou
     );
 }
 
