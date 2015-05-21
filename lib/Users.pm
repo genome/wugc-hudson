@@ -24,6 +24,7 @@ sub apipe_ignore {
         jschindl
         lcarmich
         mfulton
+        mburnett
         mjohnson
         pkimmey
         rhancock
@@ -51,7 +52,6 @@ sub apipe {
         jmcmicha
         jweible
         kkyung
-        mburnett
         mkiwala
         nnutter
         ssiebert
