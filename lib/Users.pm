@@ -16,6 +16,7 @@ sub apipe_ignore {
         eclark
         edemello
         ehvatum
+        gsanders
         josborne
         jkoval
         jlolofie
@@ -45,7 +46,6 @@ sub apipe {
         dmorton
         ebelter
         fdu
-        gsanders
         iferguso
         jmcmicha
         jweible
@@ -69,13 +69,12 @@ sub reference_alignment {
 sub somatic_variation {
     return qw(
         fdu
-        gsanders
+        tmooney
     );
 }
 
 sub somatic {
     return qw(
-        gsanders
         tmooney
     );
 }
