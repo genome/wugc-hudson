@@ -25,6 +25,7 @@ sub apipe_ignore {
         lcarmich
         mburnett
         mjohnson
+        nnutter
         pkimmey
         rhancock
         rlong
@@ -53,7 +54,6 @@ sub apipe {
         kkyung
         mfulton
         mkiwala
-        nnutter
         ssiebert
         tmooney
     );
