@@ -16,19 +16,21 @@ sub apipe_ignore {
         eclark
         edemello
         ehvatum
+        gsanders
         josborne
         jkoval
         jlolofie
         jpeck
         jschindl
         lcarmich
-        mfulton
+        mburnett
         mjohnson
         pkimmey
         rhancock
         rlong
         rmeyer
         swallace
+        tabbott
         tdutton
     );
 }
@@ -45,16 +47,14 @@ sub apipe {
         dmorton
         ebelter
         fdu
-        gsanders
         iferguso
         jmcmicha
         jweible
         kkyung
-        mburnett
+        mfulton
         mkiwala
         nnutter
         ssiebert
-        tabbott
         tmooney
     );
 }
@@ -69,13 +69,12 @@ sub reference_alignment {
 sub somatic_variation {
     return qw(
         fdu
-        gsanders
+        tmooney
     );
 }
 
 sub somatic {
     return qw(
-        gsanders
         tmooney
     );
 }
