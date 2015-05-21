@@ -30,6 +30,7 @@ sub apipe_ignore {
         rlong
         rmeyer
         swallace
+        tabbott
         tdutton
     );
 }
@@ -54,7 +55,6 @@ sub apipe {
         mkiwala
         nnutter
         ssiebert
-        tabbott
         tmooney
     );
 }
