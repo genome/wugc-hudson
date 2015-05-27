@@ -27,8 +27,8 @@ sub log_environment {
 
 sub set_genome_software_result_test_name {
     print("Customizing test environment...\n");
-    printf("Set GENOME_SOFTWARE_RESULT_TEST_NAME to '%s'.\n", test_version());
-    $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = test_version();
+    printf("Set software_result_test_name to '%s'.\n", test_version());
+    Genome::Config::set_env('software_result_test_name', test_version());
     print "\n";
 }
 

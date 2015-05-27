@@ -35,7 +35,10 @@ then
 fi
 
 export PERL_VERSION="${TEST_SPEC/-*}"
-export GENOME_TESTING=1
+
+TO_EVAL="$(genome config set-env testing 1)"
+eval $TO_EVAL
+
 export PERL5LIB="$GENOMECI_BASEDIR/lib:$PERL5LIB"
 "$GENOMECI_BASEDIR"/bin/set-perl $PERL_VERSION
 
