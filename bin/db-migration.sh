@@ -13,9 +13,14 @@ else
 fi
 
 set -o nounset
-export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
-export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
-export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+set -o errexit
+TO_EVAL="$(genome config set-env ds_gmschema_server dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT})"
+eval $TO_EVAL
+TO_EVAL="$(genome config set-env ds_gmschema_login $TESTDBSERVER_DB_USER)"
+eval $TO_EVAL
+TO_EVAL="$(genome config set-env ds_gmschema_auth $TESTDBSERVER_DB_PASS)"
+eval $TO_EVAL
+set +o errexit
 set +o nounset
 
 echo "=> Migrating test database..."

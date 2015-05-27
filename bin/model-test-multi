@@ -114,11 +114,10 @@ sub create_build {
 }
 
 sub get_initial_build {
-    if ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) {
-        printf("GENOME_SOFTWARE_RESULT_TEST_NAME before getting build is %s\n",
-            $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME});
+    if (my $test_name = Genome::Config::get('software_result_test_name')) {
+        printf("software_result_test_name before getting build is %s\n", $test_name);
     } else {
-        print "GENOME_SOFTWARE_RESULT_TEST_NAME is not set\n";
+        print "software_result_test_name is not set\n";
     }
 
     my $build =  Genome::Model::Build->get(
