@@ -216,7 +216,9 @@ sub create_changes_summary {
         system("touch $git_changelog_lock_file");
     }
 
-    run("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
+    if ($old_git_version ne $new_git_version) {
+        run("$BIN_DIR/changelog $old_git_version $new_git_version > $snapshot_path/git-changelog");
+    }
 
     # create CHANGE_SUMMARY
     unlink("$snapshot_path/CHANGE_SUMMARY");
