@@ -17,6 +17,7 @@ sub apipe_ignore {
         edemello
         ehvatum
         gsanders
+        iferguso
         josborne
         jkoval
         jlolofie
@@ -48,7 +49,6 @@ sub apipe {
         dmorton
         ebelter
         fdu
-        iferguso
         jmcmicha
         jweible
         kkyung
