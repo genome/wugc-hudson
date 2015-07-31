@@ -83,12 +83,14 @@ my $cmd5 = Genome::Config::AnalysisProject::Command::Release->create(
 $cmd5->execute;
 
 my @instrument_data_objects = Genome::InstrumentData->get(id => \@instrument_data);
-my $pre_cqid_model_count = Genome::Model->get();
+my @pre_cqid_models = Genome::Model->get();
+my $pre_cqid_model_count = scalar @pre_cqid_models;
 my $cmd6 = Genome::Config::Command::ConfigureQueuedInstrumentData->create(
     instrument_data => \@instrument_data_objects,
 );
 $cmd6->execute;
-my $post_cqid_model_count = Genome::Model->get();
+my @post_cqid_models = Genome::Model->get();
+my $post_cqid_model_count = scalar @post_cqid_models;
 my $expected_number_of_models = 7;
 my $actual_number_of_models = $post_cqid_model_count - $pre_cqid_model_count;
 unless ($actual_number_of_models == $expected_number_of_models) {
