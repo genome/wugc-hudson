@@ -59,6 +59,12 @@ sub apipe {
     );
 }
 
+sub cle {
+    return qw(
+        dlarson
+    );
+}
+
 sub reference_alignment {
     return qw(
         fdu

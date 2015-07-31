@@ -1,0 +1,3 @@
+#!/bin/bash
+#"$GENOMECI_BASEDIR"/bin/model-process-common $1 cle
+/gscuser/aregier/git/genome/fix/jenkins/bin/model-process-common $1 cle

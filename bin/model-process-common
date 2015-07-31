@@ -45,6 +45,14 @@ export PERL5LIB="$GENOMECI_BASEDIR/lib:$PERL5LIB"
 if [ "$2" = "process" ]
 then
     "$GENOMECI_BASEDIR"/bin/process-test-multi
-else
+elif [ "$2" = "model" ]
+then
     "$GENOMECI_BASEDIR"/bin/model-test-multi
+elif [ "$2" = "cle" ]
+then
+    #"$GENOMECI_BASEDIR"/bin/cle-test
+    /gscuser/aregier/git/genome/fix/jenkins/bin/cle-test
+else
+    echo "ERROR: must set type of test [model, process, or cle]" 1>&2
+    exit 1
 fi
