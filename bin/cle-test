@@ -97,11 +97,15 @@ UR::Context->commit;
 my @builds = Genome::Model::Build->get(model_id => [map {$_->id} @models]);
 
 my $start_time = time;
+my @diff_cmds;
 for my $build (@builds) {
     wait_for_build($build, $start_time);
     $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
     check_build_failure($build);
-    diff_build($build);
+    my $diff_cmd = diff_build($build);
+    if (defined $diff_cmd) {
+        push @diff_cmds, $diff_cmd;
+    }
 }
 
 my $discovery_subject = get_sample_from_subject_mapping($analysis_project, $discovery_tag);
@@ -128,8 +132,14 @@ UR::Context->current->reload($process);
 
 check_process_failure($process);
 
-diff_process($process);
-
+my $process_diff_cmd = diff_process($process);
+if ($process_diff_cmd) {
+    push @diff_cmds, $process_diff_cmd;
+}
+if (@diff_cmds) {
+    Library::send_diff_mail(@diff_cmds);
+    exit(255);
+}
 # functions
 sub get_sample_from_subject_mapping {
     my ($anp, $tag) = @_;
@@ -263,10 +273,9 @@ sub diff_build {
 
     my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
     if ($has_diffs) {
-        Library::send_diff_mail($diff_cmd);
-        exit(255);
+        return $diff_cmd;
     }
-
+    return;
 }
 
 sub diff_process {
@@ -285,10 +294,9 @@ sub diff_process {
 
     my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
     if ($has_diffs) {
-        Library::send_diff_mail($diff_cmd);
-        exit(255);
+        return $diff_cmd;
     }
-
+    return;
 }
 
 sub build_view_and_exit {
