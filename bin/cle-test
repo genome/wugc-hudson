@@ -271,8 +271,7 @@ sub diff_build {
         fail(sprintf("Diff command failed to execute for build %s!\n", $build->id));
     }
 
-    my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
-    if ($has_diffs) {
+    if (Library::diff_cmd_has_diffs($diff_cmd)) {
         return $diff_cmd;
     }
     return;
@@ -292,8 +291,7 @@ sub diff_process {
         fail("Diff command failed to execute!\n");
     }
 
-    my $has_diffs = (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
-    if ($has_diffs) {
+    if (Library::diff_cmd_has_diffs($diff_cmd)) {
         return $diff_cmd;
     }
     return;
