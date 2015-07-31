@@ -104,21 +104,9 @@ for my $build (@builds) {
     diff_build($build);
 }
 
-my $discovery_mapping = Genome::Config::AnalysisProject::SubjectMapping->get(analysis_project => $analysis_project,
-    tags => [$discovery_tag]);
-my @bridges = grep {$_->label eq 'tumor_sample'} $discovery_mapping->subject_bridges;
-my $bridge = $bridges[0];
-my $discovery_subject = $bridge->subject;
-my $followup_mapping = Genome::Config::AnalysisProject::SubjectMapping->get(analysis_project => $analysis_project,
-    tags => [$followup_tag]);
-@bridges = grep {$_->label eq 'tumor_sample'} $followup_mapping->subject_bridges;
-$bridge = $bridges[0];
-my $followup_subject = $bridge->subject;
-my $germline_mapping = Genome::Config::AnalysisProject::SubjectMapping->get(analysis_project => $analysis_project,
-    tags => [$germline_tag]);
-@bridges = grep {$_->label eq 'tumor_sample'} $germline_mapping->subject_bridges;
-$bridge = $bridges[0];
-my $germline_subject = $bridge->subject;
+my $discovery_subject = get_sample_from_subject_mapping($analysis_project, $discovery_tag);
+my $followup_subject = get_sample_from_subject_mapping($analysis_project, $followup_tag);
+my $germline_subject = get_sample_from_subject_mapping($analysis_project, $germline_tag);
 
 my @models_for_process = Genome::Model::SomaticValidation->get(analysis_projects => [$analysis_project],
     region_of_interest_set_name => 'SeqCap EZ Human Exome v3.0 + AML RMG pooled probes + WO2830729 pooled probes + WO2840081 pooled probes');
@@ -143,6 +131,15 @@ check_process_failure($process);
 diff_process($process);
 
 # functions
+sub get_sample_from_subject_mapping {
+    my ($anp, $tag) = @_;
+    my $mapping = Genome::Config::AnalysisProject::SubjectMapping->get(analysis_project => $anp,
+        tags => [$tag]);
+    my @bridges = grep {$_->label eq 'tumor_sample'} $mapping->subject_bridges;
+    my $bridge = $bridges[0];
+    return $bridge->subject;
+}
+
 sub get_timeout {
     my $timeout_hours = 14;
     my $timeout_seconds = $timeout_hours * 3600;
