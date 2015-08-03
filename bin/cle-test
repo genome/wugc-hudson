@@ -19,9 +19,7 @@ Library::setup_model_process_test();
 Library::set_genome_software_result_test_name();
 
 if (Genome::Sys->username eq 'apipe-tester' && !$ENV{MODEL_TEST_TO}) {
-    if (Users->can('cle')) {
-        $ENV{MODEL_TEST_TO} = Library::users_to_addresses(Users->cle);
-    }
+    $ENV{MODEL_TEST_TO} = Library::users_to_addresses(Users->cle);
 }
 
 my $cmd0 = Genome::Config::AnalysisProject::Command::Create->create(
