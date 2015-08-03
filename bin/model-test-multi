@@ -87,9 +87,7 @@ sub get_timeout {
     );
     my $DEFAULT_TIMEOUT = 18;
     my $timeout_hours = $MODEL_TIMEOUTS{model_subname()} || $DEFAULT_TIMEOUT;
-    my $timeout_seconds = $timeout_hours * 3600;
-
-    return $timeout_seconds;
+    return Library::get_timeout_seconds($timeout_hours);
 }
 
 sub create_build {

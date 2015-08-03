@@ -25,13 +25,10 @@ check_process_failure($process);
 
 diff_process($process);
 
-
 # functions
 sub get_timeout {
     my $DEFAULT_TIMEOUT = 6;
-    my $timeout_seconds = $DEFAULT_TIMEOUT * 3600;
-
-    return $timeout_seconds;
+    return Library::get_timeout_seconds($DEFAULT_TIMEOUT);
 }
 
 sub get_initial_process {

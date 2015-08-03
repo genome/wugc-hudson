@@ -37,6 +37,11 @@ sub test_version {
     return $prefix . Revision->test_version();
 }
 
+sub get_timeout_seconds {
+    my $hours = shift;
+    return $hours * 3600;
+}
+
 sub send_timeout_mail {
     send_mail_with_topic('Timed Out');
 }

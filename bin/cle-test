@@ -157,20 +157,6 @@ sub get_sample_from_subject_mapping {
     return $bridge->subject;
 }
 
-sub get_timeout {
-    my $timeout_hours = 24;
-    my $timeout_seconds = $timeout_hours * 3600;
-
-    return $timeout_seconds;
-}
-
-sub get_process_timeout {
-    my $timeout_hours = 24;
-    my $timeout_seconds = $timeout_hours * 3600;
-
-    return $timeout_seconds;
-}
-
 sub wait_for_build {
     my $build = shift;
     my $start_time = shift;
@@ -179,7 +165,7 @@ sub wait_for_build {
         fail("Could not get the build's master event!\n");
     }
 
-    my $timeout = get_timeout();
+    my $timeout = Library::get_timeout_seconds(24);
     printf("Monitoring build (%s) until it completes or timeout "
         . "of %s minutes is reached.\n\n", $build->id, $timeout / 60);
 
@@ -203,7 +189,7 @@ sub wait_for_build {
 sub wait_for_process {
     my $process = shift;
 
-    my $timeout = get_process_timeout();
+    my $timeout = Library::get_timeout_seconds(24);
     printf("Monitoring process (%s) until it completes or timeout "
         . "of %s minutes is reached.\n\n", $process->id, $timeout / 60);
 
