@@ -176,4 +176,32 @@ sub diff_cmd_has_diffs {
     return (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
 }
 
+sub wait_for_build {
+    my $build = shift;
+    my $start_time = shift;
+    my $timeout = shift;
+
+    my $event = $build->the_master_event;
+    unless ($event) {
+        fail("Could not get the build's master event!\n");
+    }
+
+    printf("Monitoring build (%s) until it completes or timeout "
+        . "of %s minutes is reached.\n\n", $build->id, $timeout / 60);
+
+    while (!grep { $event->event_status eq $_ } ('Succeeded',
+            'Failed', 'Crashed')) {
+        UR::Context->current->reload($event);
+        UR::Context->current->reload($build);
+        my $elapsed_time = time - $start_time;
+        if ($elapsed_time > $timeout) {
+            printf("Build (%s) timed out after %s minutes",
+                $build->id, $timeout / 60);
+            Library::send_timeout_mail();
+            build_view_and_exit($build);
+        }
+
+        sleep(30);
+    }
+}
 1;

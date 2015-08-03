@@ -106,8 +106,10 @@ my @builds = Genome::Model::Build->get(model_id => [map {$_->id} @models]);
 
 my $start_time = time;
 my @diff_cmds;
+
+my $timeout = Library::get_timeout_seconds(24);
 for my $build (@builds) {
-    wait_for_build($build, $start_time);
+    Library::wait_for_build($build, $start_time, $timeout);
     $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
     check_build_failure($build);
     my $diff_cmd = diff_build($build);
@@ -155,35 +157,6 @@ sub get_sample_from_subject_mapping {
         tags => [$tag]);
     my ($bridge) = $mapping->subject_bridges(label => 'tumor_sample');
     return $bridge->subject;
-}
-
-sub wait_for_build {
-    my $build = shift;
-    my $start_time = shift;
-    my $event = $build->the_master_event;
-    unless ($event) {
-        fail("Could not get the build's master event!\n");
-    }
-
-    my $timeout = Library::get_timeout_seconds(24);
-    printf("Monitoring build (%s) until it completes or timeout "
-        . "of %s minutes is reached.\n\n", $build->id, $timeout / 60);
-
-    while (!grep { $event->event_status eq $_ } ('Succeeded',
-            'Failed', 'Crashed')) {
-        UR::Context->current->reload($event);
-        $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
-
-        my $elapsed_time = time - $start_time;
-        if ($elapsed_time > $timeout) {
-            printf("Build (%s) timed out after %s minutes",
-                $build->id, $timeout / 60);
-            Library::send_timeout_mail();
-            build_view_and_exit($build);
-        }
-
-        sleep(30);
-    }
 }
 
 sub wait_for_process {
