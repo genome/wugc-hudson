@@ -156,8 +156,7 @@ sub get_sample_from_subject_mapping {
     my ($anp, $tag) = @_;
     my $mapping = Genome::Config::AnalysisProject::SubjectMapping->get(analysis_project => $anp,
         tags => [$tag]);
-    my @bridges = grep {$_->label eq 'tumor_sample'} $mapping->subject_bridges;
-    my $bridge = $bridges[0];
+    my ($bridge) = $mapping->subject_bridges(label => 'tumor_sample');
     return $bridge->subject;
 }
 
