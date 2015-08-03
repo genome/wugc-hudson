@@ -5,10 +5,10 @@ use Revision;
 use Library;
 use Users;
 use JenkinsData;
+use Try::Tiny qw(try catch);
 
 use strict;
 use warnings;
-
 
 # flush output buffer after every write or print
 local $| = 1;
@@ -22,7 +22,12 @@ if (Genome::Sys->username eq 'apipe-tester' && !$ENV{MODEL_TEST_TO}) {
 }
 
 my $cle_test = Genome::Site::TGI::CleTest->create();
-my @builds = $cle_test->get_builds();
+my @builds = try {
+    $cle_test->get_builds();
+}
+catch {
+    fail($_);
+};
 
 my $start_time = time;
 my @diff_cmds;
@@ -32,13 +37,23 @@ for my $build (@builds) {
     Library::wait_for_build($build, $start_time, $timeout);
     UR::Context->current->reload($build);
     Library::check_build_failure($build);
-    my $diff_cmd = $cle_test->diff_build($build);
+    my $diff_cmd = try {
+        $cle_test->diff_build($build);
+    }
+    catch {
+        fail($_);
+    };
     if (defined $diff_cmd) {
         push @diff_cmds, $diff_cmd;
     }
 }
 
-my $process = $cle_test->get_process();
+my $process = try {
+    $cle_test->get_process();
+}
+catch {
+    fail($_);
+};
 
 Library::wait_for_process($process, $timeout);
 
@@ -46,7 +61,12 @@ UR::Context->current->reload($process);
 
 Library::check_process_failure($process);
 
-my $process_diff_cmd = $cle_test->diff_process($process);
+my $process_diff_cmd = try {
+    $cle_test->diff_process($process);
+}
+catch {
+    fail($_);
+};
 if ($process_diff_cmd) {
     push @diff_cmds, $process_diff_cmd;
 }
