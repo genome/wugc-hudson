@@ -195,7 +195,7 @@ sub wait_for_build {
         UR::Context->current->reload($build);
         my $elapsed_time = time - $start_time;
         if ($elapsed_time > $timeout) {
-            printf("Build (%s) timed out after %s minutes",
+            printf("Build (%s) timed out after %s minutes\n",
                 $build->id, $timeout / 60);
             Library::send_timeout_mail();
             Library::build_view_and_exit($build);
@@ -229,7 +229,7 @@ sub wait_for_process {
 
         my $elapsed_time = time - $start_time;
         if ($elapsed_time > $timeout) {
-            printf("Process (%s) timed out after %s minutes",
+            printf("Process (%s) timed out after %s minutes\n",
                 $process->id, $timeout / 60);
             Library::send_timeout_mail();
             process_view_and_exit($process);
