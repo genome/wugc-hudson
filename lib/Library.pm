@@ -198,10 +198,72 @@ sub wait_for_build {
             printf("Build (%s) timed out after %s minutes",
                 $build->id, $timeout / 60);
             Library::send_timeout_mail();
-            build_view_and_exit($build);
+            Library::build_view_and_exit($build);
         }
 
         sleep(30);
     }
 }
+
+sub check_build_failure {
+    my $build = shift;
+
+    if ($build->status eq 'Succeeded') {
+        printf("Build status is %s.\n", $build->status);
+    } else {
+        Library::send_fail_mail();
+        Library::build_view_and_exit($build);
+    }
+}
+
+sub wait_for_process {
+    my $process = shift;
+
+    my $timeout = get_timeout();
+    printf("Monitoring process (%s) until it completes or timeout "
+        . "of %s minutes is reached.\n\n", $process->id, $timeout / 60);
+
+    my $start_time = time;
+    while (!grep { $process->status eq $_ } ('Succeeded', 'Crashed')) {
+        UR::Context->current->reload($process);
+
+        my $elapsed_time = time - $start_time;
+        if ($elapsed_time > $timeout) {
+            printf("Process (%s) timed out after %s minutes",
+                $process->id, $timeout / 60);
+            Library::send_timeout_mail();
+            process_view_and_exit($process);
+        }
+
+        sleep(30);
+    }
+}
+
+sub process_view_and_exit {
+    my $process = shift;
+    my $pv_command = Genome::Process::Command::View->create(
+        process => $process);
+    $pv_command->execute;
+    exit(255);
+}
+
+sub check_process_failure {
+    my $process = shift;
+
+    if ($process->status eq 'Succeeded') {
+        printf("Process status is %s.\n", $process->status);
+    } else {
+        Library::send_fail_mail();
+        Library::process_view_and_exit($process);
+    }
+}
+
+sub build_view_and_exit {
+    my $build = shift;
+    my $bv_command = Genome::Model::Build::Command::View->create(
+        build => $build);
+    $bv_command->execute;
+    exit(255);
+}
+
 1;

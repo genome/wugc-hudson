@@ -33,7 +33,7 @@ Library::wait_for_build($build, $start_time, get_timeout());
 
 $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
 
-check_build_failure($build);
+Library::check_build_failure($build);
 
 diff_build($build);
 
@@ -134,17 +134,6 @@ sub get_initial_build {
     return $build;
 }
 
-sub check_build_failure {
-    my $build = shift;
-
-    if ($build->status eq 'Succeeded') {
-        printf("Build status is %s.\n", $build->status);
-    } else {
-        Library::send_fail_mail();
-        build_view_and_exit($build);
-    }
-}
-
 sub diff_build {
     my $build = shift;
 
@@ -161,14 +150,6 @@ sub diff_build {
         exit(255);
     }
 
-}
-
-sub build_view_and_exit {
-    my $build = shift;
-    my $bv_command = Genome::Model::Build::Command::View->create(
-        build => $build);
-    $bv_command->execute;
-    exit(255);
 }
 
 sub fail {
