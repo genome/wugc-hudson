@@ -5,7 +5,6 @@ use Revision;
 use Library;
 use Users;
 use JenkinsData;
-use Memoize qw(memoize);
 
 use strict;
 use warnings;
