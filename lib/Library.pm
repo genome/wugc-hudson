@@ -266,4 +266,16 @@ sub build_view_and_exit {
     exit(255);
 }
 
+sub fail {
+    my $test_name = shift;
+    if (scalar(@_) == 1) {
+        print @_;
+    } elsif (scalar(@_) > 1) {
+        printf @_;
+    } else {
+        print "Failed to execute $test_name\n";
+    }
+
+    exit(255);
+}
 1;

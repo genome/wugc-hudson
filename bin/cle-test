@@ -223,14 +223,6 @@ sub diff_process {
 }
 
 sub fail {
-    if (scalar(@_) == 1) {
-        print @_;
-    } elsif (scalar(@_) > 1) {
-        printf @_;
-    } else {
-        print "Failed to execute cle test\n";
-    }
-
-    exit(255);
+    Library::fail("cle test", @_);
 }
 
