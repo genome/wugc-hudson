@@ -110,7 +110,7 @@ my @diff_cmds;
 my $timeout = Library::get_timeout_seconds(24);
 for my $build (@builds) {
     Library::wait_for_build($build, $start_time, $timeout);
-    $build = UR::Context->current->reload('Genome::Model::Build', id => $build->id);
+    UR::Context->current->reload($build);
     Library::check_build_failure($build);
     my $diff_cmd = diff_build($build);
     if (defined $diff_cmd) {
