@@ -16,7 +16,7 @@ Library::setup_model_process_test();
 Library::set_genome_software_result_test_name();
 
 my $process = get_initial_process();
-Library::wait_for_process($process);
+Library::wait_for_process($process, get_timeout());
 
 UR::Context->current->reload($process);
 

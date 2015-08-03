@@ -218,8 +218,8 @@ sub check_build_failure {
 
 sub wait_for_process {
     my $process = shift;
+    my $timeout = shift;
 
-    my $timeout = get_timeout();
     printf("Monitoring process (%s) until it completes or timeout "
         . "of %s minutes is reached.\n\n", $process->id, $timeout / 60);
 

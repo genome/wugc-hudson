@@ -136,7 +136,8 @@ my $process_command = Genome::VariantReporting::Command::Wrappers::Trio->create(
 );
 my $process = $process_command->execute;
 UR::Context->commit;
-Library::wait_for_process($process);
+
+Library::wait_for_process($process, $timeout);
 
 UR::Context->current->reload($process);
 
