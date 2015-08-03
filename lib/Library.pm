@@ -173,7 +173,7 @@ sub setup_model_process_test {
 
 sub diff_cmd_has_diffs {
     my $diff_cmd = shift;
-    return (defined($diff_cmd->_diffs) && scalar(keys %{$diff_cmd->_diffs})) || 0;
+    return $diff_cmd->has_diffs;
 }
 
 sub wait_for_build {
