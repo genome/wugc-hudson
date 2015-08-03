@@ -158,14 +158,14 @@ sub get_sample_from_subject_mapping {
 }
 
 sub get_timeout {
-    my $timeout_hours = 14;
+    my $timeout_hours = 24;
     my $timeout_seconds = $timeout_hours * 3600;
 
     return $timeout_seconds;
 }
 
 sub get_process_timeout {
-    my $timeout_hours = 14;
+    my $timeout_hours = 24;
     my $timeout_seconds = $timeout_hours * 3600;
 
     return $timeout_seconds;
