@@ -145,7 +145,7 @@ sub diff_build {
         fail("Diff command failed to execute!\n");
     }
 
-    if (Library::diff_cmd_has_diffs($diff_cmd)) {
+    if ($diff_cmd->has_diffs()) {
         Library::send_diff_mail($diff_cmd);
         exit(255);
     }

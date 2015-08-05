@@ -197,7 +197,7 @@ sub diff_build {
         fail(sprintf("Diff command failed to execute for build %s!\n", $build->id));
     }
 
-    if (Library::diff_cmd_has_diffs($diff_cmd)) {
+    if ($diff_cmd->has_diffs()) {
         return $diff_cmd;
     }
     return;
@@ -217,7 +217,7 @@ sub diff_process {
         fail("Diff command failed to execute!\n");
     }
 
-    if (Library::diff_cmd_has_diffs($diff_cmd)) {
+    if ($diff_cmd->has_diffs()) {
         return $diff_cmd;
     }
     return;
