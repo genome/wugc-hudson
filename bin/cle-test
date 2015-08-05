@@ -90,9 +90,9 @@ for my $build (@builds) {
     }
 }
 
-my $discovery_subject = get_sample_from_subject_mapping($analysis_project, $discovery_tag);
-my $followup_subject = get_sample_from_subject_mapping($analysis_project, $followup_tag);
-my $germline_subject = get_sample_from_subject_mapping($analysis_project, $germline_tag);
+my $discovery_subject = get_sample_from_subject_mapping($analysis_project, 'discovery');
+my $followup_subject = get_sample_from_subject_mapping($analysis_project, 'followup');
+my $germline_subject = get_sample_from_subject_mapping($analysis_project, 'germline');
 
 my @models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
     region_of_interest_set_name => $test_config->{region_of_interest_set_name});
@@ -124,7 +124,8 @@ if (@diff_cmds) {
 }
 # functions
 sub get_sample_from_subject_mapping {
-    my ($anp, $tag) = @_;
+    my ($anp, $tag_name) = @_;
+    my $tag = Genome::Config::Tag->get(name => $tag_name);
     my $mapping = Genome::Config::AnalysisProject::SubjectMapping->get(analysis_project => $anp,
         tags => [$tag]);
     my ($bridge) = $mapping->subject_bridges(label => 'tumor_sample');
