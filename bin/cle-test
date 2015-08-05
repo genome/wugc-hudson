@@ -17,7 +17,7 @@ Library::setup_model_process_test();
 
 Library::set_genome_software_result_test_name();
 
-my $test_config = Genome;:Site::TGI::CleTest::get_config;
+my $test_config = Genome::Site::TGI::CleTest::get_config();
 
 if (Genome::Sys->username eq 'apipe-tester' && !$ENV{MODEL_TEST_TO}) {
     $ENV{MODEL_TEST_TO} = Library::users_to_addresses(Users->cle);
