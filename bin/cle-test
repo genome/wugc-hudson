@@ -99,13 +99,14 @@ my @models_for_process = Genome::Model::SomaticValidation->get(analysis_project 
 my @coverage_models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
     tumor_sample => [$discovery_subject, $followup_subject]);
 my @germline_models = grep {$_->tumor_sample eq $germline_subject} @models_for_process;
-Genome::VariantReporting::Command::Wrappers::Trio->execute(
+my $process_cmd = Genome::VariantReporting::Command::Wrappers::Trio->create(
     models => \@models_for_process,
     coverage_models => \@coverage_models_for_process,
     tumor_sample => $discovery_subject,
     followup_sample => $followup_subject,
     normal_sample => $germline_subject,
 );
+my $process = $process_cmd->execute;
 UR::Context->commit;
 
 Library::wait_for_process($process, $timeout);
