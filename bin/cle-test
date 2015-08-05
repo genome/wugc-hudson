@@ -5,6 +5,7 @@ use Revision;
 use Library;
 use Users;
 use JenkinsData;
+use Genome::Site::TGI::CleTest;
 
 use strict;
 use warnings;
@@ -14,8 +15,9 @@ use warnings;
 local $| = 1;
 Library::setup_model_process_test();
 
-
 Library::set_genome_software_result_test_name();
+
+my $test_config = Genome;:Site::TGI::CleTest::get_config;
 
 if (Genome::Sys->username eq 'apipe-tester' && !$ENV{MODEL_TEST_TO}) {
     $ENV{MODEL_TEST_TO} = Library::users_to_addresses(Users->cle);
@@ -27,11 +29,9 @@ my $cmd0 = Genome::Config::AnalysisProject::Command::Create->create(
     no_config => 1
 );
 my $analysis_project = $cmd0->execute;
-my %tag_to_menu_item = (
-    discovery => "9ab6e28f832a428393b87b171d444401",
-    followup => "9ab6e28f832a428393b87b171d444401",
-    germline => "3770b8510d5a459f9c0bb01fabf56337",
-);
+
+my %tag_to_menu_item = %{$test_config->{tag_to_menu_item}};
+
 while (my ($tag_name, $menu_item_id) = each %tag_to_menu_item) {
     my $menu_item = Genome::Config::AnalysisMenu::Item->get($menu_item_id);
     my $tag = Genome::Config::Tag->get(name => $tag_name);
@@ -43,19 +43,14 @@ while (my ($tag_name, $menu_item_id) = each %tag_to_menu_item) {
 }
 
 my $subject_mapping_file = Genome::Sys->create_temp_file_path;
-my $subject_mapping = <<'SUBJECT_MAPPINGS';
-H_KA-174556-1309237	H_KA-174556-1309246				followup
-H_KA-174556-1309245	H_KA-174556-1309246				discovery
-H_KA-174556-1309246					germline
-SUBJECT_MAPPINGS
-
+my $subject_mapping = $test_config->{subject_mapping_string};
 Genome::Sys->write_file($subject_mapping_file, $subject_mapping);
 Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticValidation->execute(
     analysis_project => $analysis_project,
     file_path => $subject_mapping_file,
 );
 
-my @instrument_data = qw(2893814999 2893815000 2893815001 2893815002 2893815003 2893815016 2893815018 2893815020 2893815023 2893815024 2893815447 2893815448 2893815449 2893815451 2893815484 2893815485 2893815489 2893815492);
+my @instrument_data = @{$test_config->{instrument_data}};
 for my $id (@instrument_data) {
     my $instrument_data = Genome::InstrumentData->get($id);
     Genome::Config::AnalysisProject::InstrumentDataBridge->create(
@@ -100,7 +95,7 @@ my $followup_subject = get_sample_from_subject_mapping($analysis_project, $follo
 my $germline_subject = get_sample_from_subject_mapping($analysis_project, $germline_tag);
 
 my @models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
-    region_of_interest_set_name => 'SeqCap EZ Human Exome v3.0 + AML RMG pooled probes + WO2830729 pooled probes + WO2840081 pooled probes');
+    region_of_interest_set_name => $test_config->{region_of_interest_set_name});
 my @coverage_models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
     tumor_sample => [$discovery_subject, $followup_subject]);
 my @germline_models = grep {$_->tumor_sample eq $germline_subject} @models_for_process;
@@ -141,15 +136,7 @@ sub diff_build {
 
     printf("Starting diff (new build = %s)...\n", $build->id);
 
-    my @blessed_builds = Genome::Model::Build->get(id => [qw(
-    185d8bac3d7c4437b7ce9207dfadac7e
-    5f57f08a8fd84886b275f0b5571e9fd7
-    e02e8a5ccaad458d839de51eb47d8d2c
-    26e65adaa8034dd99ef92b27f61ad862
-    3243f261a8b64c089a5254291f7c2de3
-    f87701c292e843958d088e171a65a67a
-    301d5d51c96e41308d015008720f3962
-    )]);
+    my @blessed_builds = Genome::Model::Build->get(id => $test_config->{blessed_builds});
 
     my $matching_blessed_build;
     for my $blessed_build (@blessed_builds) {
@@ -182,7 +169,7 @@ sub diff_build {
 sub diff_process {
     my $process = shift;
 
-    my $blessed_process = Genome::Process->get("2b2b3d8481284fcf8a1632d65ba58083");
+    my $blessed_process = Genome::Process->get($test_config->{blessed_process});
 
     printf("Starting diff (new process = %s)...\n", $process->id);
     my $diff_cmd = Genome::Process::Command::Diff->create(
