@@ -1,0 +1,194 @@
+#!/usr/bin/perl
+
+use Genome;
+use Revision;
+use Library;
+use Users;
+use JenkinsData;
+use Genome::Site::TGI::CleTest;
+
+use strict;
+use warnings;
+
+
+# flush output buffer after every write or print
+local $| = 1;
+Library::setup_model_process_test();
+
+Library::set_genome_software_result_test_name();
+
+my $test_config = Genome::Site::TGI::CleTest::get_config();
+
+if (Genome::Sys->username eq 'apipe-tester' && !$ENV{MODEL_TEST_TO}) {
+    $ENV{MODEL_TEST_TO} = Library::users_to_addresses(Users->cle);
+}
+
+my $cmd0 = Genome::Config::AnalysisProject::Command::Create->create(
+    environment => "ad-hoc",
+    name => "CLE Test",
+    no_config => 1
+);
+my $analysis_project = $cmd0->execute;
+
+my %tag_to_menu_item = %{$test_config->{tag_to_menu_item}};
+
+while (my ($tag_name, $menu_item_id) = each %tag_to_menu_item) {
+    my $menu_item = Genome::Config::AnalysisMenu::Item->get($menu_item_id);
+    my $tag = Genome::Config::Tag->get(name => $tag_name);
+    Genome::Config::AnalysisProject::Command::AddMenuItem->execute(
+        analysis_menu_items => $menu_item,
+        tags => $tag,
+        analysis_project => $analysis_project,
+    );
+}
+
+my $subject_mapping_file = Genome::Sys->create_temp_file_path;
+my $subject_mapping = $test_config->{subject_mapping_string};
+Genome::Sys->write_file($subject_mapping_file, $subject_mapping);
+Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticValidation->execute(
+    analysis_project => $analysis_project,
+    file_path => $subject_mapping_file,
+);
+
+my @instrument_data = @{$test_config->{instrument_data}};
+for my $id (@instrument_data) {
+    my $instrument_data = Genome::InstrumentData->get($id);
+    Genome::Config::AnalysisProject::InstrumentDataBridge->create(
+        analysis_project => $analysis_project,
+        instrument_data => $instrument_data,
+        status => 'new',
+    );
+}
+
+Genome::Config::AnalysisProject::Command::Release->execute(
+    analysis_projects => [$analysis_project],
+);
+
+my @instrument_data_objects = Genome::InstrumentData->get(id => \@instrument_data);
+Genome::Config::Command::ConfigureQueuedInstrumentData->execute(
+    instrument_data => \@instrument_data_objects,
+);
+
+my @models = Genome::Model->get(analysis_project => $analysis_project);
+Genome::Model::Build::Command::Start->execute(
+    models => \@models,
+);
+UR::Context->commit;
+my @builds = Genome::Model::Build->get(model_id => [map {$_->id} @models]);
+
+my $start_time = time;
+my @diff_cmds;
+
+my $timeout = Library::get_timeout_seconds(24);
+for my $build (@builds) {
+    Library::wait_for_build($build, $start_time, $timeout);
+    UR::Context->current->reload($build);
+    Library::check_build_failure($build);
+    my $diff_cmd = diff_build($build);
+    if (defined $diff_cmd) {
+        push @diff_cmds, $diff_cmd;
+    }
+}
+
+my $discovery_subject = get_sample_from_subject_mapping($analysis_project, 'discovery');
+my $followup_subject = get_sample_from_subject_mapping($analysis_project, 'followup');
+my $germline_subject = get_sample_from_subject_mapping($analysis_project, 'germline');
+
+my @models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
+    region_of_interest_set_name => $test_config->{region_of_interest_set_name});
+my @coverage_models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
+    tumor_sample => [$discovery_subject, $followup_subject]);
+my @germline_models = grep {$_->tumor_sample eq $germline_subject} @models_for_process;
+my $process_cmd = Genome::VariantReporting::Command::Wrappers::Trio->create(
+    models => \@models_for_process,
+    coverage_models => \@coverage_models_for_process,
+    tumor_sample => $discovery_subject,
+    followup_sample => $followup_subject,
+    normal_sample => $germline_subject,
+);
+my $process = $process_cmd->execute;
+UR::Context->commit;
+
+Library::wait_for_process($process, $timeout);
+
+UR::Context->current->reload($process);
+
+Library::check_process_failure($process);
+
+my $process_diff_cmd = diff_process($process);
+if ($process_diff_cmd) {
+    push @diff_cmds, $process_diff_cmd;
+}
+if (@diff_cmds) {
+    Library::send_diff_mail(@diff_cmds);
+    exit(255);
+}
+# functions
+sub get_sample_from_subject_mapping {
+    my ($anp, $tag_name) = @_;
+    my $tag = Genome::Config::Tag->get(name => $tag_name);
+    my $mapping = Genome::Config::AnalysisProject::SubjectMapping->get(analysis_project => $anp,
+        tags => [$tag]);
+    my ($bridge) = $mapping->subject_bridges(label => 'tumor_sample');
+    return $bridge->subject;
+}
+
+sub diff_build {
+    my $build = shift;
+
+    printf("Starting diff (new build = %s)...\n", $build->id);
+
+    my @blessed_builds = Genome::Model::Build->get(id => $test_config->{blessed_builds});
+
+    my $matching_blessed_build;
+    for my $blessed_build (@blessed_builds) {
+        if ($build->tumor_sample eq $blessed_build->tumor_sample and
+                ((!defined($build->normal_sample) and !defined($blessed_build->normal_sample)) or
+                    ($build->normal_sample eq $blessed_build->normal_sample)) and
+            $build->target_region_set_name eq $blessed_build->target_region_set_name) {
+                $matching_blessed_build = $blessed_build;
+                last;
+            }
+    }
+    unless (defined $matching_blessed_build) {
+        fail(sprintf("No matching blessed build found for build %s\n", $build->id));
+    }
+
+    my $diff_cmd = Genome::Model::Build::Command::Diff->create(
+        new_build => $build,
+        blessed_build => $matching_blessed_build,
+    );
+    unless ($diff_cmd->execute) {
+        fail(sprintf("Diff command failed to execute for build %s!\n", $build->id));
+    }
+
+    if ($diff_cmd->has_diffs()) {
+        return $diff_cmd;
+    }
+    return;
+}
+
+sub diff_process {
+    my $process = shift;
+
+    my $blessed_process = Genome::Process->get($test_config->{blessed_process});
+
+    printf("Starting diff (new process = %s)...\n", $process->id);
+    my $diff_cmd = Genome::Process::Command::Diff->create(
+        new_process => $process,
+        blessed_process => $blessed_process,
+    );
+    unless ($diff_cmd->execute) {
+        fail("Diff command failed to execute!\n");
+    }
+
+    if ($diff_cmd->has_diffs()) {
+        return $diff_cmd;
+    }
+    return;
+}
+
+sub fail {
+    Library::fail("cle test", @_);
+}
+
