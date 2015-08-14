@@ -143,9 +143,7 @@ sub diff_build {
     my $matching_blessed_build;
     for my $blessed_build (@blessed_builds) {
         if ($build->tumor_sample eq $blessed_build->tumor_sample and
-                ((!defined($build->normal_sample) and !defined($blessed_build->normal_sample)) or
-                    (defined($build->normal_sample) and defined($blessed_build->normal_sample) and
-                        $build->normal_sample eq $blessed_build->normal_sample)) and
+                normal_samples_match($build, $blessed_build) and
             $build->region_of_interest_set->name eq $blessed_build->region_of_interest_set->name) {
                 $matching_blessed_build = $blessed_build;
                 last;
@@ -167,6 +165,21 @@ sub diff_build {
         return $diff_cmd;
     }
     return;
+}
+
+sub normal_samples_match {
+    my $build = shift;
+    my $blessed_build = shift;
+    if (!defined($build->normal_sample) and
+        !defined($blessed_build->normal_sample)) {
+        return 1;
+    }
+    if (defined($build->normal_sample) and
+        defined($blessed_build->normal_sample) and
+        $build->normal_sample eq $blessed_build->normal_sample) {
+        return 1;
+    }
+    return 0;
 }
 
 sub diff_process {
