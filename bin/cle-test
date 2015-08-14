@@ -144,7 +144,8 @@ sub diff_build {
     for my $blessed_build (@blessed_builds) {
         if ($build->tumor_sample eq $blessed_build->tumor_sample and
                 ((!defined($build->normal_sample) and !defined($blessed_build->normal_sample)) or
-                    ($build->normal_sample eq $blessed_build->normal_sample)) and
+                    (defined($build->normal_sample) and defined($blessed_build->normal_sample) and
+                        $build->normal_sample eq $blessed_build->normal_sample)) and
             $build->target_region_set_name eq $blessed_build->target_region_set_name) {
                 $matching_blessed_build = $blessed_build;
                 last;
