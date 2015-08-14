@@ -146,7 +146,7 @@ sub diff_build {
                 ((!defined($build->normal_sample) and !defined($blessed_build->normal_sample)) or
                     (defined($build->normal_sample) and defined($blessed_build->normal_sample) and
                         $build->normal_sample eq $blessed_build->normal_sample)) and
-            $build->region_of_interest_set_name eq $blessed_build->region_of_interest_set_name) {
+            $build->region_of_interest_set->name eq $blessed_build->region_of_interest_set->name) {
                 $matching_blessed_build = $blessed_build;
                 last;
             }
