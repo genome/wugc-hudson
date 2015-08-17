@@ -53,11 +53,8 @@ sub send_fail_mail {
 sub send_diff_mail {
     my @diff_cmds = @_;
 
-    my @bless_messages = map {$_->bless_message} @diff_cmds;
     my @diffs_messages = map {$_->diff_message} @diff_cmds;
     send_mail_with_topic('Diffs Found',
-        '********************************************************************************',
-        @bless_messages,
         '********************************************************************************',
         @diffs_messages);
 }
