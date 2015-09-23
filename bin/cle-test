@@ -79,7 +79,7 @@ my @builds = Genome::Model::Build->get(model_id => [map {$_->id} @models]);
 my $start_time = time;
 my @diff_cmds;
 
-my $timeout = Library::get_timeout_seconds(24);
+my $timeout = Library::get_timeout_seconds(36);
 for my $build (@builds) {
     Library::wait_for_build($build, $start_time, $timeout);
     UR::Context->current->reload($build);
