@@ -23,6 +23,8 @@ sub apipe_ignore {
         jlolofie
         jpeck
         jschindl
+        jweible
+        kkyung
         lcarmich
         mburnett
         mjohnson
@@ -50,8 +52,6 @@ sub apipe {
         ebelter
         fdu
         jmcmicha
-        jweible
-        kkyung
         mfulton
         mkiwala
         ssiebert
@@ -88,14 +88,12 @@ sub somatic {
 sub de_novo_assembly {
     return qw(
         ebelter
-        kkyung
     );
 }
 
 sub amplicon_assembly {
     return qw(
         ebelter
-        kkyung
     );
 }
 
@@ -108,7 +106,6 @@ sub convergence {
 sub metagenomic_composition_16s {
     return qw(
         ebelter
-        kkyung
     );
 }
 
