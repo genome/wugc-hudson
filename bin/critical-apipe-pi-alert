@@ -8,7 +8,7 @@ JOBS=(
 )
 for JOB in "${JOBS[@]}"
 do
-    if ! curl --silent --insecure --location "https://apipe-ci.gsc.wustl.edu/view/All/job/${JOB}/api/xml?xpath=freeStyleProject/buildable" | grep -q true
+    if ! curl --silent --insecure --location "https://apipe-pi.gsc.wustl.edu/view/All/job/${JOB}/api/xml?xpath=freeStyleProject/buildable" | grep -q true
     then
         FAILED=("${FAILED[@]}" "$JOB")
     fi
@@ -21,6 +21,6 @@ then
     do
         EMAIL="${EMAIL}  $JOB\n"
     done
-    echo -e "$EMAIL" | mail -s "Critical apipe-ci Jobs Disabled" jeldred@genome.wustl.edu
+    echo -e "$EMAIL" | mail -s "Critical apipe-pi Jobs Disabled" jeldred@genome.wustl.edu
 fi
 
