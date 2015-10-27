@@ -1,10 +1,10 @@
 #!/bin/bash -l
 
 JOBS=(
-    "CQID"
-    "Reconcile%20Misc%20Updates"
-    "Copy%20New%20Entities%20and%20Remove%20Expunged%20Instrument%20Data"
-    "Sync%20LIMS%20and%20Genome"
+    "cqid"
+    "reconcile-misc-updates"
+    "copy-new-entities-and-remove-expunged-instrument-data"
+    "sync-lims-and-genome"
 )
 for JOB in "${JOBS[@]}"
 do
