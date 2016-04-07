@@ -13,6 +13,7 @@ sub apipe_ignore {
         ccarey
         cfederer
         coliver
+        dmorton
         eclark
         edemello
         ehvatum
@@ -48,7 +49,6 @@ sub apipe {
         abrummet
         acoffman
         aregier
-        dmorton
         ebelter
         fdu
         jmcmicha
