@@ -79,27 +79,9 @@ sub somatic_variation {
     );
 }
 
-sub somatic {
-    return qw(
-        tmooney
-    );
-}
-
 sub de_novo_assembly {
     return qw(
         ebelter
-    );
-}
-
-sub amplicon_assembly {
-    return qw(
-        ebelter
-    );
-}
-
-sub convergence {
-    return qw(
-        tmooney
     );
 }
 
