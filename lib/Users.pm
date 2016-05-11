@@ -29,6 +29,7 @@ sub apipe_ignore {
         lcarmich
         mburnett
         mjohnson
+        mkiwala
         nnutter
         pkimmey
         rhancock
@@ -53,7 +54,6 @@ sub apipe {
         fdu
         jmcmicha
         mfulton
-        mkiwala
         ssiebert
         tmooney
     );
