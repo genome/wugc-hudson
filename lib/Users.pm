@@ -29,6 +29,7 @@ sub apipe_ignore {
         lcarmich
         mburnett
         mjohnson
+        mkiwala
         nnutter
         pkimmey
         rhancock
@@ -53,7 +54,6 @@ sub apipe {
         fdu
         jmcmicha
         mfulton
-        mkiwala
         ssiebert
         tmooney
     );
@@ -79,27 +79,9 @@ sub somatic_variation {
     );
 }
 
-sub somatic {
-    return qw(
-        tmooney
-    );
-}
-
 sub de_novo_assembly {
     return qw(
         ebelter
-    );
-}
-
-sub amplicon_assembly {
-    return qw(
-        ebelter
-    );
-}
-
-sub convergence {
-    return qw(
-        tmooney
     );
 }
 
@@ -111,8 +93,6 @@ sub metagenomic_composition_16s {
 
 sub gene_prediction_eukaryotic {
     return qw(
-        kpepin
-        xzhang
         tmooney
     );
 }
