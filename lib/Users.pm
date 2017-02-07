@@ -10,6 +10,7 @@ use warnings;
 sub apipe_ignore {
     return qw(
         adukes
+        aramu
         ccarey
         cfederer
         coliver
@@ -99,7 +100,6 @@ sub gene_prediction_eukaryotic {
 
 sub clin_seq {
     return qw(
-        aramu
         awagner
         bainscou
         mgriffit
