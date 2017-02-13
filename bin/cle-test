@@ -30,6 +30,20 @@ my $cmd0 = Genome::Config::AnalysisProject::Command::Create->create(
 );
 my $analysis_project = $cmd0->execute;
 
+my $env_file = Genome::Sys->create_temp_file_path();
+Genome::Sys->write_file($env_file, <<EOFILE
+disk_group_alignments: apipe_tester
+disk_group_models: apipe_tester
+EOFILE
+);
+
+my $env_cmd = Genome::Config::AnalysisProject::Command::AddEnvironmentFile->create(
+    environment_file => $env_file,
+    analysis_project => $analysis_project,
+);
+$env_cmd->execute
+    or fail('Could not set environment file.');
+
 my %tag_to_menu_item = %{$test_config->{tag_to_menu_item}};
 
 while (my ($tag_name, $menu_item_id) = each %tag_to_menu_item) {
