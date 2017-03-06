@@ -16,7 +16,6 @@ sub CURRENT_WEB { return $BASE_DIR . '/current/web'};
 sub CURRENT_USER { return $BASE_DIR . '/current/user'};
 
 sub UR_REPOSITORY { return 'git://github.com/sakoht/UR.git'};
-sub WORKFLOW_REPOSITORY { return 'ssh://git.gsc.wustl.edu/srv/git/workflow.git'};
 sub GENOME_REPOSITORY { return 'ssh://git.gsc.wustl.edu/srv/git/genome.git'};
 
 sub GIT_REPOS_BASE { return '/gscuser/apipe-tester/.hudson_repos'};
@@ -24,7 +23,6 @@ sub REPOSITORIES {
     return (
     	UR => 'git://github.com/sakoht/UR.git',
     	genome => 'ssh://git.gsc.wustl.edu/srv/git/genome.git',
-    	workflow => 'ssh://git.gsc.wustl.edu/srv/git/workflow.git',
     );
 };
 

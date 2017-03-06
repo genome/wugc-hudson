@@ -16,9 +16,6 @@ PATH=$GIT_BASE_DIR/ur/bin:$PATH
 
 PERL5LIB=$GIT_BASE_DIR/configuration-manager/lib:$PERL5LIB
 
-PERL5LIB=$GIT_BASE_DIR/workflow/lib:$PERL5LIB
-PATH=$GIT_BASE_DIR/workflow/bin:$PATH
-
 PERL5LIB=$GIT_BASE_DIR/lib/perl:$PERL5LIB
 PATH=$GIT_BASE_DIR/bin:$PATH
 
@@ -27,11 +24,11 @@ export PATH
 
 set +o nounset
 
-for MODULE in UR Workflow Genome; do
+for MODULE in UR Genome; do
     if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then echo "$MODULE found in $SNAPSHOT_LIB! Aborting!" 1>&2 && exit 1; fi
 done
 
-for BIN in ur workflow genome; do
+for BIN in ur genome; do
     if which $BIN | grep -q "$SNAPSHOT_BIN"; then echo "$BIN found in $SNAPSHOT_BIN! Aborting!" 1>&2 && exit 1; fi
 done
 

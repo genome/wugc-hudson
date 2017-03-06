@@ -176,7 +176,7 @@ sub post_create_cleanup {
     # Only allow bins that have been "whitelisted" because we once accidentally upgraded the whole center's perl.
     my @bins = glob("$snapshot_dir/bin/*");
     # Intentionally leaving off $ so it allows genome*, gmt*, etc.
-    my @bad_bins = grep { $_ !~ /$snapshot_dir\/bin\/(genome|gmt|ur|workflow|annotate-log|filter_bqm_for_errors|getopt_complete)/ } @bins;
+    my @bad_bins = grep { $_ !~ /$snapshot_dir\/bin\/(genome|gmt|ur|annotate-log|filter_bqm_for_errors|getopt_complete)/ } @bins;
     if (@bad_bins) {
         system('rm', '-f', @bad_bins);
     }
