@@ -91,7 +91,7 @@ sub promote {
         return 1;
     }
 
-    my $file_lock = Fcntl::FileLock->create(path => '/gsc/var/lock/genome/promote.lock');
+    my $file_lock = Fcntl::FileLock->create(path => '/gscmnt/gc13001/info/site_locks/genome/promote.lock');
     my $start_time = time;
     while (!$file_lock->lock) {
         my $errno = $!;
@@ -204,7 +204,7 @@ sub create_changes_summary {
 
 
     # create git-changelog
-    my $git_changelog_lock_file = "/gsc/var/lock/genome/promote_changelog.lock";
+    my $git_changelog_lock_file = "/gscmnt/gc13001/info/site_locks/genome/promote_changelog.lock";
     if (-e $git_changelog_lock_file) {
         my $start_time = time;
         while (-e $git_changelog_lock_file) {
