@@ -255,7 +255,7 @@ sub send_announcement_email {
         die "Invalid params passed to send_announcement_email: " . join(', ', @params_keys) . ".\n";
     }
 
-    my $mail_to = 'genome-announce@genome.wustl.edu';
+    my $mail_to = 'gms@gowustl.onmicrosoft.com';
     my $user_name = getpwuid($<);
     my $mail_from = $user_name . '@genome.wustl.edu';
 
